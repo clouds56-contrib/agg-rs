@@ -169,12 +169,13 @@ impl GsvDefaultFont {
 fn string_width(txt: &str, font: &ft::Face) -> f64 {
     let mut width = 0.0;
     for c in txt.chars() {
-        let glyph_index = font.get_char_index(c as usize);
-        font.load_glyph(glyph_index, ft::face::LoadFlag::DEFAULT).unwrap();
-        let glyph = font.glyph();
-        glyph.render_glyph(ft::RenderMode::Normal).unwrap();
-        let adv = glyph.advance();
-        width += adv.x as f64
+        if let Some(glyph_index) = font.get_char_index(c as usize) {
+            font.load_glyph(glyph_index, ft::face::LoadFlag::DEFAULT).unwrap();
+            let glyph = font.glyph();
+            glyph.render_glyph(ft::RenderMode::Normal).unwrap();
+            let adv = glyph.advance();
+            width += adv.x as f64;
+        }
     }
     width / 64.0
 }
@@ -197,7 +198,9 @@ pub fn draw_text<T>(txt: &str, x: i64, y: i64, font: &ft::Face, ren_base: &mut R
     x -= dx;
     y += dy;
     for c in txt.chars() {
-        let glyph_index = font.get_char_index(c as usize);
+        let Some(glyph_index) = font.get_char_index(c as usize) else {
+          continue;
+        };
         font.load_glyph(glyph_index, ft::face::LoadFlag::DEFAULT).unwrap();
         font.glyph().render_glyph(ft::RenderMode::Normal).unwrap();
         let g = font.glyph().bitmap();
@@ -209,7 +212,7 @@ pub fn draw_text<T>(txt: &str, x: i64, y: i64, font: &ft::Face, ren_base: &mut R
         let width = g.width() as i64;
         for i in 0 .. rows {
             ren_base.blend_solid_hspan(x + left, y-top+i, width,
-                                       color, &buf[pitch*i as usize..]);
+                                    color, &buf[pitch*i as usize..]);
         }
         let adv = font.glyph().advance();
         x += (adv.x as f64 / 64.0).round() as i64;
@@ -236,13 +239,13 @@ impl From<String> for AggFontError {
     }
 }
 
-pub fn font(name: &str) -> Result<ft::Face, AggFontError> {
-    let prop = font_loader::system_fonts::FontPropertyBuilder::new().family(name).build();
-    let (font, _) = font_loader::system_fonts::get(&prop).ok_or("error loading font".to_string())?;
-    let lib = ft::Library::init()?;
-    let face = lib.new_memory_face(font, 0)?;
-    Ok(face)
-}
+// pub fn font(name: &str) -> Result<ft::Face, AggFontError> {
+//     let prop = font_loader::system_fonts::FontPropertyBuilder::new().family(name).build();
+//     let (font, _) = font_loader::system_fonts::get(&prop).ok_or("error loading font".to_string())?;
+//     let lib = ft::Library::init()?;
+//     let face = lib.new_memory_face(font, 0)?;
+//     Ok(face)
+// }
 
 
 #[derive(Debug,Copy,Clone,PartialEq)]
@@ -332,10 +335,10 @@ fn draw_text_subpixel<T>(txt: &str, x: f64, y: f64,
     };
 
     for c in txt.chars() {
-        let glyph_index = font.get_char_index(c as usize);
-        font.load_glyph(glyph_index, ft::face::LoadFlag::DEFAULT).unwrap();
+        if let Some(glyph_index) = font.get_char_index(c as usize) {
+            font.load_glyph(glyph_index, ft::face::LoadFlag::DEFAULT).unwrap();
 
-        let glyph = font.glyph().get_glyph().unwrap();
+            let glyph = font.glyph().get_glyph().unwrap();
         let dt = ft::Vector {
             x: ((x - x.floor()) * 64.0).round() as i64,
             y: ((y - y.floor()) * 64.0).round() as i64
@@ -358,6 +361,7 @@ fn draw_text_subpixel<T>(txt: &str, x: f64, y: f64,
 
         x += glyph.advance_x() as f64 / 65536.0;
         y += glyph.advance_y() as f64 / 65536.0;
+        }
     }
 }
 

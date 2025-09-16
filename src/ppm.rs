@@ -5,13 +5,14 @@
 use std::path::Path;
 
 pub fn read_file<P: AsRef<Path>>(filename: P) -> Result<(Vec<u8>,usize,usize),image::ImageError> {
-    let img = image::open(filename)?.to_rgb(); // This should be changed
+    let img = image::open(filename)?.to_rgb8(); // This should be changed
     let (w, h) = img.dimensions();
     let buf = img.into_raw();
     Ok((buf, w as usize, h as usize))
 }
 pub fn write_file<P: AsRef<Path>>(buf: &[u8], width: usize, height: usize, filename: P) -> Result<(), std::io::Error> {
-    image::save_buffer(filename, buf, width as u32, height as u32, image::RGB(8))
+    image::save_buffer(filename, buf, width as u32, height as u32, image::ColorType::Rgb8)
+        .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))
 }
 
 pub fn img_diff<P: AsRef<Path>>(f1: P, f2: P) -> Result<bool,image::ImageError> {

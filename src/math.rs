@@ -17,7 +17,7 @@ pub fn lerp_u8(p: u8, q: u8, a: u8) -> u8 {
 ///
 /// p + q - (p*a)
 pub fn prelerp_u8(p: u8, q: u8, a: u8) -> u8 {
-    p.wrapping_add(q).wrapping_sub(multiply_u8(p,a))
+    ((p as i32) + (q as i32) - multiply_u8(p,a) as i32).min(255).max(0) as u8
 }
 
 /// Multiply two u8 values using fixed point math
@@ -30,9 +30,8 @@ pub fn prelerp_u8(p: u8, q: u8, a: u8) -> u8 {
 pub fn multiply_u8(a: u8, b: u8) -> u8 {
     let base_shift = 8;
     let base_msb = 1 << (base_shift - 1);
-    let (a,b) = (u32::from(a), u32::from(b));
-    let t : u32  = a * b + base_msb;
-    let tt : u32 = ((t >> base_shift) + t) >> base_shift;
+    let t  = a as u32 * b as u32 + base_msb;
+    let tt = ((t >> base_shift) + t) >> base_shift;
     tt as u8
 }
 
