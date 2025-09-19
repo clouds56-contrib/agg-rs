@@ -3,6 +3,7 @@
 use crate::scan::ScanlineU8;
 use crate::base::RenderingBase;
 use crate::color::Rgba8;
+use crate::NamedColor;
 use crate::POLY_SUBPIXEL_SCALE;
 use crate::POLY_SUBPIXEL_MASK;
 use crate::POLY_SUBPIXEL_SHIFT;
@@ -110,7 +111,7 @@ impl Interpolator {
         if let (Some(x),Some(y)) = (self.li_x.as_ref(), self.li_y.as_ref()) {
             (x.y, y.y)
         } else {
-            panic!("Interpolator not Initialized"); 
+            panic!("Interpolator not Initialized");
         }
     }
 }
@@ -453,7 +454,7 @@ impl LineInterpolator {
     /// Error term is initialized as: `rem` - `count`
     ///
     /// `xmod`, `rem` and `left` are adjusted if `xmod` is negative
-    pub fn new(y1: i64, y2: i64, count: i64) -> Self { 
+    pub fn new(y1: i64, y2: i64, count: i64) -> Self {
         let cnt = std::cmp::max(1,count);
         let mut left = (y2 - y1) / cnt;
         let mut rem  = (y2 - y1) % cnt;

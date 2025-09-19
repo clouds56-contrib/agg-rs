@@ -1,7 +1,7 @@
 
 extern crate agg;
 
-use agg::Pixel;
+use agg::{NamedColor, Pixel};
 
 #[test]
 fn t05_solar_spectrum_alpha() {

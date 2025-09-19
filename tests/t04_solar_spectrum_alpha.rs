@@ -1,7 +1,7 @@
 
 extern crate agg;
 
-use agg::Pixel;
+use agg::{NamedColor, Pixel};
 
 #[test]
 fn t04_solar_spectrum_alpha() {
@@ -33,4 +33,3 @@ fn t04_solar_spectrum_alpha() {
     assert_eq!(agg::ppm::img_diff("tests/tmp/agg_test_04.png", "images/agg_test_04.png").unwrap(), true);
 
 }
-

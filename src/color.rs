@@ -8,10 +8,20 @@ use crate::math::multiply_u8;
 pub trait ColorValueType: Copy + Debug + PartialEq<Self> {
     fn color_min() -> Self { Self::from_color_f64(0.0) }
     fn color_max() -> Self { Self::from_color_f64(1.0) }
+
     fn as_color_f64(self) -> f64;
     fn as_color_u8(self) -> u8 { (self.as_color_f64() * 255.0).round() as u8 }
     fn from_color_f64(v: f64) -> Self;
     fn from_color_u8(v: u8) -> Self { Self::from_color_f64(v as f64 / 255.0) }
+    fn as_color_<T: ColorValueType>(self) -> T {
+        T::from_color_f64(self.as_color_f64())
+    }
+
+    fn color_mul(self, v: Self) -> Self {
+        let a = self.as_color_f64();
+        let b = v.as_color_f64();
+        Self::from_color_f64(a * b)
+    }
 }
 impl ColorValueType for u8 {
     fn color_min() -> Self { 0 }
@@ -20,6 +30,7 @@ impl ColorValueType for u8 {
     fn as_color_u8(self) -> u8 { self }
     fn from_color_f64(v: f64) -> Self { (v * 255.0).round() as u8 }
     fn from_color_u8(v: u8) -> Self { v }
+    fn color_mul(self, v: Self) -> Self { multiply_u8(self, v) }
 }
 impl ColorValueType for u16 {
     fn color_min() -> Self { 0 }
@@ -34,6 +45,18 @@ impl ColorValueType for f32 {
 impl ColorValueType for f64 {
     fn as_color_f64(self) -> f64 { self }
     fn from_color_f64(v: f64) -> Self { v }
+}
+
+pub trait ConvertColorValue<T1: ColorValueType, T2: ColorValueType> {
+    fn convert_color_value(v: T1) -> T2 {
+        T2::from_color_f64(v.as_color_f64())
+    }
+}
+
+pub trait NamedColor {
+    fn white() -> Self;
+    fn black() -> Self;
+    fn gray<T: ColorValueType>(g: T, a: T) -> Self;
 }
 
 /// Convert from sRGB to RGB for a single component
@@ -72,14 +95,11 @@ pub type Rgba32 = Rgba<f32>;
 pub type Rgba64 = Rgba<f64>;
 
 impl<T: ColorValueType> Rgba<T> {
+    pub fn from_color<C: Color>(c: C) -> Self {
+        Self::new(c.red(), c.green(), c.blue(), c.alpha())
+    }
     pub fn new(r: T, g: T, b: T, a: T) -> Self {
         Self { r, g, b, a }
-    }
-    pub fn white() -> Self {
-        Self::new(T::color_max(), T::color_max(), T::color_max(), T::color_max())
-    }
-    pub fn black() -> Self {
-        Self::new(T::color_min(), T::color_min(), T::color_min(), T::color_max())
     }
     pub fn clear(&mut self) {
         self.r = T::color_min();
@@ -87,35 +107,45 @@ impl<T: ColorValueType> Rgba<T> {
         self.b = T::color_min();
         self.a = T::color_min();
     }
+    pub fn into_slice(&self) -> [T;4] {
+        [self.r, self.g, self.b, self.a]
+    }
+    pub fn premultiply(&self) -> RgbaPre<T> {
+        match self.a {
+            a if a == T::color_max() => {
+                RgbaPre::new(self.r, self.g, self.b, self.a)
+            },
+            a if a == T::color_min() => {
+                RgbaPre::new(T::color_min(), T::color_min(), T::color_min(), self.a)
+            },
+            a => {
+                let r = self.r.color_mul(a);
+                let g = self.g.color_mul(a);
+                let b = self.b.color_mul(a);
+                RgbaPre::new(r, g, b, self.a)
+            }
+        }
+    }
+}
+
+impl<T: ColorValueType> NamedColor for Rgba<T> {
+    fn white() -> Self {
+        Self::new(T::color_max(), T::color_max(), T::color_max(), T::color_max())
+    }
+    fn black() -> Self {
+        Self::new(T::color_min(), T::color_min(), T::color_min(), T::color_max())
+    }
+    fn gray<T2: ColorValueType>(gray: T2, alpha: T2) -> Self {
+        let gray = gray.as_color_();
+        Self::new(gray, gray, gray, alpha.as_color_())
+    }
 }
 
 impl Rgba8 {
-    pub fn from_trait<C: Color>(c: C) -> Self {
-        Self::new(c.red8(), c.green8(), c.blue8(), c.alpha8())
-    }
-    pub fn into_slice(&self) -> [u8;4] {
-        [self.r, self.g, self.b, self.a]
-    }
     /// Crate new color from a wavelength and gamma
     pub fn from_wavelength_gamma(w: f64, gamma: f64) -> Self {
         let c = Rgb8::from_wavelength_gamma(w, gamma);
-        Self::from_trait(c)
-    }
-    pub fn premultiply(self) -> RgbaPre8 {
-        match self.a {
-            255 => {
-                RgbaPre8::new(self.r, self.g, self.b, self.a)
-            },
-            0   => {
-                RgbaPre8::new(0, 0, 0, self.a)
-            },
-            _   => {
-                let r = multiply_u8(self.r, self.a);
-                let g = multiply_u8(self.g, self.a);
-                let b = multiply_u8(self.b, self.a);
-                RgbaPre8::new(r, g, b, self.a)
-            }
-        }
+        Self::from_color(c)
     }
 }
 
@@ -132,33 +162,38 @@ pub type Gray16 = Gray<u16>;
 pub type Gray32 = Gray<f32>;
 pub type Gray64 = Gray<f64>;
 
-impl Gray8 {
-    pub fn from_trait<C: Color>(c: C) -> Self {
-        let lum = luminance_u8(c.red8(), c.green8(), c.blue8());
-        Self::new_with_alpha( lum, c.alpha8() )
+impl<T: ColorValueType> Gray<T> {
+    pub fn from_color<C: Color>(c: C) -> Self {
+        let lum = luminance(c.red(), c.green(), c.blue());
+        Self::new_with_alpha( lum.as_color_(), c.alpha() )
     }
     /// Create a new gray scale value
-    pub fn new(value: u8) -> Self {
-        Self { value, alpha: 255 }
+    pub fn new(value: T) -> Self {
+        Self { value, alpha: T::color_max() }
     }
-    pub fn new_with_alpha(value: u8, alpha: u8) -> Self {
+    pub fn new_with_alpha(value: T, alpha: T) -> Self {
         Self { value, alpha }
     }
-    pub fn from_slice(v: &[u8]) -> Self {
-        Self::new_with_alpha(v[0],v[1])
+    pub fn from_slice(v: &[T]) -> Self {
+        Self { value: v[0], alpha: v[1] }
     }
-    pub fn into_slice(&self) -> [u8;2] {
+    pub fn into_slice(&self) -> [T;2] {
         [self.value, self.alpha]
     }
 }
 
-fn luminance_u8(red: u8, green: u8, blue: u8) -> u8 {
-    luminance(
-        red.as_color_f64(),
-        green.as_color_f64(),
-        blue.as_color_f64()
-    ).as_color_u8()
+impl<T: ColorValueType> NamedColor for Gray<T> {
+    fn white() -> Self {
+        Self::new(T::color_max())
+    }
+    fn black() -> Self {
+        Self::new(T::color_min())
+    }
+    fn gray<T2: ColorValueType>(g: T2, a: T2) -> Self {
+        Self::new_with_alpha(g.as_color_(), a.as_color_())
+    }
 }
+
 pub fn luminance(red: f64, green: f64, blue: f64) -> f64 {
     0.2126 * red + 0.7152 * green + 0.0722 * blue
 }
@@ -179,29 +214,48 @@ pub fn average(red: f64, green: f64, blue: f64) -> f64 {
     (red + green + blue) / 3.0
 }
 
+/// Color as Red, Green, Blue
+#[derive(Debug,Default,Copy,Clone,PartialEq)]
+pub struct Rgb<T> {
+    pub r: T,
+    pub g: T,
+    pub b: T,
+}
 
-impl Rgb8 {
-    pub fn from_trait<C: Color>(c: C) -> Self {
-        Self::new(c.red8(), c.green8(), c.blue8())
+pub type Rgb8  = Rgb<u8>;
+pub type Rgb16 = Rgb<u16>;
+pub type Rgb32 = Rgb<f32>;
+pub type Rgb64 = Rgb<f64>;
+
+impl<T: ColorValueType> Rgb<T> {
+    pub fn from_color<C: Color>(c: C) -> Self {
+        Self::new(c.red(), c.green(), c.blue())
     }
-    pub fn white() -> Self {
-        Self::new(255,255,255)
+    pub fn new(r: T, g: T, b: T) -> Self {
+        Self { r, g, b }
     }
-    pub fn black() -> Self {
-        Self::new(0,0,0)
+    pub fn from_slice(v: &[T]) -> Self {
+        Self { r: v[0], g: v[1], b: v[2] }
     }
-    pub fn new(r: u8, g: u8, b: u8) -> Self {
-        Rgb8 { r, g, b }
-    }
-    pub fn gray(g: u8) -> Self {
-        Self::new(g,g,g)
-    }
-    pub fn from_slice(v: &[u8]) -> Self {
-        Rgb8 { r: v[0], g: v[1], b: v[2] }
-    }
-    pub fn into_slice(&self) -> [u8;3] {
+    pub fn into_slice(&self) -> [T;3] {
         [self.r, self.g, self.b]
     }
+}
+
+impl<T: ColorValueType> NamedColor for Rgb<T> {
+    fn white() -> Self {
+        Self::new(T::color_max(), T::color_max(), T::color_max())
+    }
+    fn black() -> Self {
+        Self::new(T::color_min(), T::color_min(), T::color_min())
+    }
+    fn gray<T2: ColorValueType>(gray: T2, _: T2) -> Self {
+        let gray = gray.as_color_();
+        Self::new(gray, gray, gray)
+    }
+}
+
+impl Rgb8 {
     pub fn from_wavelength_gamma(w: f64, gamma: f64) -> Self {
         let (r,g,b) =
             if w >= 380.0 && w <= 440.0 {
@@ -234,18 +288,6 @@ impl Rgb8 {
     }
 }
 
-/// Color as Red, Green, Blue
-#[derive(Debug,Default,Copy,Clone,PartialEq)]
-pub struct Rgb<T> {
-    pub r: T,
-    pub g: T,
-    pub b: T,
-}
-
-pub type Rgb8  = Rgb<u8>;
-pub type Rgb16 = Rgb<u16>;
-pub type Rgb32 = Rgb<f32>;
-pub type Rgb64 = Rgb<f64>;
 
 /// Color as Red, Green, Blue, and Alpha with pre-multiplied components
 #[derive(Debug,Default,Copy,Clone,PartialEq)]
@@ -261,15 +303,27 @@ pub type RgbaPre16 = RgbaPre<u16>;
 pub type RgbaPre32 = RgbaPre<f32>;
 pub type RgbaPre64 = RgbaPre<f64>;
 
-impl RgbaPre8 {
-    pub fn new(r: u8, g: u8, b: u8, a: u8) -> Self {
+impl<T: ColorValueType> RgbaPre<T> {
+    pub fn from_color<C: Color>(color: C) -> Self {
+        Self {r: color.red(), g: color.green(), b: color.blue(), a: color.alpha() }
+    }
+    pub fn new(r: T, g: T, b: T, a: T) -> Self {
         Self {r, g, b, a}
     }
-    pub fn from_trait<C: Color>(color: C) -> Self {
-        Self {r: color.red8(), g: color.green8(), b: color.blue8(), a: color.alpha8() }
-    }
-    pub fn into_slice(&self) -> [u8;4] {
+    pub fn into_slice(&self) -> [T;4] {
         [self.r, self.g, self.b, self.a]
+    }
+}
+
+impl<T: ColorValueType> NamedColor for RgbaPre<T> {
+    fn white() -> Self {
+        Rgba::white().premultiply()
+    }
+    fn black() -> Self {
+        Rgba::black().premultiply()
+    }
+    fn gray<T2: ColorValueType>(gray: T2, alpha: T2) -> Self {
+        Rgba::gray(gray, alpha).premultiply()
     }
 }
 
@@ -295,11 +349,11 @@ pub type Srgba32 = Srgba<f32>;
 pub type Srgba64 = Srgba<f64>;
 
 impl<T: ColorValueType> Srgba<T> {
-    pub fn from_rgb<C: Color>(c: C) -> Self {
-        let r = T::from_color_f64(rgb_to_srgb(c.red()));
-        let g = T::from_color_f64(rgb_to_srgb(c.green()));
-        let b = T::from_color_f64(rgb_to_srgb(c.blue()));
-        let a = T::from_color_f64(c.alpha());
+    pub fn from_color<C: Color>(c: C) -> Self {
+        let r = rgb_to_srgb(c.red64()).as_color_();
+        let g = rgb_to_srgb(c.green64()).as_color_();
+        let b = rgb_to_srgb(c.blue64()).as_color_();
+        let a = c.alpha64().as_color_();
         Self::new(r,g,b,a)
     }
     /// Create a new Srgba8 color
@@ -308,93 +362,64 @@ impl<T: ColorValueType> Srgba<T> {
     }
 }
 
-impl Rgba32 {
-    pub fn from_trait<C: Color>(c: C) -> Self {
-        Self::new(c.red() as f32,
-                  c.green() as f32,
-                  c.blue() as f32,
-                  c.alpha() as f32)
-    }
-    pub fn premultiply(&self) -> Self {
-        if (self.a - 1.0).abs() <= std::f32::EPSILON {
-            Rgba32::new(self.r, self.g, self.b, self.a)
-        } else if self.a == 0.0 {
-            Rgba32::new(0., 0., 0., self.a)
-        } else {
-            let r = self.r * self.a;
-            let g = self.g * self.a;
-            let b = self.b * self.a;
-            Rgba32::new(r, g, b, self.a)
-        }
-    }
-}
-
 impl<T: ColorValueType> Color for Rgba<T> {
-    fn   red(&self)  -> f64 { self.r.as_color_f64() }
-    fn green(&self)  -> f64 { self.g.as_color_f64() }
-    fn  blue(&self)  -> f64 { self.b.as_color_f64() }
-    fn alpha(&self)  -> f64 { self.a.as_color_f64() }
-    fn alpha8(&self) -> u8  { self.a.as_color_u8() }
-    fn red8(&self)   -> u8  { self.r.as_color_u8() }
-    fn green8(&self) -> u8  { self.g.as_color_u8() }
-    fn blue8(&self)  -> u8  { self.b.as_color_u8() }
+    fn red<T2: ColorValueType>(&self) -> T2 { self.r.as_color_::<T2>() }
+    fn green<T2: ColorValueType>(&self) -> T2 { self.g.as_color_::<T2>() }
+    fn blue<T2: ColorValueType>(&self) -> T2 { self.b.as_color_::<T2>() }
+    fn alpha<T2: ColorValueType>(&self) -> T2 { self.a.as_color_::<T2>() }
     fn is_premultiplied(&self) -> bool { false }
 }
 impl<T: ColorValueType> Color for Rgb<T> {
-    fn   red(&self) -> f64 { self.r.as_color_f64() }
-    fn green(&self) -> f64 { self.g.as_color_f64() }
-    fn  blue(&self) -> f64 { self.b.as_color_f64() }
-    fn alpha(&self) -> f64 { 1.0 }
-    fn alpha8(&self) -> u8 { 255 }
-    fn red8(&self) -> u8   { self.r.as_color_u8() }
-    fn green8(&self) -> u8 { self.g.as_color_u8() }
-    fn blue8(&self) -> u8  { self.b.as_color_u8() }
+    fn red<T2: ColorValueType>(&self) -> T2 { self.r.as_color_::<T2>() }
+    fn green<T2: ColorValueType>(&self) -> T2 { self.g.as_color_::<T2>() }
+    fn blue<T2: ColorValueType>(&self) -> T2 { self.b.as_color_::<T2>() }
+    fn alpha<T2: ColorValueType>(&self) -> T2 { T2::color_max() }
     fn is_premultiplied(&self) -> bool { false }
 }
 impl<T: ColorValueType> Color for RgbaPre<T> {
-    fn   red(&self) -> f64 { self.r.as_color_f64() }
-    fn green(&self) -> f64 { self.g.as_color_f64() }
-    fn  blue(&self) -> f64 { self.b.as_color_f64() }
-    fn alpha(&self) -> f64 { self.a.as_color_f64() }
-    fn alpha8(&self) -> u8 { self.a.as_color_u8() }
-    fn red8(&self) -> u8   { self.r.as_color_u8() }
-    fn green8(&self) -> u8 { self.g.as_color_u8() }
-    fn blue8(&self) -> u8  { self.b.as_color_u8() }
+    fn red<T2: ColorValueType>(&self) -> T2 { self.r.as_color_::<T2>() }
+    fn green<T2: ColorValueType>(&self) -> T2 { self.g.as_color_::<T2>() }
+    fn blue<T2: ColorValueType>(&self) -> T2 { self.b.as_color_::<T2>() }
+    fn alpha<T2: ColorValueType>(&self) -> T2 { self.a.as_color_::<T2>() }
     fn is_premultiplied(&self) -> bool { true }
-    fn is_transparent(&self) -> bool {
-        self.a == T::color_min()
-    }
 }
 impl<T: ColorValueType> Color for Srgba<T> {
-    fn   red(&self)  -> f64 { srgb_to_rgb(self.r.as_color_f64()) }
-    fn green(&self)  -> f64 { srgb_to_rgb(self.g.as_color_f64()) }
-    fn  blue(&self)  -> f64 { srgb_to_rgb(self.b.as_color_f64()) }
-    fn alpha(&self)  -> f64 { self.a.as_color_f64() }
-    fn alpha8(&self) -> u8  { self.alpha().as_color_u8() }
-    fn red8(&self)   -> u8  { self.red().as_color_u8() }
-    fn green8(&self) -> u8  { self.green().as_color_u8() }
-    fn blue8(&self)  -> u8  { self.blue().as_color_u8() }
+    fn red<T2: ColorValueType>(&self) -> T2 { self.red64().as_color_::<T2>() }
+    fn green<T2: ColorValueType>(&self) -> T2 { self.green64().as_color_::<T2>() }
+    fn blue<T2: ColorValueType>(&self) -> T2 { self.blue64().as_color_::<T2>() }
+    fn alpha<T2: ColorValueType>(&self) -> T2 { self.a.as_color_::<T2>() }
+    fn   red64(&self)  -> f64 { srgb_to_rgb(self.r.as_color_f64()) }
+    fn green64(&self)  -> f64 { srgb_to_rgb(self.g.as_color_f64()) }
+    fn  blue64(&self)  -> f64 { srgb_to_rgb(self.b.as_color_f64()) }
     fn is_premultiplied(&self) -> bool { false }
 }
 impl<T: ColorValueType> Color for Gray<T> {
-    fn   red(&self)  -> f64 { self.value.as_color_f64() }
-    fn green(&self)  -> f64 { self.value.as_color_f64() }
-    fn  blue(&self)  -> f64 { self.value.as_color_f64() }
-    fn alpha(&self)  -> f64 { self.alpha.as_color_f64() }
-    fn alpha8(&self) -> u8  { self.alpha.as_color_u8() }
-    fn red8(&self)   -> u8  { self.value.as_color_u8() }
-    fn green8(&self) -> u8  { self.value.as_color_u8() }
-    fn blue8(&self)  -> u8  { self.value.as_color_u8() }
+    fn red<T2: ColorValueType>(&self) -> T2 { self.value.as_color_::<T2>() }
+    fn green<T2: ColorValueType>(&self) -> T2 { self.value.as_color_::<T2>() }
+    fn blue<T2: ColorValueType>(&self) -> T2 { self.value.as_color_::<T2>() }
+    fn alpha<T2: ColorValueType>(&self) -> T2 { self.alpha.as_color_::<T2>() }
     fn is_premultiplied(&self) -> bool { false }
 }
 
 #[cfg(test)]
 mod tests {
+    use crate::{ColorValueType, NamedColor};
+
     use super::Gray8;
     use super::Rgb8;
     use super::Rgba8;
     use super::RgbaPre8;
     use super::Srgba8;
+
+    #[test]
+    fn value_type_test() {
+        for i in 0..=255u8 {
+            assert_eq!(i.as_color_::<u8>(), i);
+        }
+        for i in 0..=65535u16 {
+            assert_eq!(i.as_color_::<u16>(), i);
+        }
+    }
 
     #[test]
     fn rgb8_to_gray8_test() {
@@ -416,7 +441,7 @@ mod tests {
         ];
         for [r,g,b,z] in &values {
             let c = Rgb8::new(*r,*g,*b);
-            let gray = Gray8::from_trait(c);
+            let gray = Gray8::from_color(c);
             assert_eq!(gray.value, *z);
         }
     }
@@ -426,7 +451,7 @@ mod tests {
         assert_eq!(w, Rgb8{r: 255, g:255, b: 255});
         let w = Rgb8::black();
         assert_eq!(w, Rgb8{r: 0, g:0, b: 0});
-        let w = Rgb8::gray(128);
+        let w = Rgb8::gray(128u8, 255);
         assert_eq!(w, Rgb8{r: 128, g:128, b: 128});
         let w = Rgb8::from_slice(&[1,2,3]);
         assert_eq!(w, Rgb8{r: 1, g:2, b: 3});
@@ -461,7 +486,7 @@ mod tests {
     fn srgb_test() {
         let s = Srgba8::new(50,150,250,128);
         assert_eq!(s, Srgba8{r:50,g:150,b:250,a:128});
-        let t = Rgba8::from_trait(s);
+        let t = Rgba8::from_color(s);
         assert_eq!(t, Rgba8{r:8,g:78,b:244,a:128});
     }
 }

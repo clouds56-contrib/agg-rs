@@ -1,4 +1,5 @@
 
+use crate::NamedColor;
 use crate::VertexSource;
 use crate::paths::Vertex;
 use crate::base::RenderingBase;

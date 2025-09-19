@@ -91,7 +91,7 @@ fn chain() -> agg::Pixfmt<agg::Rgba32> {
         let g = ((v >>  8) & 0x00ff_u32) as u8;
         let b = ((v      ) & 0x00ff_u32) as u8;
         let a =  (v >> 24) as u8;
-        let c = agg::Rgba32::from_trait(agg::Srgba8::new(r,g,b,a));
+        let c = agg::Rgba32::from_color(agg::Srgba8::new(r,g,b,a));
         colors.push( c.premultiply() );
     }
     let mut k = 0;

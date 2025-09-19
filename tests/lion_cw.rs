@@ -1,6 +1,6 @@
 
 extern crate agg;
-use agg::Render;
+use agg::{NamedColor, Render};
 use std::fs;
 
 fn parse_lion() -> (Vec<agg::Path>, Vec<agg::Rgba8>){

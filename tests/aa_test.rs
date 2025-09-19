@@ -1,7 +1,7 @@
 
 mod assets;
 
-use agg::Render;
+use agg::{NamedColor, Render};
 
 fn path_from_slice(pts: &[f64]) -> agg::Path {
     assert!(pts.len() % 2 == 0);
