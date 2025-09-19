@@ -1,6 +1,6 @@
 
 extern crate agg;
-use agg::Pixel;
+use agg::{NamedColor, Pixel};
 
 fn draw_black_frame(pix: &mut agg::Pixfmt<agg::Rgb8>) {
     let w = pix.width();
@@ -35,4 +35,3 @@ fn t01_rendering_buffer() {
     pix.to_file("tests/tmp/agg_test_01.png").unwrap();
     assert_eq!(agg::ppm::img_diff("tests/tmp/agg_test_01.png", "images/agg_test_01.png").unwrap(), true);
 }
-

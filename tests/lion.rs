@@ -3,7 +3,7 @@ extern crate agg;
 
 use std::fs;
 
-use agg::Render;
+use agg::{NamedColor, Render};
 
 fn parse_lion() -> (Vec<agg::Path>, Vec<agg::Rgba8>){
     let txt = fs::read_to_string("tests/lion.txt").unwrap();

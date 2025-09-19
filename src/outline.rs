@@ -134,11 +134,11 @@ impl<'a,T> RendererPrimatives<'a,T> where T: Pixel {
     }
     /// Set line color
     pub fn line_color<C: Color>(&mut self, line_color: C) {
-        self.line_color = Rgba8::from_trait(line_color);
+        self.line_color = Rgba8::from_color(line_color);
     }
     /// Set fill color
     pub fn fill_color<C: Color>(&mut self, fill_color: C) {
-        self.fill_color = Rgba8::from_trait(fill_color);
+        self.fill_color = Rgba8::from_color(fill_color);
     }
     pub(crate) fn coord(&self, c: f64) -> Subpixel {
         Subpixel::from( (c * POLY_SUBPIXEL_SCALE as f64).round() as i64 )

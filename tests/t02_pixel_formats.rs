@@ -1,7 +1,7 @@
 
 extern crate agg;
 
-use agg::Pixel;
+use agg::{NamedColor, Pixel};
 
 fn draw_black_frame(pix: &mut agg::Pixfmt<agg::Rgb8>) {
     let w = pix.width();

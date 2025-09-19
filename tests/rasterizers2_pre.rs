@@ -91,7 +91,7 @@ fn chain() -> agg::Pixfmt<agg::Rgba32> {
         let g = ((v >>  8) & 0x00ff_u32) as u8;
         let b = ((v      ) & 0x00ff_u32) as u8;
         let a =  (v >> 24) as u8;
-        let c = agg::Rgba32::from_trait(agg::Srgba8::new(r,g,b,a));
+        let c = agg::Rgba32::from_color(agg::Srgba8::new(r,g,b,a));
         colors.push( c.premultiply() );
     }
     let mut k = 0;
@@ -108,7 +108,7 @@ fn chain() -> agg::Pixfmt<agg::Rgba32> {
 fn rasterizers2_pre() {
     let (w,h) = (500, 450);
 
-    let pixf = agg::Pixfmt::<agg::Rgba8pre>::new(w, h);
+    let pixf = agg::Pixfmt::<agg::RgbaPre8>::new(w, h);
     let mut ren_base = agg::RenderingBase::new(pixf);
 
     ren_base.clear( agg::Rgba8::new(255, 255, 242, 255) );

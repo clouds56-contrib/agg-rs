@@ -1,7 +1,7 @@
 
 #[test]
 fn t00_example() {
-    use agg::Render;
+    use agg::{NamedColor, Render};
 
     // Create a blank image 10x10 pixels
     let pix = agg::Pixfmt::<agg::Rgb8>::new(100,100);

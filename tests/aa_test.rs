@@ -1,7 +1,7 @@
 
 mod assets;
 
-use agg::Render;
+use agg::{NamedColor, Render};
 
 fn path_from_slice(pts: &[f64]) -> agg::Path {
     assert!(pts.len() % 2 == 0);
@@ -14,6 +14,33 @@ fn path_from_slice(pts: &[f64]) -> agg::Path {
                      pts[i+1] + 0.5);
     }
     path
+}
+
+fn dash_line<T: agg::Pixel>(
+    ren: &mut agg::RenderingScanlineAASolid<T>,
+    ras: &mut agg::RasterizerScanline,
+    x1: f64, y1: f64, x2: f64, y2: f64,
+    line_width: f64, dash_len: f64)
+{
+
+    ras.reset();
+    let mut path = agg::Path::new();
+    path.move_to(x1 + 0.5, y1 + 0.5);
+    path.line_to(x2 + 0.5, y2 + 0.5);
+    if dash_len > 0.0 {
+        let mut dash = agg::Dash::new(path);
+        dash.add_dash(dash_len, dash_len);
+        let mut stroke = agg::Stroke::new(dash);
+        stroke.width(line_width);
+        stroke.line_cap(agg::LineCap::Round);
+        ras.add_path(&stroke);
+    } else {
+        let mut stroke = agg::Stroke::new(path);
+        stroke.width(line_width);
+        stroke.line_cap(agg::LineCap::Round);
+        ras.add_path(&stroke);
+    }
+    agg::render_scanlines(ras, ren);
 }
 
 
@@ -30,33 +57,20 @@ fn t26_aa_test() {
     // Radial Line Test
     let cx = width  as f64 / 2.0;
     let cy = height as f64 / 2.0;
-    let r = if cx < cy { cx } else { cy };
+    let r = cx.min(cy);
 
     let mut ras = agg::RasterizerScanline::new();
     {
         let mut ren = agg::RenderingScanlineAASolid::with_base(&mut ren_base);
         ren.color(agg::Rgba8::new(255, 255, 255, 51));
         for i in (1..=180).rev() {
-            ras.reset();
             let n = 2.0 * (i as f64) * std::f64::consts::PI / 180.0;
-            let mut path = agg::Path::new();
-            path.move_to((cx + r * n.sin()) + 0.5,
-                         (cy + r * n.cos()) + 0.5);
-            path.line_to(cx + 0.5, cy + 0.5);
-            if i < 90 {
-                let mut dash = agg::Dash::new(path);
-                dash.add_dash(i as f64, i as f64);
-                let mut stroke = agg::Stroke::new(dash);
-                stroke.width(1.0);
-                stroke.line_cap(agg::LineCap::Round);
-                ras.add_path(&stroke);
-            } else {
-                let mut stroke = agg::Stroke::new(path);
-                stroke.width(1.0);
-                stroke.line_cap(agg::LineCap::Round);
-                ras.add_path(&stroke);
-            }
-            agg::render_scanlines(&mut ras, &mut ren);
+            dash_line(
+                &mut ren, &mut ras,
+                cx + r * n.sin(), cy + r * n.cos(),
+                cx, cy,
+                1.0, if i < 90 { i as f64 } else { 0.0 }
+            );
         }
     }
 
@@ -66,27 +80,33 @@ fn t26_aa_test() {
         // Integral Point Sizes 1..=20
         ras.reset();
         ren.color( agg::Rgb8::white() );
-        let ell = agg::Ellipse::new(20.0 + k * (k + 1.0) + 0.5,
-                                    20.5,
-                                    k/2.0, k/2.0,
-                                    8 + i);
+        let ell = agg::Ellipse::new(
+            20.0 + k * (k + 1.0) + 0.5,
+            20.5,
+            k/2.0, k/2.0,
+            8 + i
+        );
         ras.add_path(&ell);
         agg::render_scanlines(&mut ras, &mut ren);
-        
+
         // Fractional Point Sizes 0..=2
         ras.reset();
-        let ell = agg::Ellipse::new(18. + (k * 4.0) + 0.5,
-                                    33. + 0.5,
-                                    k/20.0, k/20.0,
-                                    8);
+        let ell = agg::Ellipse::new(
+            18. + (k * 4.0) + 0.5,
+            33. + 0.5,
+            k/20.0, k/20.0,
+            8
+        );
         ras.add_path(&ell);
         agg::render_scanlines(&mut ras, &mut ren);
 
         // Fractional Point Positioning
         ras.reset();
-        let ell = agg::Ellipse::new(18. + (k*4.0) + (k-1.0) / 10.0 + 0.5,
-                                    27. + (k-1.0) / 10.0 + 0.5,
-                                    0.5, 0.5, 8);
+        let ell = agg::Ellipse::new(
+            18. + (k*4.0) + (k-1.0) / 10.0 + 0.5,
+            27. + (k-1.0) / 10.0 + 0.5,
+            0.5, 0.5, 8
+        );
         ras.reset();
         ras.add_path(&ell);
         agg::render_scanlines(&mut ras, &mut ren);

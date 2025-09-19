@@ -29,7 +29,7 @@ fn parse_lion() -> (Vec<agg::Path>, Vec<agg::Srgba8>){
             }
             path = agg::Path::new();
             let rgb = agg::Rgba8::new(r,g,b,255);
-            color =  agg::Srgba8::from_rgb(rgb);
+            color =  agg::Srgba8::from_color(rgb);
             //color =  agg::Rgba8::new(r,g,b,255);
         } else {
             for val in v {

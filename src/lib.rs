@@ -26,7 +26,7 @@
 //!    [`render_all_paths`], [`render_scanlines_aa_solid`] and
 //!    [`render_scanlines_bin_solid`]
 //!
-//!       use agg::Render;
+//!       use agg::{NamedColor, Render};
 //!
 //!       // Create a blank image 10x10 pixels
 //!       let pix = agg::Pixfmt::<agg::Rgb8>::new(100,100);
@@ -72,7 +72,7 @@
 //! # Primative Renderer
 //!
 //! Render for primative shapes: lines, rectangles, and ellipses; filled or
-//!    outlined. 
+//!    outlined.
 //!
 //!        use agg::{Pixfmt,Rgb8,Rgba8,RenderingBase,DrawOutline};
 //!        use agg::{RendererPrimatives,RasterizerOutline};
@@ -98,7 +98,7 @@
 //!
 //!   **Note:** Functions here are a somewhat low level interface and probably not what
 //!     you want to use.
-//! 
+//!
 //!   Functions to set pixel color through [`Pixfmt`] are [`clear`], [`set`], [`copy_pixel`],
 //!     [`copy_hline`], [`copy_vline`], [`fill`]
 //!
@@ -201,26 +201,40 @@ pub trait VertexSource {
 
 /// Access Color properties and compoents
 pub trait Color: Debug + Copy {
+    /// Get red value
+    fn red<T: ColorValueType>(&self) -> T;
+    /// Get green value
+    fn green<T: ColorValueType>(&self) -> T;
+    /// Get blue value
+    fn blue<T: ColorValueType>(&self) -> T;
+    /// Get alpha value
+    fn alpha<T: ColorValueType>(&self) -> T;
     /// Get red value [0,1] as f64
-    fn red(&self) -> f64;
-    /// Get green value [0,1] as f64 
-    fn green(&self) -> f64;
+    fn red64(&self) -> f64 { self.red() }
+    /// Get green value [0,1] as f64
+    fn green64(&self) -> f64 { self.green() }
     /// Get blue value [0,1] as f64
-    fn blue(&self) -> f64;
+    fn blue64(&self) -> f64 { self.blue() }
     /// Get alpha value [0,1] as f64
-    fn alpha(&self) -> f64;
+    fn alpha64(&self) -> f64 { self.alpha() }
     /// Get red value [0,255] as u8
-    fn red8(&self) -> u8;
+    fn red8(&self) -> u8 { self.red() }
     /// Get green value [0,255] as u8
-    fn green8(&self) -> u8;
+    fn green8(&self) -> u8 { self.green() }
     /// Get blue value [0,255] as u8
-    fn blue8(&self) -> u8;
+    fn blue8(&self) -> u8 { self.blue() }
     /// Get alpha value [0,255] as u8
-    fn alpha8(&self) -> u8;
+    fn alpha8(&self) -> u8 { self.alpha() }
+
+    fn rgb<T: ColorValueType>(&self) -> Rgb<T> { Rgb::from_color(*self) }
+    fn rgba<T: ColorValueType>(&self) -> Rgba<T> { Rgba::from_color(*self) }
+    fn gray<T: ColorValueType>(&self) -> Gray<T> { Gray::from_color(*self) }
+    fn srgba<T: ColorValueType>(&self) -> Srgba<T> { Srgba::from_color(*self) }
+
     /// Return if the color is completely transparent, alpha = 0.0
-    fn is_transparent(&self) -> bool { self.alpha() == 0.0 }
+    fn is_transparent(&self) -> bool { self.alpha64() == 0.0 }
     /// Return if the color is completely opaque, alpha = 1.0
-    fn is_opaque(&self) -> bool { self.alpha() >= 1.0 }
+    fn is_opaque(&self) -> bool { self.alpha64() >= 1.0 }
     /// Return if the color has been premultiplied
     fn is_premultiplied(&self) -> bool;
 }
@@ -246,7 +260,7 @@ pub trait Rasterize {
     fn max_x(&self) -> i64;
     /// Resets the rasterizer, clearing content
     fn reset(&mut self);
-    /// Rasterize a path 
+    /// Rasterize a path
     fn add_path<VS: VertexSource>(&mut self, path: &VS);
 }
 */
@@ -295,7 +309,7 @@ pub trait Pixel {
     ///
     /// If `color` [`is_transparent`] nothing is done
     ///
-    ///     use agg::{Source,Pixfmt,Rgb8,Rgba8,Pixel};
+    ///     use agg::{NamedColor,Source,Pixfmt,Rgb8,Rgba8,Pixel};
     ///
     ///     let mut pix = Pixfmt::<Rgb8>::new(1,1);
     ///     let black  = Rgba8::black();
@@ -466,5 +480,3 @@ pub(crate) trait DistanceInterpolator {
     fn dec_x(&mut self, dy: i64);
     fn dec_y(&mut self, dx: i64);
 }
-
-

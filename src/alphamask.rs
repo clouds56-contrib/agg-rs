@@ -62,8 +62,8 @@ impl<T> AlphaMaskAdaptor<T> where Pixfmt<T>: Pixel + Source {
 
 fn blend_pix<C1: Color, C2: Color>(p: &C1, c: &C2, cover: u64) -> Rgba8 {
 
-    assert!(c.alpha() >= 0.0);
-    assert!(c.alpha() <= 1.0);
+    assert!(c.alpha64() >= 0.0);
+    assert!(c.alpha64() <= 1.0);
 
     let alpha = multiply_u8(c.alpha8(), cover as u8);
 

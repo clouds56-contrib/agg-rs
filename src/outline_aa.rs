@@ -44,6 +44,7 @@ use crate::color::Rgba8;
 use crate::clip::Rectangle;
 use crate::render::clip_line_segment;
 use crate::raster::len_i64_xy;
+use crate::NamedColor;
 use crate::Pixel;
 use crate::Color;
 use crate::RenderOutline;
@@ -452,7 +453,7 @@ impl<'a,T> RendererOutlineAA<'a,T> where T: Pixel {
     ///
     /// If line to "too long", divide it by two and draw both segments
     /// otherwise, interpolate along the line to draw
-    /// 
+    ///
     fn line0_no_clip(&mut self, lp: &LineParameters) {
         if lp.len > LINE_MAX_LENGTH {
             let (lp1, lp2) = lp.divide();
@@ -804,7 +805,7 @@ impl<T> DrawOutline for RendererOutlineAA<'_, T> where T: Pixel {
         }
     }
     fn color<C: Color>(&mut self, color: C) {
-        self.color = Rgba8::from_trait(color);
+        self.color = Rgba8::from_color(color);
     }
 
     fn accurate_join_only(&self) -> bool{
@@ -886,7 +887,7 @@ impl LineProfileAA {
     }
     /// Create the Line Profile
     ///
-    /// 
+    ///
     fn set(&mut self, center_width: f64, smoother_width: f64) {
         let subpixel_shift = POLY_SUBPIXEL_SHIFT;
         let subpixel_scale = 1 << subpixel_shift;
@@ -922,7 +923,7 @@ impl LineProfileAA {
         // Width in Subpixel scales
         let subpixel_center_width : usize   = (center_width * subpixel_scale as f64) as usize;
         let subpixel_smoother_width : usize = (smoother_width * subpixel_scale as f64) as usize;
-        // 
+        //
         let n_smoother = self.profile.len() -
             subpixel_smoother_width -
             subpixel_center_width -
@@ -987,7 +988,7 @@ impl EllipseInterpolator {
 
     /// Increment the Interpolator
     fn inc(&mut self) {
-        // 
+        //
         let mut mx = self.cur_f + self.inc_x + self.ry2;
         let fx = mx;
         if mx < 0 {
