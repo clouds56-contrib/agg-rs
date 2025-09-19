@@ -225,6 +225,12 @@ pub trait Color: Debug + Copy {
     fn blue8(&self) -> u8 { self.blue() }
     /// Get alpha value [0,255] as u8
     fn alpha8(&self) -> u8 { self.alpha() }
+
+    fn rgb<T: ColorValueType>(&self) -> Rgb<T> { Rgb::from_color(*self) }
+    fn rgba<T: ColorValueType>(&self) -> Rgba<T> { Rgba::from_color(*self) }
+    fn gray<T: ColorValueType>(&self) -> Gray<T> { Gray::from_color(*self) }
+    fn srgba<T: ColorValueType>(&self) -> Srgba<T> { Srgba::from_color(*self) }
+
     /// Return if the color is completely transparent, alpha = 0.0
     fn is_transparent(&self) -> bool { self.alpha64() == 0.0 }
     /// Return if the color is completely opaque, alpha = 1.0

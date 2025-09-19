@@ -17,6 +17,19 @@ pub trait ColorValueType: Copy + Debug + PartialEq<Self> {
         T::from_color_f64(self.as_color_f64())
     }
 
+    fn luminance_f64(r: Self, g: Self, b: Self) -> f64 {
+        luminance(r.as_color_f64(), g.as_color_f64(), b.as_color_f64())
+    }
+    fn luminance_<T: ColorValueType>(r: Self, g: Self, b: Self) -> T { Self::luminance_f64(r, g, b).as_color_() }
+    fn luminance(r: Self, g: Self, b: Self) -> Self { Self::luminance_(r, g, b) }
+
+    fn to_srgb_f64(self) -> f64 { rgb_to_srgb(self.as_color_f64()) }
+    fn to_srgb_<T: ColorValueType>(self) -> T { self.to_srgb_f64().as_color_() }
+    fn to_srgb(self) -> Self { self.to_srgb_() }
+    fn from_srgb_f64(self) -> f64 { srgb_to_rgb(self.as_color_f64()) }
+    fn from_srgb_<T: ColorValueType>(self) -> T { self.from_srgb_f64().as_color_() }
+    fn from_srgb(self) -> Self { self.from_srgb_() }
+
     fn color_mul(self, v: Self) -> Self {
         let a = self.as_color_f64();
         let b = v.as_color_f64();
@@ -56,7 +69,7 @@ pub trait ConvertColorValue<T1: ColorValueType, T2: ColorValueType> {
 pub trait NamedColor {
     fn white() -> Self;
     fn black() -> Self;
-    fn gray<T: ColorValueType>(g: T, a: T) -> Self;
+    fn gray_color<T: ColorValueType>(g: T, a: T) -> Self;
 }
 
 /// Convert from sRGB to RGB for a single component
@@ -135,7 +148,7 @@ impl<T: ColorValueType> NamedColor for Rgba<T> {
     fn black() -> Self {
         Self::new(T::color_min(), T::color_min(), T::color_min(), T::color_max())
     }
-    fn gray<T2: ColorValueType>(gray: T2, alpha: T2) -> Self {
+    fn gray_color<T2: ColorValueType>(gray: T2, alpha: T2) -> Self {
         let gray = gray.as_color_();
         Self::new(gray, gray, gray, alpha.as_color_())
     }
@@ -189,7 +202,7 @@ impl<T: ColorValueType> NamedColor for Gray<T> {
     fn black() -> Self {
         Self::new(T::color_min())
     }
-    fn gray<T2: ColorValueType>(g: T2, a: T2) -> Self {
+    fn gray_color<T2: ColorValueType>(g: T2, a: T2) -> Self {
         Self::new_with_alpha(g.as_color_(), a.as_color_())
     }
 }
@@ -249,7 +262,7 @@ impl<T: ColorValueType> NamedColor for Rgb<T> {
     fn black() -> Self {
         Self::new(T::color_min(), T::color_min(), T::color_min())
     }
-    fn gray<T2: ColorValueType>(gray: T2, _: T2) -> Self {
+    fn gray_color<T2: ColorValueType>(gray: T2, _: T2) -> Self {
         let gray = gray.as_color_();
         Self::new(gray, gray, gray)
     }
@@ -322,8 +335,8 @@ impl<T: ColorValueType> NamedColor for RgbaPre<T> {
     fn black() -> Self {
         Rgba::black().premultiply()
     }
-    fn gray<T2: ColorValueType>(gray: T2, alpha: T2) -> Self {
-        Rgba::gray(gray, alpha).premultiply()
+    fn gray_color<T2: ColorValueType>(gray: T2, alpha: T2) -> Self {
+        Rgba::gray_color(gray, alpha).premultiply()
     }
 }
 
@@ -350,9 +363,9 @@ pub type Srgba64 = Srgba<f64>;
 
 impl<T: ColorValueType> Srgba<T> {
     pub fn from_color<C: Color>(c: C) -> Self {
-        let r = rgb_to_srgb(c.red64()).as_color_();
-        let g = rgb_to_srgb(c.green64()).as_color_();
-        let b = rgb_to_srgb(c.blue64()).as_color_();
+        let r = c.red64().to_srgb_();
+        let g = c.green64().to_srgb_();
+        let b = c.blue64().to_srgb_();
         let a = c.alpha64().as_color_();
         Self::new(r,g,b,a)
     }
@@ -363,41 +376,38 @@ impl<T: ColorValueType> Srgba<T> {
 }
 
 impl<T: ColorValueType> Color for Rgba<T> {
-    fn red<T2: ColorValueType>(&self) -> T2 { self.r.as_color_::<T2>() }
-    fn green<T2: ColorValueType>(&self) -> T2 { self.g.as_color_::<T2>() }
-    fn blue<T2: ColorValueType>(&self) -> T2 { self.b.as_color_::<T2>() }
-    fn alpha<T2: ColorValueType>(&self) -> T2 { self.a.as_color_::<T2>() }
+    fn red<T2: ColorValueType>(&self) -> T2 { self.r.as_color_() }
+    fn green<T2: ColorValueType>(&self) -> T2 { self.g.as_color_() }
+    fn blue<T2: ColorValueType>(&self) -> T2 { self.b.as_color_() }
+    fn alpha<T2: ColorValueType>(&self) -> T2 { self.a.as_color_() }
     fn is_premultiplied(&self) -> bool { false }
 }
 impl<T: ColorValueType> Color for Rgb<T> {
-    fn red<T2: ColorValueType>(&self) -> T2 { self.r.as_color_::<T2>() }
-    fn green<T2: ColorValueType>(&self) -> T2 { self.g.as_color_::<T2>() }
-    fn blue<T2: ColorValueType>(&self) -> T2 { self.b.as_color_::<T2>() }
+    fn red<T2: ColorValueType>(&self) -> T2 { self.r.as_color_() }
+    fn green<T2: ColorValueType>(&self) -> T2 { self.g.as_color_() }
+    fn blue<T2: ColorValueType>(&self) -> T2 { self.b.as_color_() }
     fn alpha<T2: ColorValueType>(&self) -> T2 { T2::color_max() }
     fn is_premultiplied(&self) -> bool { false }
 }
 impl<T: ColorValueType> Color for RgbaPre<T> {
-    fn red<T2: ColorValueType>(&self) -> T2 { self.r.as_color_::<T2>() }
-    fn green<T2: ColorValueType>(&self) -> T2 { self.g.as_color_::<T2>() }
-    fn blue<T2: ColorValueType>(&self) -> T2 { self.b.as_color_::<T2>() }
-    fn alpha<T2: ColorValueType>(&self) -> T2 { self.a.as_color_::<T2>() }
+    fn red<T2: ColorValueType>(&self) -> T2 { self.r.as_color_() }
+    fn green<T2: ColorValueType>(&self) -> T2 { self.g.as_color_() }
+    fn blue<T2: ColorValueType>(&self) -> T2 { self.b.as_color_() }
+    fn alpha<T2: ColorValueType>(&self) -> T2 { self.a.as_color_() }
     fn is_premultiplied(&self) -> bool { true }
 }
 impl<T: ColorValueType> Color for Srgba<T> {
-    fn red<T2: ColorValueType>(&self) -> T2 { self.red64().as_color_::<T2>() }
-    fn green<T2: ColorValueType>(&self) -> T2 { self.green64().as_color_::<T2>() }
-    fn blue<T2: ColorValueType>(&self) -> T2 { self.blue64().as_color_::<T2>() }
-    fn alpha<T2: ColorValueType>(&self) -> T2 { self.a.as_color_::<T2>() }
-    fn   red64(&self)  -> f64 { srgb_to_rgb(self.r.as_color_f64()) }
-    fn green64(&self)  -> f64 { srgb_to_rgb(self.g.as_color_f64()) }
-    fn  blue64(&self)  -> f64 { srgb_to_rgb(self.b.as_color_f64()) }
+    fn red<T2: ColorValueType>(&self) -> T2 { self.r.from_srgb_() }
+    fn green<T2: ColorValueType>(&self) -> T2 { self.g.from_srgb_() }
+    fn blue<T2: ColorValueType>(&self) -> T2 { self.b.from_srgb_() }
+    fn alpha<T2: ColorValueType>(&self) -> T2 { self.a.as_color_() }
     fn is_premultiplied(&self) -> bool { false }
 }
 impl<T: ColorValueType> Color for Gray<T> {
-    fn red<T2: ColorValueType>(&self) -> T2 { self.value.as_color_::<T2>() }
-    fn green<T2: ColorValueType>(&self) -> T2 { self.value.as_color_::<T2>() }
-    fn blue<T2: ColorValueType>(&self) -> T2 { self.value.as_color_::<T2>() }
-    fn alpha<T2: ColorValueType>(&self) -> T2 { self.alpha.as_color_::<T2>() }
+    fn red<T2: ColorValueType>(&self) -> T2 { self.value.as_color_() }
+    fn green<T2: ColorValueType>(&self) -> T2 { self.value.as_color_() }
+    fn blue<T2: ColorValueType>(&self) -> T2 { self.value.as_color_() }
+    fn alpha<T2: ColorValueType>(&self) -> T2 { self.alpha.as_color_() }
     fn is_premultiplied(&self) -> bool { false }
 }
 
@@ -451,7 +461,7 @@ mod tests {
         assert_eq!(w, Rgb8{r: 255, g:255, b: 255});
         let w = Rgb8::black();
         assert_eq!(w, Rgb8{r: 0, g:0, b: 0});
-        let w = Rgb8::gray(128u8, 255);
+        let w = Rgb8::gray_color(128u8, 255);
         assert_eq!(w, Rgb8{r: 128, g:128, b: 128});
         let w = Rgb8::from_slice(&[1,2,3]);
         assert_eq!(w, Rgb8{r: 1, g:2, b: 3});
