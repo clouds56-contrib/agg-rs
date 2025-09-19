@@ -163,7 +163,7 @@ impl Source for Pixfmt<Rgba8> {
         Rgba8::new(p[0],p[1],p[2],p[3])
     }
 }
-impl Source for Pixfmt<Rgba8pre> {
+impl Source for Pixfmt<RgbaPre8> {
     fn get(&self, id: (usize, usize)) -> Rgba8 {
         let p = &self.rbuf[id];
         Rgba8::new(p[0],p[1],p[2],p[3])
@@ -189,7 +189,7 @@ impl Source for Pixfmt<Rgba32> {
     }
 }
 
-macro_rules! impl_pixel { 
+macro_rules! impl_pixel {
     () => {
         /// Height of rendering buffer in pixels
         fn height(&self) -> usize {
@@ -337,11 +337,11 @@ impl Pixfmt<Rgba8> {
         self.set(id, pix);
     }
 }
-impl Pixel for Pixfmt<Rgba8pre> {
+impl Pixel for Pixfmt<RgbaPre8> {
     impl_pixel!();
     fn setn<C: Color>(&mut self, id: (usize, usize), n: usize, c: C) {
         let bpp = Self::bpp();
-        let c = Rgba8pre::from_trait(c).into_slice();
+        let c = RgbaPre8::from_trait(c).into_slice();
         let p = &mut self.rbuf[id][..n*bpp];
         for chunk in p.chunks_mut(bpp) {
             chunk.copy_from_slice(&c);
@@ -358,15 +358,15 @@ impl Pixel for Pixfmt<Rgba8pre> {
     fn cover_mask() -> u64 { 255 }
     fn blend_pix<C: Color>(&mut self, id: (usize, usize), c: C, cover: u64) {
         let p = self.get(id);
-        let p0 = Rgba8pre::new(p.red8(), p.green8(), p.blue8(), p.alpha8());
-        let c0 = Rgba8pre::new(c.red8(), c.green8(), c.blue8(), c.alpha8());
+        let p0 = RgbaPre8::new(p.red8(), p.green8(), p.blue8(), p.alpha8());
+        let c0 = RgbaPre8::new(c.red8(), c.green8(), c.blue8(), c.alpha8());
         let p  = self.mix_pix(p0, c0, c.alpha8(), cover);
         self.set(id, p);
     }
     fn fill<C: Color>(&mut self, color: C) {
         let n = 4;
         let bpp = Self::bpp();
-        let c = Rgba8pre::from_trait(color).into_slice();
+        let c = RgbaPre8::from_trait(color).into_slice();
         let c2 = [ c[0],c[1],c[2],c[3],  c[0],c[1],c[2],c[3],  c[0],c[1],c[2],c[3],  c[0],c[1],c[2],c[3] ];
         let mut chunks = self.rbuf.data.chunks_exact_mut(bpp*n);
         while let Some(chunk) = chunks.next() {
@@ -402,7 +402,7 @@ impl Pixfmt<Rgb8> {
         Rgb8::new(red, green, blue)
     }
 }
-impl Pixfmt<Rgba8pre> {
+impl Pixfmt<RgbaPre8> {
     /// Compute **over** operator
     ///
     /// # Arguments
@@ -414,7 +414,7 @@ impl Pixfmt<Rgba8pre> {
     /// # Output
     ///   - prelerp(p, c * cover, alpha * cover)
     ///
-    fn mix_pix(&mut self, p: Rgba8pre, c: Rgba8pre, alpha: u8, cover: u64) -> Rgba8pre {
+    fn mix_pix(&mut self, p: RgbaPre8, c: RgbaPre8, alpha: u8, cover: u64) -> RgbaPre8 {
         let alpha = multiply_u8(alpha, cover as u8);
         let red   = multiply_u8(c.r, cover as u8);
         let green = multiply_u8(c.g, cover as u8);
@@ -424,7 +424,7 @@ impl Pixfmt<Rgba8pre> {
         let green = prelerp_u8(p.g, green, alpha);
         let blue  = prelerp_u8(p.b, blue,  alpha);
         let alpha = prelerp_u8(p.a, alpha, alpha);
-        Rgba8pre::new(red, green, blue, alpha)
+        RgbaPre8::new(red, green, blue, alpha)
     }
     pub fn drop_alpha(&self) -> Pixfmt<Rgb8> {
         let buf : Vec<_> = self.as_bytes().iter()
@@ -623,7 +623,7 @@ mod tests {
     use crate::Source;
     use crate::Rgb8;
     use crate::Rgba8;
-    use crate::Rgba8pre;
+    use crate::RgbaPre8;
     use crate::Srgba8;
     use crate::Rgba32;
     #[test]
@@ -813,7 +813,7 @@ mod tests {
     #[test]
     fn pixfmt_rgba8pre_test() {
 
-        let mut pix = Pixfmt::<Rgba8pre>::new(1,1);
+        let mut pix = Pixfmt::<RgbaPre8>::new(1,1);
         let black  = Rgba8::black();
         let white  = Rgba8::white();
 
@@ -858,4 +858,3 @@ mod tests {
         assert_eq!(pix.get((0,0)), Rgba8::new(191,191,191,160));
     }
 }
-

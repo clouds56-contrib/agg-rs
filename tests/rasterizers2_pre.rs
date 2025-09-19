@@ -108,7 +108,7 @@ fn chain() -> agg::Pixfmt<agg::Rgba32> {
 fn rasterizers2_pre() {
     let (w,h) = (500, 450);
 
-    let pixf = agg::Pixfmt::<agg::Rgba8pre>::new(w, h);
+    let pixf = agg::Pixfmt::<agg::RgbaPre8>::new(w, h);
     let mut ren_base = agg::RenderingBase::new(pixf);
 
     ren_base.clear( agg::Rgba8::new(255, 255, 242, 255) );
