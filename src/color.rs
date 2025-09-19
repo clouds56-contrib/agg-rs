@@ -5,7 +5,7 @@ use std::fmt::Debug;
 use crate::Color;
 use crate::math::multiply_u8;
 
-pub trait ColorValueType: Copy + Debug + PartialEq<Self> {
+pub trait ColorValueType: Copy + Debug + PartialEq<Self> + 'static {
     fn color_min() -> Self { Self::from_color_f64(0.0) }
     fn color_max() -> Self { Self::from_color_f64(1.0) }
 
@@ -14,7 +14,12 @@ pub trait ColorValueType: Copy + Debug + PartialEq<Self> {
     fn from_color_f64(v: f64) -> Self;
     fn from_color_u8(v: u8) -> Self { Self::from_color_f64(v as f64 / 255.0) }
     fn as_color_<T: ColorValueType>(self) -> T {
-        T::from_color_f64(self.as_color_f64())
+        if std::any::TypeId::of::<Self>() == std::any::TypeId::of::<T>() {
+            // This is safe because we just checked that Self and T are the same type
+            unsafe { std::mem::transmute_copy(&self) }
+        } else {
+            T::from_color_f64(self.as_color_f64())
+        }
     }
 
     fn luminance_f64(r: Self, g: Self, b: Self) -> f64 {
