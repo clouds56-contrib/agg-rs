@@ -1,5 +1,6 @@
 
 #[test]
+#[ignore = "freetype update may change the output image"]
 fn t23_font() {
     let lib = agg::ft::Library::init().unwrap();
     let font = lib.new_face("/System/Library/Fonts/Helvetica.ttc", 0).unwrap();
