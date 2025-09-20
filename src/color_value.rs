@@ -286,25 +286,6 @@ pub trait ColorValue: RealLike + MulOps + Copy + 'static {
   fn luminance(r: Self, g: Self, b: Self) -> Self {
     Self::luminance_(r, g, b)
   }
-
-  fn to_srgb_f64(self) -> f64 {
-    rgb_to_srgb(self.as_color_f64())
-  }
-  fn to_srgb_<T: ColorValue>(self) -> T {
-    self.to_srgb_f64().as_color_()
-  }
-  fn to_srgb(self) -> Self {
-    self.to_srgb_()
-  }
-  fn from_srgb_f64(self) -> f64 {
-    srgb_to_rgb(self.as_color_f64())
-  }
-  fn from_srgb_<T: ColorValue>(self) -> T {
-    self.from_srgb_f64().as_color_()
-  }
-  fn from_srgb(self) -> Self {
-    self.from_srgb_()
-  }
 }
 impl ColorValue for U8 {
   fn as_color_u8(self) -> U8 {
@@ -317,20 +298,3 @@ impl ColorValue for U8 {
 impl ColorValue for U16 {}
 impl ColorValue for f32 {}
 impl ColorValue for f64 {}
-
-/// Convert from sRGB to RGB for a single component
-fn srgb_to_rgb(x: f64) -> f64 {
-  if x <= 0.04045 {
-    x / 12.92
-  } else {
-    ((x + 0.055) / 1.055).powf(2.4)
-  }
-}
-/// Convert from RGB to sRGB for a single component
-fn rgb_to_srgb(x: f64) -> f64 {
-  if x <= 0.003_130_8 {
-    x * 12.92
-  } else {
-    1.055 * x.powf(1.0 / 2.4) - 0.055
-  }
-}

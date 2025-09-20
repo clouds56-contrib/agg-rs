@@ -1,6 +1,9 @@
 //! Colors
 
-use palette::blend::Premultiply;
+use palette::{
+  blend::Premultiply,
+  encoding::{FromLinear, IntoLinear},
+};
 
 use crate::{Color, ColorValue, U8, U16};
 
@@ -110,25 +113,6 @@ impl<T: ColorValue> FromColor for Rgba<T> {
     Self::new(c.red_(), c.green_(), c.blue_(), c.alpha_())
   }
 }
-
-// impl<T: ColorValueType> Rgba<T> {
-//     pub fn premultiply(&self) -> RgbaPre<T> {
-//         match self.a {
-//             a if a == T::ONE => {
-//                 RgbaPre::new(self.r, self.g, self.b, self.a)
-//             },
-//             a if a == T::ZERO => {
-//                 RgbaPre::new(T::ZERO, T::ZERO, T::ZERO, self.a)
-//             },
-//             a => {
-//                 let r = self.r.color_mul(a);
-//                 let g = self.g.color_mul(a);
-//                 let b = self.b.color_mul(a);
-//                 RgbaPre::new(r, g, b, self.a)
-//             }
-//         }
-//     }
-// }
 
 impl<T: ColorValue> NamedColor for Rgba<T> {
   const EMPTY: Self = Self::new(T::ZERO, T::ZERO, T::ZERO, T::ZERO);
@@ -357,12 +341,14 @@ impl<T: ColorValue> IntoRaw4 for Srgba<T> {
 }
 impl<T: ColorValue> FromColor for Srgba<T> {
   fn from_color<C: Color>(c: C) -> Self {
-    Self::new(
-      c.red_::<T>().to_srgb(),
-      c.green_::<T>().to_srgb(),
-      c.blue_::<T>().to_srgb(),
-      c.alpha_(),
-    )
+    if std::any::TypeId::of::<C>() == std::any::TypeId::of::<Srgba<T>>() {
+      // This is safe because we just checked that C and Srgba<T> are the same type
+      return unsafe { std::mem::transmute_copy(&c) };
+    }
+    let red: f64 = palette::encoding::Srgb::from_linear(c.red64());
+    let green: f64 = palette::encoding::Srgb::from_linear(c.green64());
+    let blue: f64 = palette::encoding::Srgb::from_linear(c.blue64());
+    Self::new(red.as_color_(), green.as_color_(), blue.as_color_(), c.alpha_())
   }
 }
 
@@ -436,13 +422,13 @@ where
 }
 impl<T: ColorValue> Color for Srgba<T> {
   fn red_<T2: ColorValue>(&self) -> T2 {
-    self.red.from_srgb_()
+    palette::encoding::Srgb::into_linear(self.red.to_f64()).as_color_()
   }
   fn green_<T2: ColorValue>(&self) -> T2 {
-    self.green.from_srgb_()
+    palette::encoding::Srgb::into_linear(self.green.to_f64()).as_color_()
   }
   fn blue_<T2: ColorValue>(&self) -> T2 {
-    self.blue.from_srgb_()
+    palette::encoding::Srgb::into_linear(self.blue.to_f64()).as_color_()
   }
   fn alpha_<T2: ColorValue>(&self) -> T2 {
     self.alpha.as_color_()
