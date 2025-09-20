@@ -1,10 +1,9 @@
-
 use std::env;
 use std::path::PathBuf;
 // https://www.reddit.com/r/rust/comments/ahsz9q/psa_if_the_examples_for_your_crate_rely_on_media/
 
 pub fn is_base_dir(cwd: &PathBuf) -> Option<(PathBuf, PathBuf)> {
-    if ! cwd.join("Cargo.toml").is_file() {
+    if !cwd.join("Cargo.toml").is_file() {
         return None;
     }
     let mut images = cwd.clone();

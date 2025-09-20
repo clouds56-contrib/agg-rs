@@ -1,4 +1,3 @@
-
 extern crate agg;
 
 use agg::prelude::*;
@@ -13,23 +12,25 @@ fn t04_solar_spectrum_alpha() {
     let w = pix.width();
     let h = pix.height();
 
-    for i in 0 .. h {
-        let v = (255 * i/h) as u8;
+    for i in 0..h {
+        let v = (255 * i / h) as u8;
         alpha.copy_hline(0, i, w, agg::Gray8::from_raw(v, 255));
     }
 
     let mut span = vec![agg::Rgb8::WHITE; w];
-    for i in 0 .. w {
+    for i in 0..w {
         span[i] = agg::rgb8_from_wavelength_gamma(380.0 + 400.0 * i as f64 / w as f64, 0.8);
     }
 
     let mut mix = agg::AlphaMaskAdaptor::new(pix, alpha);
 
-    for i in 0 .. h {
+    for i in 0..h {
         mix.blend_color_hspan(0, i, w, &span, 0);
     }
     mix.rgb.to_file("tests/tmp/agg_test_04.png").unwrap();
 
-    assert_eq!(agg::ppm::img_diff("tests/tmp/agg_test_04.png", "images/agg_test_04.png").unwrap(), true);
-
+    assert_eq!(
+        agg::ppm::img_diff("tests/tmp/agg_test_04.png", "images/agg_test_04.png").unwrap(),
+        true
+    );
 }

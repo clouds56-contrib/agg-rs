@@ -1,9 +1,8 @@
-
 extern crate agg;
 use agg::prelude::*;
 use std::fs;
 
-fn parse_lion(arrange_orientations: bool) -> (Vec<agg::Path>, Vec<agg::Rgba8>){
+fn parse_lion(arrange_orientations: bool) -> (Vec<agg::Path>, Vec<agg::Rgba8>) {
     let txt = fs::read_to_string("tests/lion.txt").unwrap();
     let mut paths = vec![];
     let mut colors = vec![];
@@ -12,20 +11,20 @@ fn parse_lion(arrange_orientations: bool) -> (Vec<agg::Path>, Vec<agg::Rgba8>){
     let mut cmd = agg::PathCommand::Stop;
 
     for line in txt.lines() {
-        let v : Vec<_> = line.split_whitespace().collect();
+        let v: Vec<_> = line.split_whitespace().collect();
         if v.len() == 1 {
             let n = 0;
             let hex = v[0];
-            let r = u8::from_str_radix(&hex[n+0..n+2],16).unwrap();
-            let g = u8::from_str_radix(&hex[n+2..n+4],16).unwrap();
-            let b = u8::from_str_radix(&hex[n+4..n+6],16).unwrap();
+            let r = u8::from_str_radix(&hex[n + 0..n + 2], 16).unwrap();
+            let g = u8::from_str_radix(&hex[n + 2..n + 4], 16).unwrap();
+            let b = u8::from_str_radix(&hex[n + 4..n + 6], 16).unwrap();
             if path.vertices.len() > 0 {
                 path.close_polygon();
                 paths.push(path);
                 colors.push(color);
             }
             path = agg::Path::new();
-            color = agg::Rgba8::from_raw(r,g,b,255);
+            color = agg::Rgba8::from_raw(r, g, b, 255);
         } else {
             for val in v {
                 if val == "M" {
@@ -33,13 +32,10 @@ fn parse_lion(arrange_orientations: bool) -> (Vec<agg::Path>, Vec<agg::Rgba8>){
                 } else if val == "L" {
                     cmd = agg::PathCommand::LineTo;
                 } else {
-                    let pts : Vec<_> = val.split(",")
-                        .map(|x| x.parse::<f64>().unwrap())
-                        .collect();
+                    let pts: Vec<_> = val.split(",").map(|x| x.parse::<f64>().unwrap()).collect();
 
                     match cmd {
-                        agg::PathCommand::LineTo =>
-                            path.line_to(pts[0], pts[1]),
+                        agg::PathCommand::LineTo => path.line_to(pts[0], pts[1]),
                         agg::PathCommand::MoveTo => {
                             path.close_polygon();
                             path.move_to(pts[0], pts[1]);
@@ -57,7 +53,9 @@ fn parse_lion(arrange_orientations: bool) -> (Vec<agg::Path>, Vec<agg::Rgba8>){
     }
     assert_eq!(paths.len(), colors.len());
     if arrange_orientations {
-        paths.iter_mut().for_each(|p| p.arrange_orientations(agg::PathOrientation::Clockwise));
+        paths
+            .iter_mut()
+            .for_each(|p| p.arrange_orientations(agg::PathOrientation::Clockwise));
     }
     (paths, colors)
 }
@@ -69,7 +67,7 @@ fn transform_paths(paths: Vec<agg::Path>, w: f64, h: f64) -> Vec<agg::ConvTransf
         return Vec::new();
     }
     let p = paths[0].vertices[0];
-    let mut r = agg::Rectangle::new(p.x,p.y,p.x,p.y);
+    let mut r = agg::Rectangle::new(p.x, p.y, p.x, p.y);
     for p in &paths {
         if let Some(rp) = agg::bounding_rect(p) {
             //eprintln!("dx,dy: {:?}", rp);
@@ -77,15 +75,16 @@ fn transform_paths(paths: Vec<agg::Path>, w: f64, h: f64) -> Vec<agg::ConvTransf
         }
     }
     //eprintln!("dx,dy: {:?}", r);
-    let g_base_dx = (r.x2() - r.x1())/2.0;
-    let g_base_dy = (r.y2() - r.y1())/2.0;
+    let g_base_dx = (r.x2() - r.x1()) / 2.0;
+    let g_base_dy = (r.y2() - r.y1()) / 2.0;
     let mut mtx = agg::Transform::new();
     //eprintln!("dx,dy: {} {}", -g_base_dx, -g_base_dy);
     //eprintln!("dx,dy: {} {}", w/2.0, h/2.0);
     mtx.translate(-g_base_dx, -g_base_dy);
-    mtx.translate(w/2.0, h/2.0);
+    mtx.translate(w / 2.0, h / 2.0);
     //mtx.translate(0.0, 0.0);
-    let t : Vec<_> = paths.into_iter()
+    let t: Vec<_> = paths
+        .into_iter()
         .map(|p| agg::ConvTransform::new(p, mtx.clone()))
         .collect();
     println!("polygons: {}", t.len());
@@ -93,163 +92,173 @@ fn transform_paths(paths: Vec<agg::Path>, w: f64, h: f64) -> Vec<agg::ConvTransf
 }
 
 mod tests {
-use super::*;
-#[test]
-fn lion_png() {
-    let (w,h) = (400,400);
+    use super::*;
+    #[test]
+    fn lion_png() {
+        let (w, h) = (400, 400);
 
-    let (paths, colors) = parse_lion(false);
-    let pixf = agg::Pixfmt::<agg::Rgb8>::new(w,h);
-    let mut ren_base = agg::RenderingBase::new(pixf);
-    ren_base.clear( agg::Rgba8::WHITE );
-    let mut ren = agg::RenderingScanlineBinSolid::with_base(&mut ren_base);
-    ren.color( agg::Rgba8::RED );
+        let (paths, colors) = parse_lion(false);
+        let pixf = agg::Pixfmt::<agg::Rgb8>::new(w, h);
+        let mut ren_base = agg::RenderingBase::new(pixf);
+        ren_base.clear(agg::Rgba8::WHITE);
+        let mut ren = agg::RenderingScanlineBinSolid::with_base(&mut ren_base);
+        ren.color(agg::Rgba8::RED);
 
-    let mut ras = agg::RasterizerScanline::new();
+        let mut ras = agg::RasterizerScanline::new();
 
-    let t = transform_paths(paths, w as f64, h as f64);
+        let t = transform_paths(paths, w as f64, h as f64);
 
-    agg::render_all_paths(&mut ras, &mut ren, &t, &colors);
+        agg::render_all_paths(&mut ras, &mut ren, &t, &colors);
 
-    ren.to_file("tests/tmp/lion.png").unwrap();
+        ren.to_file("tests/tmp/lion.png").unwrap();
 
-    if ! agg::ppm::img_diff("tests/tmp/lion.png", "images/lion.png").unwrap() {
-        panic!("PNG Images differ");
+        if !agg::ppm::img_diff("tests/tmp/lion.png", "images/lion.png").unwrap() {
+            panic!("PNG Images differ");
+        }
     }
-}
 
-#[test]
-fn lion_cw() {
-    let (w,h) = (400,400);
+    #[test]
+    fn lion_cw() {
+        let (w, h) = (400, 400);
 
-    let (paths, colors) = parse_lion(true);
-    let pixf = agg::Pixfmt::<agg::Rgb8>::new(w,h);
-    let mut ren_base = agg::RenderingBase::new(pixf);
-    ren_base.clear( agg::Rgba8::WHITE );
-    let mut ren = agg::RenderingScanlineBinSolid::with_base(&mut ren_base);
-    ren.color( agg::Rgba8::RED );
+        let (paths, colors) = parse_lion(true);
+        let pixf = agg::Pixfmt::<agg::Rgb8>::new(w, h);
+        let mut ren_base = agg::RenderingBase::new(pixf);
+        ren_base.clear(agg::Rgba8::WHITE);
+        let mut ren = agg::RenderingScanlineBinSolid::with_base(&mut ren_base);
+        ren.color(agg::Rgba8::RED);
 
-    let mut ras = agg::RasterizerScanline::new();
+        let mut ras = agg::RasterizerScanline::new();
 
-    let t = transform_paths(paths, w as f64, h as f64);
+        let t = transform_paths(paths, w as f64, h as f64);
 
-    agg::render_all_paths(&mut ras, &mut ren, &t, &colors);
+        agg::render_all_paths(&mut ras, &mut ren, &t, &colors);
 
-    ren.to_file("tests/tmp/lion_cw.png").unwrap();
+        ren.to_file("tests/tmp/lion_cw.png").unwrap();
 
-    assert_eq!(agg::ppm::img_diff("tests/tmp/lion_cw.png", "images/lion_cw.png").unwrap(), true);
+        assert_eq!(
+            agg::ppm::img_diff("tests/tmp/lion_cw.png", "images/lion_cw.png").unwrap(),
+            true
+        );
+    }
+    // compare -verbose -metric AE lion.ppm ./tests/lion.ppm blarg.ppm
 
-}
-// compare -verbose -metric AE lion.ppm ./tests/lion.ppm blarg.ppm
+    #[test]
+    fn lion_cw_aa() {
+        let (w, h) = (400, 400);
 
-#[test]
-fn lion_cw_aa() {
-    let (w,h) = (400,400);
+        let (paths, colors) = parse_lion(true);
+        let pixf = agg::Pixfmt::<agg::Rgb8>::new(w, h);
+        let mut ren_base = agg::RenderingBase::new(pixf);
+        ren_base.clear(agg::Rgba8::WHITE);
+        let mut ren = agg::RenderingScanlineAASolid::with_base(&mut ren_base);
+        ren.color(agg::Rgba8::RED);
 
-    let (paths, colors) = parse_lion(true);
-    let pixf = agg::Pixfmt::<agg::Rgb8>::new(w,h);
-    let mut ren_base = agg::RenderingBase::new(pixf);
-    ren_base.clear( agg::Rgba8::WHITE );
-    let mut ren = agg::RenderingScanlineAASolid::with_base(&mut ren_base);
-    ren.color( agg::Rgba8::RED );
+        let mut ras = agg::RasterizerScanline::new();
 
-    let mut ras = agg::RasterizerScanline::new();
+        let t = transform_paths(paths, w as f64, h as f64);
 
-    let t = transform_paths(paths, w as f64, h as f64);
+        agg::render_all_paths(&mut ras, &mut ren, &t, &colors);
 
-    agg::render_all_paths(&mut ras, &mut ren, &t, &colors);
+        ren.to_file("tests/tmp/lion_cw_aa.png").unwrap();
 
-    ren.to_file("tests/tmp/lion_cw_aa.png").unwrap();
+        assert_eq!(
+            agg::ppm::img_diff("tests/tmp/lion_cw_aa.png", "images/lion_cw_aa.png").unwrap(),
+            true
+        );
+    }
+    // compare -verbose -metric AE lion.ppm ./tests/lion.ppm blarg.ppm
 
-    assert_eq!(agg::ppm::img_diff("tests/tmp/lion_cw_aa.png", "images/lion_cw_aa.png").unwrap(), true);
+    #[test]
+    fn lion_cw_aa_srgba() {
+        let (w, h) = (400, 400);
 
-}
-// compare -verbose -metric AE lion.ppm ./tests/lion.ppm blarg.ppm
+        let (paths, colors) = parse_lion(true);
+        let pixf = agg::Pixfmt::<agg::Rgb8>::new(w, h);
+        let mut ren_base = agg::RenderingBase::new(pixf);
+        //ren_base.clear( agg::Srgba8::new([255, 255, 255, 255]) );
+        ren_base.clear(agg::Rgba8::WHITE);
+        let mut ren = agg::RenderingScanlineAASolid::with_base(&mut ren_base);
+        //ren.color( &agg::Srgba8::new([255,0,0,255]) );
+        ren.color(agg::Rgba8::RED);
 
-#[test]
-fn lion_cw_aa_srgba() {
-    let (w,h) = (400,400);
+        let mut ras = agg::RasterizerScanline::new();
 
-    let (paths, colors) = parse_lion(true);
-    let pixf = agg::Pixfmt::<agg::Rgb8>::new(w,h);
-    let mut ren_base = agg::RenderingBase::new(pixf);
-    //ren_base.clear( agg::Srgba8::new([255, 255, 255, 255]) );
-    ren_base.clear( agg::Rgba8::WHITE );
-    let mut ren = agg::RenderingScanlineAASolid::with_base(&mut ren_base);
-    //ren.color( &agg::Srgba8::new([255,0,0,255]) );
-    ren.color( agg::Rgba8::RED );
+        let colors = colors.into_iter().map(|c| c.srgba8()).collect::<Vec<_>>();
+        let t = transform_paths(paths, w as f64, h as f64);
 
-    let mut ras = agg::RasterizerScanline::new();
+        agg::render_all_paths(&mut ras, &mut ren, &t, &colors);
 
-    let colors = colors.into_iter().map(|c| c.srgba8()).collect::<Vec<_>>();
-    let t = transform_paths(paths, w as f64, h as f64);
+        ren.to_file("tests/tmp/lion_cw_aa_srgba.png").unwrap();
 
-    agg::render_all_paths(&mut ras, &mut ren, &t, &colors);
+        assert_eq!(
+            agg::ppm::img_diff(
+                "tests/tmp/lion_cw_aa_srgba.png",
+                "images/lion_cw_aa_srgba.png"
+            )
+            .unwrap(),
+            true
+        );
+    }
+    // compare -verbose -metric AE lion.ppm ./tests/lion.ppm blarg.ppm
 
-    ren.to_file("tests/tmp/lion_cw_aa_srgba.png").unwrap();
+    #[test]
+    fn lion_outline_width1() {
+        let (w, h) = (400, 400);
 
-    assert_eq!(agg::ppm::img_diff("tests/tmp/lion_cw_aa_srgba.png", "images/lion_cw_aa_srgba.png").unwrap(), true);
+        let (paths, colors) = parse_lion(true);
+        let pixf = agg::Pixfmt::<agg::Rgb8>::new(w, h);
+        let mut ren_base = agg::RenderingBase::new(pixf);
+        //ren_base.clear( agg::Srgba8::new([255, 255, 255, 255]) );
+        ren_base.clear(agg::Rgba8::WHITE);
+        let mut ren = agg::RenderingScanlineAASolid::with_base(&mut ren_base);
+        //ren.color( &agg::Srgba8::new([255,0,0,255]) );
+        ren.color(agg::Rgba8::RED);
 
-}
-// compare -verbose -metric AE lion.ppm ./tests/lion.ppm blarg.ppm
+        let mut ras = agg::RasterizerScanline::new();
 
-#[test]
-fn lion_outline_width1() {
-    let (w,h) = (400,400);
+        let colors = colors.into_iter().map(|c| c.srgba8()).collect::<Vec<_>>();
+        let t = transform_paths(paths, w as f64, h as f64);
 
-    let (paths, colors) = parse_lion(true);
-    let pixf = agg::Pixfmt::<agg::Rgb8>::new(w,h);
-    let mut ren_base = agg::RenderingBase::new(pixf);
-    //ren_base.clear( agg::Srgba8::new([255, 255, 255, 255]) );
-    ren_base.clear( agg::Rgba8::WHITE );
-    let mut ren = agg::RenderingScanlineAASolid::with_base(&mut ren_base);
-    //ren.color( &agg::Srgba8::new([255,0,0,255]) );
-    ren.color( agg::Rgba8::RED );
+        let mut stroke: Vec<_> = t.into_iter().map(|p| agg::Stroke::new(p)).collect();
+        stroke.iter_mut().for_each(|p| p.width(1.0));
+        agg::render_all_paths(&mut ras, &mut ren, &stroke, &colors);
 
-    let mut ras = agg::RasterizerScanline::new();
+        ren.to_file("tests/tmp/lion_outline_width1.png").unwrap();
+        assert!(agg::ppm::img_diff(
+            "tests/tmp/lion_outline_width1.png",
+            "images/lion_outline_width1.png"
+        )
+        .unwrap());
+    }
 
-    let colors = colors.into_iter().map(|c| c.srgba8()).collect::<Vec<_>>();
-    let t = transform_paths(paths, w as f64, h as f64);
+    #[test]
+    fn lion_outline() {
+        let (w, h) = (400, 400);
 
-    let mut stroke : Vec<_> = t.into_iter()
-    .map(|p| agg::Stroke::new( p ))
-    .collect();
-stroke.iter_mut().for_each(|p| p.width(1.0));
-agg::render_all_paths(&mut ras, &mut ren, &stroke, &colors);
+        let (paths, colors) = parse_lion(true);
+        let pixf = agg::Pixfmt::<agg::Rgb8>::new(w, h);
+        let mut ren_base = agg::RenderingBase::new(pixf);
+        //ren_base.clear( agg::Srgba8::new([255, 255, 255, 255]) );
+        ren_base.clear(agg::Rgba8::WHITE);
+        let mut ren = agg::RenderingScanlineAASolid::with_base(&mut ren_base);
+        //ren.color( &agg::Srgba8::new([255,0,0,255]) );
+        ren.color(agg::Rgba8::RED);
 
-ren.to_file("tests/tmp/lion_outline_width1.png").unwrap();
-assert!(agg::ppm::img_diff("tests/tmp/lion_outline_width1.png", "images/lion_outline_width1.png").unwrap());
+        let mut ras = agg::RasterizerScanline::new();
 
-}
+        let colors = colors.into_iter().map(|c| c.srgba8()).collect::<Vec<_>>();
+        let t = transform_paths(paths, w as f64, h as f64);
 
-#[test]
-fn lion_outline() {
-    let (w,h) = (400,400);
+        let mut stroke: Vec<_> = t.into_iter().map(|p| agg::Stroke::new(p)).collect();
+        stroke.iter_mut().for_each(|p| p.width(7.0));
+        agg::render_all_paths(&mut ras, &mut ren, &stroke, &colors);
 
-    let (paths, colors) = parse_lion(true);
-    let pixf = agg::Pixfmt::<agg::Rgb8>::new(w,h);
-    let mut ren_base = agg::RenderingBase::new(pixf);
-    //ren_base.clear( agg::Srgba8::new([255, 255, 255, 255]) );
-    ren_base.clear( agg::Rgba8::WHITE );
-    let mut ren = agg::RenderingScanlineAASolid::with_base(&mut ren_base);
-    //ren.color( &agg::Srgba8::new([255,0,0,255]) );
-    ren.color( agg::Rgba8::RED );
-
-    let mut ras = agg::RasterizerScanline::new();
-
-    let colors = colors.into_iter().map(|c| c.srgba8()).collect::<Vec<_>>();
-    let t = transform_paths(paths, w as f64, h as f64);
-
-    let mut stroke : Vec<_> = t.into_iter()
-    .map(|p| agg::Stroke::new( p ))
-    .collect();
-    stroke.iter_mut().for_each(|p| p.width(7.0));
-    agg::render_all_paths(&mut ras, &mut ren, &stroke, &colors);
-
-    ren.to_file("tests/tmp/lion_outline.png").unwrap();
-    assert_eq!(agg::ppm::img_diff("tests/tmp/lion_outline.png", "images/lion_outline.png").unwrap(), true);
-
-}
-// compare -verbose -metric AE lion.ppm ./tests/lion.ppm diff.ppm
-
+        ren.to_file("tests/tmp/lion_outline.png").unwrap();
+        assert_eq!(
+            agg::ppm::img_diff("tests/tmp/lion_outline.png", "images/lion_outline.png").unwrap(),
+            true
+        );
+    }
+    // compare -verbose -metric AE lion.ppm ./tests/lion.ppm diff.ppm
 }

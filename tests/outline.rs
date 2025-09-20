@@ -2,9 +2,9 @@ use agg::prelude::*;
 
 #[test]
 fn t24_outline_basic_render() {
-    let pix = Pixfmt::<Rgb8>::new(100,100);
+    let pix = Pixfmt::<Rgb8>::new(100, 100);
     let mut ren_base = agg::RenderingBase::new(pix);
-    ren_base.clear( Rgba8::WHITE );
+    ren_base.clear(Rgba8::WHITE);
 
     let mut ren = RendererPrimatives::with_base(&mut ren_base);
     ren.line_color(agg::Rgba8::BLACK);
@@ -18,15 +18,14 @@ fn t24_outline_basic_render() {
     ras.add_path(&path);
     ren_base.to_file("tests/tmp/outline.png").unwrap();
 
-    assert!(agg::ppm::img_diff("tests/tmp/outline.png",
-                              "images/outline.png").unwrap());
+    assert!(agg::ppm::img_diff("tests/tmp/outline.png", "images/outline.png").unwrap());
 }
 
 #[test]
 fn t20_outline_render() {
-    let pix = Pixfmt::<Rgb8>::new(100,100);
+    let pix = Pixfmt::<Rgb8>::new(100, 100);
     let mut ren_base = agg::RenderingBase::new(pix);
-    ren_base.clear( Rgba8::WHITE );
+    ren_base.clear(Rgba8::WHITE);
     let mut ren = RendererOutlineAA::with_base(&mut ren_base);
     ren.color(agg::Rgba8::BLACK);
     ren.width(20.0);
@@ -42,5 +41,4 @@ fn t20_outline_render() {
     ren_base.to_file("tests/tmp/outline_aa.png").unwrap();
 
     assert!(agg::ppm::img_diff("tests/tmp/outline_aa.png", "images/outline_aa.png").unwrap());
-
 }

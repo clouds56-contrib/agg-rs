@@ -2,7 +2,7 @@
 name = "agg"
 version = "0.1.1"
 authors = ["Brian Savage <savage13@gmail.com>"]
-edition = "2024"
+edition = "2021"
 repository = "https://github.com/savge13/agg"
 documentation = "https://docs.rs/agg"
 homepage = "https://github.com/savage13/agg"

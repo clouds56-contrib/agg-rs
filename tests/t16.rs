@@ -1,20 +1,19 @@
-
 extern crate agg;
 use agg::prelude::*;
 
 #[test]
 fn t16_path_stroke_no_clip() {
-    let (w,h) = (100,100);
+    let (w, h) = (100, 100);
 
-    let pixf = agg::Pixfmt::<agg::Rgb8>::new(w,h);
+    let pixf = agg::Pixfmt::<agg::Rgb8>::new(w, h);
 
     let mut ren_base = agg::RenderingBase::new(pixf);
 
-    ren_base.clear( agg::Rgba8::WHITE );
+    ren_base.clear(agg::Rgba8::WHITE);
 
     let mut ren = agg::RenderingScanlineAASolid::with_base(&mut ren_base);
 
-    ren.color( agg::Rgba8::RED );
+    ren.color(agg::Rgba8::RED);
 
     let mut ras = agg::RasterizerScanline::new();
 

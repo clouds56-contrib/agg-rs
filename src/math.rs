@@ -1,4 +1,3 @@
-
 /// Interpolate a value between two end points using fixed point math
 ///
 /// See agg_color_rgba.h:454 of agg version 2.4
@@ -7,9 +6,9 @@ pub fn lerp_u8(p: u8, q: u8, a: u8) -> u8 {
     let base_shift = 8;
     let base_msb = 1 << (base_shift - 1);
     let v = if p > q { 1 } else { 0 };
-    let (q,p,a) = (i32::from(q), i32::from(p), i32::from(a));
-    let t0 : i32  = (q - p) * a + base_msb - v; // Signed multiplication
-    let t1 : i32 = ((t0>>base_shift) + t0) >> base_shift;
+    let (q, p, a) = (i32::from(q), i32::from(p), i32::from(a));
+    let t0: i32 = (q - p) * a + base_msb - v; // Signed multiplication
+    let t1: i32 = ((t0 >> base_shift) + t0) >> base_shift;
     (p + t1) as u8
 }
 
@@ -17,7 +16,9 @@ pub fn lerp_u8(p: u8, q: u8, a: u8) -> u8 {
 ///
 /// p + q - (p*a)
 pub fn prelerp_u8(p: u8, q: u8, a: u8) -> u8 {
-    ((p as i32) + (q as i32) - multiply_u8(p,a) as i32).min(255).max(0) as u8
+    ((p as i32) + (q as i32) - multiply_u8(p, a) as i32)
+        .min(255)
+        .max(0) as u8
 }
 
 /// Multiply two u8 values using fixed point math
@@ -30,17 +31,15 @@ pub fn prelerp_u8(p: u8, q: u8, a: u8) -> u8 {
 pub fn multiply_u8(a: u8, b: u8) -> u8 {
     let base_shift = 8;
     let base_msb = 1 << (base_shift - 1);
-    let t  = a as u32 * b as u32 + base_msb;
+    let t = a as u32 * b as u32 + base_msb;
     let tt = ((t >> base_shift) + t) >> base_shift;
     tt as u8
 }
 
-
-
 #[cfg(test)]
 mod tests {
-    use super::multiply_u8;
     use super::lerp_u8;
+    use super::multiply_u8;
     use super::prelerp_u8;
 
     fn mu864(i: u8, j: u8) -> u8 {
@@ -65,16 +64,14 @@ mod tests {
         (v * 255.0).round() as u8
     }
 
-
     #[test]
     fn lerp_u8_test() {
-        for p in 0 ..= 255 {
-            for q in 0 ..= 255 {
-                for a in 0 ..= 255 {
-                    let (p,q,a) = (p as u8, q as u8, a as u8);
-                    let v = lerp_u8_f64(p,q,a);
-                    assert_eq!(lerp_u8(p,q,a), v,
-                               "lerp({},{},{}) = {}",p,q,a,v);
+        for p in 0..=255 {
+            for q in 0..=255 {
+                for a in 0..=255 {
+                    let (p, q, a) = (p as u8, q as u8, a as u8);
+                    let v = lerp_u8_f64(p, q, a);
+                    assert_eq!(lerp_u8(p, q, a), v, "lerp({},{},{}) = {}", p, q, a, v);
                 }
             }
         }
@@ -82,23 +79,22 @@ mod tests {
 
     #[test]
     fn perlerp_u8_test() {
-        for p in 0 ..= 255 {
-            for q in 0 ..=  255 {
-                for a in 0 ..= 255 {
-                    let (p,q,a) = (p as u8, q as u8, a as u8);
-                    let v = prelerp_u8_f64(p,q,a);
-                    assert_eq!(prelerp_u8(p,q,a), v,
-                               "prelerp({},{},{}) = {}",p,q,a,v);
+        for p in 0..=255 {
+            for q in 0..=255 {
+                for a in 0..=255 {
+                    let (p, q, a) = (p as u8, q as u8, a as u8);
+                    let v = prelerp_u8_f64(p, q, a);
+                    assert_eq!(prelerp_u8(p, q, a), v, "prelerp({},{},{}) = {}", p, q, a, v);
                 }
             }
         }
     }
     #[test]
     fn multiply_u8_test() {
-        for i in 0 ..= 255  {
-            for j in 0 ..= 255  {
-                let v = mu864(i,j);
-                assert_eq!(multiply_u8(i,j), v, "{} * {} = {}", i, j, v);
+        for i in 0..=255 {
+            for j in 0..=255 {
+                let v = mu864(i, j);
+                assert_eq!(multiply_u8(i, j), v, "{} * {} = {}", i, j, v);
             }
         }
     }

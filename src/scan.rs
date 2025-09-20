@@ -3,7 +3,7 @@
 //use std::collections::HashMap;
 
 /// Contigious area of data
-#[derive(Debug,Default)]
+#[derive(Debug, Default)]
 pub(crate) struct Span {
     /// Starting x position
     pub x: i64,
@@ -16,7 +16,7 @@ pub(crate) struct Span {
 /// Unpacked Scanline
 ///
 /// Represents a single row of an image
-#[derive(Debug,Default)]
+#[derive(Debug, Default)]
 pub(crate) struct ScanlineU8 {
     /// Last x value used
     ///
@@ -42,8 +42,12 @@ const LAST_X: i64 = 0x7FFF_FFF0;
 impl ScanlineU8 {
     /// Create a new empty scanline
     pub fn new() -> Self {
-        Self { last_x: LAST_X, min_x: 0, y: 0,
-               spans: Vec::with_capacity(256), } //covers: HashMap::new() }
+        Self {
+            last_x: LAST_X,
+            min_x: 0,
+            y: 0,
+            spans: Vec::with_capacity(256),
+        } //covers: HashMap::new() }
     }
     /// Reset values and clear spans
     pub fn reset_spans(&mut self) {
@@ -79,8 +83,11 @@ impl ScanlineU8 {
             cur.len += len;
             cur.covers.extend(vec![cover; len as usize]);
         } else {
-            let span = Span { x: x + self.min_x, len,
-                              covers: vec![cover; len as usize] };
+            let span = Span {
+                x: x + self.min_x,
+                len,
+                covers: vec![cover; len as usize],
+            };
             self.spans.push(span);
         }
         self.last_x = x + len - 1;
@@ -98,8 +105,11 @@ impl ScanlineU8 {
             cur.covers.push(cover);
         } else {
             //let cover = self.covers.get(&x).unwrap().clone();
-            let span = Span { x: x + self.min_x, len: 1,
-                              covers: vec![cover] };
+            let span = Span {
+                x: x + self.min_x,
+                len: 1,
+                covers: vec![cover],
+            };
             self.spans.push(span);
         }
         self.last_x = x;

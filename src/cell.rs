@@ -1,25 +1,25 @@
-
 //! Rendering Cells
 
+use crate::POLY_SUBPIXEL_MASK;
 use crate::POLY_SUBPIXEL_SCALE;
 use crate::POLY_SUBPIXEL_SHIFT;
-use crate::POLY_SUBPIXEL_MASK;
 
-use std::cmp::min;
 use std::cmp::max;
+use std::cmp::min;
 
 /// Rendering Cell
 ///
 /// Effectively Represents a Pixel
-#[derive(Debug,Copy,Clone,PartialEq, Default)]
-pub(crate) struct Cell { // cell_aa
+#[derive(Debug, Copy, Clone, PartialEq, Default)]
+pub(crate) struct Cell {
+    // cell_aa
     /// Cell x position
     pub x: i64,
     /// Cell y position
     pub y: i64,
     /// Cell coverage
     pub cover: i64,
-    /// Cell area 
+    /// Cell area
     pub area: i64,
 }
 
@@ -28,7 +28,12 @@ impl Cell {
     ///
     /// Cover and Area are both 0
     fn new() -> Self {
-        Cell { x: std::i64::MAX, y: std::i64::MAX, cover: 0, area: 0 }
+        Cell {
+            x: i64::MAX,
+            y: i64::MAX,
+            cover: 0,
+            area: 0,
+        }
     }
     /// Create new cell at position (x,y)
     pub fn at(x: i64, y: i64) -> Self {
@@ -47,9 +52,8 @@ impl Cell {
     //}
 }
 
-
 /// Collection of Cells
-#[derive(Debug,Default)]
+#[derive(Debug, Default)]
 pub(crate) struct RasterizerCell {
     /// Cells
     cells: Vec<Cell>,
@@ -65,26 +69,26 @@ pub(crate) struct RasterizerCell {
     pub sorted_y: Vec<Vec<Cell>>,
 }
 
-
 impl RasterizerCell {
     /// Create new Cell collection
     pub fn new() -> Self {
-        Self { cells: Vec::with_capacity(256),
-               min_x: std::i64::MAX,
-               min_y: std::i64::MAX,
-               max_x: std::i64::MIN,
-               max_y: std::i64::MIN,
-               sorted_y: vec![],
+        Self {
+            cells: Vec::with_capacity(256),
+            min_x: i64::MAX,
+            min_y: i64::MAX,
+            max_x: i64::MIN,
+            max_y: i64::MIN,
+            sorted_y: vec![],
         }
     }
     /// Clear cells
     pub fn reset(&mut self) {
-        self.max_x = std::i64::MIN;
-        self.max_y = std::i64::MIN;
-        self.min_x = std::i64::MAX;
-        self.min_y = std::i64::MAX;
+        self.max_x = i64::MIN;
+        self.max_y = i64::MIN;
+        self.min_x = i64::MAX;
+        self.min_y = i64::MAX;
         self.sorted_y.clear(); // Not sure if this should be cleared
-        self.cells.clear();    // Not sure if this should be cleared
+        self.cells.clear(); // Not sure if this should be cleared
     }
 
     /// Return total number of cells
@@ -95,20 +99,20 @@ impl RasterizerCell {
     ///
     /// Cells are distributed into y bins, then sorted by x value
     pub fn sort_cells(&mut self) {
-        if ! self.sorted_y.is_empty() || self.max_y < 0 {
+        if !self.sorted_y.is_empty() || self.max_y < 0 {
             return;
         }
-        // Distribute into 
-        self.sorted_y = vec![Vec::with_capacity(8); (self.max_y+1) as usize];
+        // Distribute into
+        self.sorted_y = vec![Vec::with_capacity(8); (self.max_y + 1) as usize];
         for c in self.cells.iter() {
             if c.y >= 0 {
                 let y = c.y as usize;
-                self.sorted_y[y].push(c.clone());
+                self.sorted_y[y].push(*c);
             }
         }
         // Sort by the x value
-        for i in 0 .. self.sorted_y.len() {
-            self.sorted_y[i].sort_by(|a,b| (a.x).cmp(&b.x));
+        for i in 0..self.sorted_y.len() {
+            self.sorted_y[i].sort_by(|a, b| (a.x).cmp(&b.x));
         }
     }
     /// Return number of cells in a specific y row
@@ -117,7 +121,7 @@ impl RasterizerCell {
     }
     /// Returns the cells of a specific y row
     pub fn scanline_cells(&self, y: i64) -> &[Cell] {
-        & self.sorted_y[y as usize]
+        &self.sorted_y[y as usize]
     }
 
     //pub fn add_curr_cell(&mut self, new_cell: Cell) {
@@ -136,8 +140,8 @@ impl RasterizerCell {
     /// Determine if the current cell is located at (x,y)
     fn curr_cell_not_equal(&self, x: i64, y: i64) -> bool {
         match self.cells.last() {
-            None      => true,
-            Some(cur) => ! cur.equal(x,y),
+            None => true,
+            Some(cur) => !cur.equal(x, y),
         }
     }
     /// Remove last cell is cover and area are equal to 0
@@ -146,11 +150,11 @@ impl RasterizerCell {
         if n == 0 {
             return;
         }
-        if self.cells[n-1].area == 0 && self.cells[n-1].cover == 0 {
+        if self.cells[n - 1].area == 0 && self.cells[n - 1].cover == 0 {
             self.cells.pop();
         } //else {
           //  self.show_last_cell();
-        //}
+          //}
     }
     /// Print the last cell
     // fn show_last_cell(&self) {
@@ -162,19 +166,19 @@ impl RasterizerCell {
     ///
     /// Current cell is removed if empty (cover and area equal to 0)
     /// New cell is added to cell list
-    fn set_curr_cell(&mut self, x: i64, y: i64)  {
+    fn set_curr_cell(&mut self, x: i64, y: i64) {
         if self.curr_cell_not_equal(x, y) {
             self.pop_last_cell_if_empty();
-            self.cells.push( Cell::at(x,y) );
+            self.cells.push(Cell::at(x, y));
         }
     }
 
-    /// Create and update new cells 
+    /// Create and update new cells
     fn render_hline(&mut self, ey: i64, x1: i64, y1: i64, x2: i64, y2: i64) {
         let ex1 = x1 >> POLY_SUBPIXEL_SHIFT;
         let ex2 = x2 >> POLY_SUBPIXEL_SHIFT;
-        let fx1 = x1  & POLY_SUBPIXEL_MASK;
-        let fx2 = x2  & POLY_SUBPIXEL_MASK;
+        let fx1 = x1 & POLY_SUBPIXEL_MASK;
+        let fx2 = x2 & POLY_SUBPIXEL_MASK;
 
         // Horizontal Line
         if y1 == y2 {
@@ -185,18 +189,23 @@ impl RasterizerCell {
         // Single Cell
         if ex1 == ex2 {
             let m_curr_cell = self.cells.last_mut().unwrap();
-            m_curr_cell.cover += y2-y1;
-            m_curr_cell.area  += (fx1 + fx2) * (y2-y1);
+            m_curr_cell.cover += y2 - y1;
+            m_curr_cell.area += (fx1 + fx2) * (y2 - y1);
             return;
         }
         // Adjacent Cells on Same Line
-        let (mut p, first, incr, dx) = if x2-x1 < 0 {
-            (fx1 * (y2-y1), 0,-1, x1-x2)
+        let (mut p, first, incr, dx) = if x2 - x1 < 0 {
+            (fx1 * (y2 - y1), 0, -1, x1 - x2)
         } else {
-            ((POLY_SUBPIXEL_SCALE - fx1) * (y2-y1), POLY_SUBPIXEL_SCALE, 1, x2-x1)
+            (
+                (POLY_SUBPIXEL_SCALE - fx1) * (y2 - y1),
+                POLY_SUBPIXEL_SCALE,
+                1,
+                x2 - x1,
+            )
         };
         let mut delta = p / dx;
-        let mut xmod =  p % dx;
+        let mut xmod = p % dx;
 
         if xmod < 0 {
             delta -= 1;
@@ -205,7 +214,7 @@ impl RasterizerCell {
         {
             let m_curr_cell = self.cells.last_mut().unwrap();
             m_curr_cell.cover += delta;
-            m_curr_cell.area  += (fx1 + first) * delta;
+            m_curr_cell.area += (fx1 + first) * delta;
         }
         let mut ex1 = ex1 + incr;
         self.set_curr_cell(ex1, ey);
@@ -231,18 +240,18 @@ impl RasterizerCell {
                 {
                     let m_curr_cell = self.cells.last_mut().unwrap();
                     m_curr_cell.cover += delta;
-                    m_curr_cell.area  += POLY_SUBPIXEL_SCALE * delta;
+                    m_curr_cell.area += POLY_SUBPIXEL_SCALE * delta;
                 }
                 y1 += delta;
                 ex1 += incr;
                 self.set_curr_cell(ex1, ey);
             }
         }
-        delta = y2-y1;
+        delta = y2 - y1;
         {
             let m_curr_cell = self.cells.last_mut().unwrap();
             m_curr_cell.cover += delta;
-            m_curr_cell.area  += (fx2 + POLY_SUBPIXEL_SCALE - first) * delta;
+            m_curr_cell.area += (fx2 + POLY_SUBPIXEL_SCALE - first) * delta;
         }
     }
 
@@ -261,14 +270,14 @@ impl RasterizerCell {
             self.line(x1, y1, cx, cy);
             self.line(cx, cy, x2, y2);
         }
-        let dy = y2-y1;
+        let dy = y2 - y1;
         // Downshift
         let ex1 = x1 >> POLY_SUBPIXEL_SHIFT;
         let ex2 = x2 >> POLY_SUBPIXEL_SHIFT;
         let ey1 = y1 >> POLY_SUBPIXEL_SHIFT;
         let ey2 = y2 >> POLY_SUBPIXEL_SHIFT;
-        let fy1 = y1 &  POLY_SUBPIXEL_MASK;
-        let fy2 = y2 &  POLY_SUBPIXEL_MASK;
+        let fy1 = y1 & POLY_SUBPIXEL_MASK;
+        let fy2 = y2 & POLY_SUBPIXEL_MASK;
 
         self.min_x = min(ex2, min(ex1, self.min_x));
         self.min_y = min(ey2, min(ey1, self.min_y));
@@ -280,7 +289,7 @@ impl RasterizerCell {
         if ey1 == ey2 {
             self.render_hline(ey1, x1, fy1, x2, fy2);
             let n = self.cells.len();
-            if self.cells[n-1].area == 0 && self.cells[n-1].cover == 0 {
+            if self.cells[n - 1].area == 0 && self.cells[n - 1].cover == 0 {
                 self.cells.pop();
             }
             return;
@@ -300,7 +309,7 @@ impl RasterizerCell {
             {
                 let m_curr_cell = self.cells.last_mut().unwrap();
                 m_curr_cell.cover += delta;
-                m_curr_cell.area  += two_fx * delta;
+                m_curr_cell.area += two_fx * delta;
             }
 
             let mut ey1 = ey1 + incr;
@@ -325,13 +334,13 @@ impl RasterizerCell {
             return;
         }
         // Render Multiple Lines
-        let (p,first,incr, dy) = if dy < 0 {
+        let (p, first, incr, dy) = if dy < 0 {
             (fy1 * dx, 0, -1, -dy)
         } else {
             ((POLY_SUBPIXEL_SCALE - fy1) * dx, POLY_SUBPIXEL_SCALE, 1, dy)
         };
         let mut delta = p / dy;
-        let mut xmod  = p % dy;
+        let mut xmod = p % dy;
         if xmod < 0 {
             delta -= 1;
             xmod += dy;
@@ -343,7 +352,7 @@ impl RasterizerCell {
         if ey1 != ey2 {
             let p = POLY_SUBPIXEL_SCALE * dx;
             let mut lift = p / dy;
-            let mut rem  = p % dy;
+            let mut rem = p % dy;
             if rem < 0 {
                 lift -= 1;
                 rem += dy;

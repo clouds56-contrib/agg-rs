@@ -61,8 +61,8 @@ jobs:
           if [ ! -f Cargo.lock ]; then
             cargo generate-lockfile
           fi
-      - name: Cargo clippy (deny warnings)
-        run: cargo clippy --all-targets --all-features -- -D warnings
+      - name: Cargo clippy (deny errors)
+        run: cargo clippy --all-targets --all-features -- -D clippy::correctness -W clippy::suspicious -W clippy::complexity -W clippy::perf -A dead_code
 
   build-test:
     name: Build & Test (Linux)

@@ -27,7 +27,6 @@
 //!
 //! <img src="https://raw.githubusercontent.com/savage13/agg/master/images/agg_test_01.png" height="150"/>
 
-
 //! ### Copy a set of colors horizontally
 //!
 //! Generate an array of colors, then copy those colors to the image along
@@ -38,7 +37,6 @@
 //! [AGG Example](http://www.antigrain.com/doc/basic_renderers/basic_renderers.agdoc.html#toc0007)
 //!
 //! <img src="https://raw.githubusercontent.com/savage13/agg/master/images/agg_test_03.png" height="150"/>
-
 
 //! ### Copy with an Alpha Channel
 //!
@@ -57,13 +55,11 @@
 //!
 //! <img src="https://raw.githubusercontent.com/savage13/agg/master/images/agg_test_05.png" height="150"/>
 
-
 //! ### Filled polygon
 //!
 //! [t11.rs](https://github.com/savage13/agg/blob/master/tests/t11.rs)
 //!
 //! <img src="https://raw.githubusercontent.com/savage13/agg/master/images/agg_test_11.png" height="150"/>
-
 
 //! ### Filled polygon within a clip box
 //!
@@ -71,20 +67,17 @@
 //!
 //! <img src="https://raw.githubusercontent.com/savage13/agg/master/images/agg_test_12.png" height="150"/>
 
-
 //! ### Filled polygon within a clip box, without anti-aliasing
 //!
 //! [t13.rs](https://github.com/savage13/agg/blob/master/tests/t13.rs)
 //!
 //! <img src="https://raw.githubusercontent.com/savage13/agg/master/images/agg_test_13.png" height="150"/>
 
-
 //! ### Filled polygon within a clip box, with a gamma value
 //!
 //! [t14.rs](https://github.com/savage13/agg/blob/master/tests/t14.rs)
 //!
 //! <img src="https://raw.githubusercontent.com/savage13/agg/master/images/agg_test_14.png" height="150"/>
-
 
 //! ### Filled polygon with outline stroke within a clip box
 //!
@@ -97,7 +90,6 @@
 //! [t16.rs](https://github.com/savage13/agg/blob/master/tests/t16.rs)
 //!
 //! <img src="https://raw.githubusercontent.com/savage13/agg/master/images/agg_test_16.png" height="150"/>
-
 
 //! ### Component Rendering
 //!
@@ -112,7 +104,6 @@
 //! <img src="https://raw.githubusercontent.com/savage13/agg/master/images/component_rendering_128.png" height="150"/>
 //!
 //! <img src="https://raw.githubusercontent.com/savage13/agg/master/images/component_rendering_255.png" height="150"/>
-
 
 //! ### Solid Image Rendering
 //!
@@ -164,7 +155,7 @@
 //! [rasterizers_gamma.rs](https://github.com/savage13/agg/blob/master/tests/rasterizers_gamma.rs)
 //!
 //! [AGG Source](http://www.antigrain.com/demo/rasterizers.cpp.html)
-//! 
+//!
 //! [AGG Output](http://www.antigrain.com/demo/rasterizers.gif)
 //!
 //! <img src="https://raw.githubusercontent.com/savage13/agg/master/images/rasterizers.png" height="150"/>
@@ -185,7 +176,6 @@
 //! [AGG Output](http://www.antigrain.com/demo/rasterizers2_s.gif)
 //!
 //! <img src="https://raw.githubusercontent.com/savage13/agg/master/images/rasterizers2_pre.png" height="150"/>
-
 
 //! ### Rounded Rectangle
 //!
