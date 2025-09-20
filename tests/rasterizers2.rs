@@ -31,6 +31,7 @@ where
 }
 
 #[derive(Debug, Default)]
+#[allow(dead_code)]
 pub struct Spiral {
   x: f64,
   y: f64,
