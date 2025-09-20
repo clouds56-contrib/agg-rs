@@ -1,7 +1,7 @@
 
 extern crate agg;
 
-use agg::Render;
+use agg::prelude::*;
 
 #[test]
 fn t13_aliased() {
@@ -11,11 +11,11 @@ fn t13_aliased() {
 
     let mut ren_base = agg::RenderingBase::new(pixf);
 
-    ren_base.clear( agg::Rgba8::new(255, 255, 255, 255) );
+    ren_base.clear( agg::Rgba8::WHITE );
 
     let mut ren = agg::RenderingScanlineBinSolid::with_base(&mut ren_base);
 
-    ren.color( agg::Rgba8::new(255,0,0,255) );
+    ren.color( agg::Rgba8::RED );
 
     let mut ras = agg::RasterizerScanline::new();
 
@@ -31,4 +31,3 @@ fn t13_aliased() {
 
     assert_eq!(agg::ppm::img_diff("tests/tmp/agg_test_13.png", "images/agg_test_13.png").unwrap(), true);
 }
-

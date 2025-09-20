@@ -225,38 +225,36 @@ impl<T: ColorValue> NamedColor for Rgb<T> {
     }
 }
 
-// impl Rgb8 {
-//     pub fn from_wavelength_gamma(w: f64, gamma: f64) -> Self {
-//         let (r,g,b) =
-//             if w >= 380.0 && w <= 440.0 {
-//                 (-1.0 * (w-440.0) / (440.0-380.0), 0.0, 1.0)
-//             } else if w >= 440.0 && w <= 490.0 {
-//                 (0.0, (w-440.0)/(490.0-440.0), 1.0)
-//             } else if w >= 490.0 && w <= 510.0 {
-//                 (0.0, 1.0, -1.0 * (w-510.0)/(510.0-490.0))
-//             } else if w >= 510.0 && w <= 580.0 {
-//                 ((w-510.0)/(580.0-510.0), 1.0, 0.0)
-//             } else if w >= 580.0 && w <= 645.0 {
-//                 (1.0, -1.0*(w-645.0)/(645.0-580.0), 0.0)
-//             } else if w >= 645.0 && w <= 780.0 {
-//                 (1.0, 0.0, 0.0)
-//             } else {
-//                 (0.,0.,0.)
-//             };
-//         let scale =
-//             if w > 700.0 {
-//                 0.3 + 0.7 * (780.0-w)/(780.0-700.0)
-//             } else if w < 420.0 {
-//                 0.3 + 0.7 * (w-380.0)/(420.0-380.0)
-//             } else {
-//                 1.0
-//             };
-//         let r = (r * scale).powf(gamma) * 255.0;
-//         let g = (g * scale).powf(gamma) * 255.0;
-//         let b = (b * scale).powf(gamma) * 255.0;
-//         Self::new ( r as u8, g as u8, b as u8 )
-//     }
-// }
+pub fn rgb8_from_wavelength_gamma(w: f64, gamma: f64) -> Rgb8 {
+    let (r,g,b) =
+        if w >= 380.0 && w <= 440.0 {
+            (-1.0 * (w-440.0) / (440.0-380.0), 0.0, 1.0)
+        } else if w >= 440.0 && w <= 490.0 {
+            (0.0, (w-440.0)/(490.0-440.0), 1.0)
+        } else if w >= 490.0 && w <= 510.0 {
+            (0.0, 1.0, -1.0 * (w-510.0)/(510.0-490.0))
+        } else if w >= 510.0 && w <= 580.0 {
+            ((w-510.0)/(580.0-510.0), 1.0, 0.0)
+        } else if w >= 580.0 && w <= 645.0 {
+            (1.0, -1.0*(w-645.0)/(645.0-580.0), 0.0)
+        } else if w >= 645.0 && w <= 780.0 {
+            (1.0, 0.0, 0.0)
+        } else {
+            (0.,0.,0.)
+        };
+    let scale =
+        if w > 700.0 {
+            0.3 + 0.7 * (780.0-w)/(780.0-700.0)
+        } else if w < 420.0 {
+            0.3 + 0.7 * (w-380.0)/(420.0-380.0)
+        } else {
+            1.0
+        };
+    let r = (r * scale).powf(gamma) * 255.0;
+    let g = (g * scale).powf(gamma) * 255.0;
+    let b = (b * scale).powf(gamma) * 255.0;
+    Rgb::from_raw( r as u8, g as u8, b as u8 )
+}
 
 
 pub type RgbaPre<T> = palette::blend::PreAlpha<Rgb<T>>;

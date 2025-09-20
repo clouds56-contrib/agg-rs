@@ -1,13 +1,12 @@
 //! Rendering Outline, not Anti-Aliased
 //!
-//!     use agg::{Pixfmt,Rgb8,Rgba8};
-//!     use agg::{RendererPrimatives,RasterizerOutline};
+//!     use agg::prelude::*;
 //!     let pix = Pixfmt::<Rgb8>::new(100,100);
 //!     let mut ren_base = agg::RenderingBase::new(pix);
 //!     ren_base.clear( Rgba8::WHITE );
 //!
 //!     let mut ren = RendererPrimatives::with_base(&mut ren_base);
-//!     ren.line_color(agg::Rgba8::new(0,0,0,255));
+//!     ren.line_color(agg::Rgba8::from_raw(0,0,0,255));
 //!
 //!     let mut path = agg::Path::new();
 //!     path.move_to(10.0, 10.0);

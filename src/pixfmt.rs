@@ -50,12 +50,12 @@ impl<T> Pixfmt<T> where Pixfmt<T>: Pixel {
     ///
     /// All color components are set to 255, including `alpha` if present
     ///
-    ///     use agg::{Source,Pixfmt,Rgb8,Rgba8};
+    ///     use agg::prelude::*;
     ///
     ///     // Pixfmt with Rgb8, not Alpha Component
     ///     let mut pix = Pixfmt::<Rgb8>::new(2,2);
     ///     pix.clear();
-    ///     let empty = Rgba8 { r:255, g:255, b:255, a:255};
+    ///     let empty = Rgba8::WHITE;
     ///     assert_eq!(pix.get((0,0)), empty);
     ///     assert_eq!(pix.get((0,1)), empty);
     ///     assert_eq!(pix.get((1,0)), empty);
@@ -64,7 +64,7 @@ impl<T> Pixfmt<T> where Pixfmt<T>: Pixel {
     ///     // Pixfmt with Rgba8, including Alpha Component
     ///     let mut pix = Pixfmt::<Rgb8>::new(2,2);
     ///     pix.clear();
-    ///     let empty = Rgba8 { r:255, g:255, b:255, a:255};
+    ///     let empty = Rgba8::WHITE;
     ///     assert_eq!(pix.get((0,0)), empty);
     ///     assert_eq!(pix.get((0,1)), empty);
     ///     assert_eq!(pix.get((1,0)), empty);
@@ -80,12 +80,12 @@ impl<T> Pixfmt<T> where Pixfmt<T>: Pixel {
     ///
     /// Locations outside of the region are igorned
     ///
-    ///     use agg::{NamedColor,Source,Pixfmt,Rgba8};
+    ///     use agg::prelude::*;
     ///
     ///     let mut pix = Pixfmt::<Rgba8>::new(1,2);
     ///     let black = Rgba8::BLACK;
     ///     pix.copy_pixel(0,1, black);
-    ///     assert_eq!(pix.get((0,0)), Rgba8{r:0, g:0, b:0, a:0});
+    ///     assert_eq!(pix.get((0,0)), Rgba8::from_raw(0,0,0,0));
     ///     assert_eq!(pix.get((0,1)), black);
     ///
     ///     pix.copy_pixel(10,10, black); // Ignored, outside of range
@@ -126,7 +126,7 @@ impl<T> Pixfmt<T> where Pixfmt<T>: Pixel {
     ///
     /// Locations outside of the region are ignored
     ///
-    ///     use agg::{Source,Pixfmt,Rgba8,Rgba32};
+    ///     use agg::prelude::*;
     ///
     ///     let mut pix = Pixfmt::<Rgba32>::new(1,10);
     ///     let black  = Rgba32::new(0.,0.,0.,1.);

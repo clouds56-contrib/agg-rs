@@ -1,12 +1,13 @@
+
+use agg::prelude::*;
+
 #[test]
 fn t20_outline_render() {
-    use agg::{Pixfmt,Rgb8,Rgba8,DrawOutline};
-    use agg::{RendererOutlineAA,RasterizerOutlineAA};
     let pix = Pixfmt::<Rgb8>::new(100,100);
     let mut ren_base = agg::RenderingBase::new(pix);
-    ren_base.clear( Rgba8::new(255, 255, 255, 255) );
+    ren_base.clear( Rgba8::WHITE );
     let mut ren = RendererOutlineAA::with_base(&mut ren_base);
-    ren.color(agg::Rgba8::new(0,0,0,255));
+    ren.color(agg::Rgba8::BLACK);
     ren.width(20.0);
 
     let mut path = agg::Path::new();

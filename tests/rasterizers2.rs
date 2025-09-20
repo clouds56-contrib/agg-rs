@@ -1,7 +1,7 @@
 
 extern crate agg;
 
-use agg::Render;
+use agg::prelude::*;
 use agg::VertexSource;
 
 pub struct Roundoff<T: VertexSource> {
@@ -77,7 +77,7 @@ fn rasterizers2() {
     let pixf = agg::Pixfmt::<agg::Rgb8>::new(w, h);
     let mut ren_base = agg::RenderingBase::new(pixf);
 
-    ren_base.clear( agg::Rgba8::new(255, 255, 242, 255) );
+    ren_base.clear( agg::Rgba8::from_raw(255, 255, 242, 255) );
 
     let start_angle = 0.0;
     let line_width = 3.0;
@@ -96,7 +96,7 @@ fn rasterizers2() {
         let mut stroke = agg::Stroke::new(spiral);
         stroke.width(line_width);
         //stroke.cap(round_cap);
-        ren_aa.color( agg::Rgba8::new(102, 77, 26, 255));
+        ren_aa.color( agg::Rgba8::from_raw(102, 77, 26, 255));
         ras_aa.add_path(&stroke);
         agg::render_scanlines(&mut ras_aa, &mut ren_aa);
 
@@ -108,7 +108,7 @@ fn rasterizers2() {
         let spiral = Spiral::new(x, y, r1, r2, step, start_angle);
 
         let mut ren_prim = agg::RendererPrimatives::with_base(&mut ren_base);
-        ren_prim.line_color(agg::Rgba8::new(102, 77, 26, 255));
+        ren_prim.line_color(agg::Rgba8::from_raw(102, 77, 26, 255));
         let mut ras_al = agg::RasterizerOutline::with_primative(&mut ren_prim);
         let trans = Roundoff::new(spiral);
         ras_al.add_path(&trans);
@@ -121,7 +121,7 @@ fn rasterizers2() {
         let spiral = Spiral::new(x, y, r1, r2, step, start_angle);
 
         let mut ren_prim = agg::RendererPrimatives::with_base(&mut ren_base);
-        ren_prim.line_color(agg::Rgba8::new(102, 77, 26, 255));
+        ren_prim.line_color(agg::Rgba8::from_raw(102, 77, 26, 255));
         let mut ras_al = agg::RasterizerOutline::with_primative(&mut ren_prim);
         ras_al.add_path(&spiral);
     }

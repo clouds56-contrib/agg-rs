@@ -50,14 +50,13 @@
 //!
 //! # Outline AntiAlias Renderer
 //!
-//!        use agg::{Pixfmt,Rgb8,Rgba8,RenderingBase,DrawOutline};
-//!        use agg::{RendererOutlineAA,RasterizerOutlineAA};
+//!        use agg::prelude::*;
 //!        let pix = Pixfmt::<Rgb8>::new(100,100);
 //!        let mut ren_base = agg::RenderingBase::new(pix);
 //!        ren_base.clear( Rgba8::WHITE );
 //!
 //!        let mut ren = RendererOutlineAA::with_base(&mut ren_base);
-//!        ren.color(agg::Rgba8::new(102,77,26,255));
+//!        ren.color(agg::Rgba8::from_raw(102,77,26,255));
 //!        ren.width(3.0);
 //!
 //!        let mut path = agg::Path::new();
@@ -74,15 +73,14 @@
 //! Render for primative shapes: lines, rectangles, and ellipses; filled or
 //!    outlined.
 //!
-//!        use agg::{Pixfmt,Rgb8,Rgba8,RenderingBase,DrawOutline};
-//!        use agg::{RendererPrimatives,RasterizerOutline};
+//!        use agg::prelude::*;
 //!
 //!        let pix = Pixfmt::<Rgb8>::new(100,100);
 //!        let mut ren_base = agg::RenderingBase::new(pix);
 //!        ren_base.clear( Rgba8::WHITE );
 //!
 //!        let mut ren = RendererPrimatives::with_base(&mut ren_base);
-//!        ren.line_color(agg::Rgba8::new(0,0,0,255));
+//!        ren.line_color(agg::Rgba8::from_raw(0,0,0,255));
 //!
 //!        let mut path = agg::Path::new();
 //!        path.move_to(10.0, 10.0);
@@ -320,7 +318,7 @@ pub trait Pixel {
     ///
     /// If `color` [`is_transparent`] nothing is done
     ///
-    ///     use agg::{NamedColor,Source,Pixfmt,Rgb8,Rgba8,Pixel};
+    ///     use agg::prelude::*;
     ///
     ///     let mut pix = Pixfmt::<Rgb8>::new(1,1);
     ///     let black  = Rgba8::BLACK;
@@ -329,21 +327,21 @@ pub trait Pixel {
     ///     assert_eq!(pix.get((0,0)), black);
     ///
     ///     let (alpha, cover) = (255, 255); // Copy Pixel
-    ///     let color = Rgba8::new(255,255,255,alpha);
+    ///     let color = Rgba8::from_raw(255,255,255,alpha);
     ///     pix.copy_or_blend_pix_with_cover((0,0), color, cover);
     ///     assert_eq!(pix.get((0,0)), white);
     ///
     ///     let (alpha, cover) = (255, 128); // Partial Coverage, Blend
-    ///     let color = Rgba8::new(255,255,255,alpha);
+    ///     let color = Rgba8::from_raw(255,255,255,alpha);
     ///     pix.copy_pixel(0,0,black);
     ///     pix.copy_or_blend_pix_with_cover((0,0), color, cover);
-    ///     assert_eq!(pix.get((0,0)), Rgba8::new(128,128,128,255));
+    ///     assert_eq!(pix.get((0,0)), Rgba8::from_raw(128,128,128,255));
     ///
     ///     let (alpha, cover) = (128, 255); // Partial Coverage, Blend
-    ///     let color = Rgba8::new(255,255,255,alpha);
+    ///     let color = Rgba8::from_raw(255,255,255,alpha);
     ///     pix.copy_pixel(0,0,black);
     ///     pix.copy_or_blend_pix_with_cover((0,0), color, cover);
-    ///     assert_eq!(pix.get((0,0)), Rgba8::new(128,128,128,255));
+    ///     assert_eq!(pix.get((0,0)), Rgba8::from_raw(128,128,128,255));
     ///
     /// [`is_opaque`]: ../trait.Color.html#method.is_opaque
     /// [`is_transparent`]: ../trait.Color.html#method.is_transparent
@@ -494,7 +492,15 @@ pub(crate) trait DistanceInterpolator {
 
 pub mod prelude {
     pub use crate::{
-        Color, NamedColor as _, FromRaw2 as _, FromColor as _, FromRaw3 as _, FromRaw4 as _,
-        Render as _, Pixel as _,
+        Color as _, NamedColor as _, FromRaw2 as _, FromColor as _, FromRaw3 as _, FromRaw4 as _,
+        Render as _, Pixel as _, Source as _,
     };
+
+    pub use crate::{Pixfmt,RenderingBase,DrawOutline};
+    pub use crate::{
+        Rgb8,Rgb16,Rgb32,Rgb64,
+        Rgba8,Rgba16,Rgba32,Rgba64,
+    };
+    pub use crate::{RendererPrimatives, RasterizerOutline};
+    pub use crate::{RendererOutlineAA, RasterizerOutlineAA};
 }
