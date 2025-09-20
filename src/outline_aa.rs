@@ -805,7 +805,7 @@ impl<T> DrawOutline for RendererOutlineAA<'_, T> where T: Pixel {
         }
     }
     fn color<C: Color>(&mut self, color: C) {
-        self.color = Rgba8::from_color(color);
+        self.color = color.rgba();
     }
 
     fn accurate_join_only(&self) -> bool{

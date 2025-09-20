@@ -3,6 +3,7 @@
 use crate::scan::ScanlineU8;
 use crate::base::RenderingBase;
 use crate::color::Rgba8;
+use crate::FromRaw4;
 use crate::NamedColor;
 use crate::POLY_SUBPIXEL_SCALE;
 use crate::POLY_SUBPIXEL_MASK;
@@ -241,8 +242,7 @@ impl<T> Render for RenderingScanlineAASolid<'_,T> where T: Pixel {
     }
     /// Set the current color
     fn color<C: Color>(&mut self, color: C) {
-        self.color = Rgba8::new(color.red8(), color.green8(),
-                                color.blue8(), color.alpha8());
+        self.color = color.rgba8();
     }
 
 }
@@ -253,8 +253,7 @@ impl<T> Render for RenderingScanlineBinSolid<'_,T> where T: Pixel {
     }
     /// Set the current Color
     fn color<C: Color>(&mut self, color: C) {
-        self.color = Rgba8::new(color.red8(),color.green8(),
-                                color.blue8(), color.alpha8());
+        self.color = color.rgba8();
     }
 }
 impl<T> Render for RenderingScanlineAA<'_,T> where T: Pixel {
@@ -785,7 +784,7 @@ impl LineImagePattern {
         }
         //const color_type* s1;
         //const color_type* s2;
-        let none = Rgba8::new(0,0,0,0);
+        let none = Rgba8::empty();
         let dill = self.dilation as usize;
         for y in 0 .. dill {
             //s1 = self.buf.row_ptr(self.height + self.dilation - 1) + self.dilation;
@@ -900,33 +899,33 @@ impl PatternFilterBilinear {
         let ptr = pix.get((x_lr,y_lr));
 
         let weight = (POLY_SUBPIXEL_SCALE - x) * (POLY_SUBPIXEL_SCALE - y);
-        red   += weight * i64::from(ptr.r);
-        green += weight * i64::from(ptr.g);
-        blue  += weight * i64::from(ptr.b);
-        alpha += weight * i64::from(ptr.a);
+        red   += weight * i64::from(ptr.red8());
+        green += weight * i64::from(ptr.green8());
+        blue  += weight * i64::from(ptr.blue8());
+        alpha += weight * i64::from(ptr.alpha8());
         let ptr = pix.get((x_lr + 1,y_lr));
         let weight = x * (POLY_SUBPIXEL_SCALE - y);
-        red   += weight * i64::from(ptr.r);
-        green += weight * i64::from(ptr.g);
-        blue  += weight * i64::from(ptr.b);
-        alpha += weight * i64::from(ptr.a);
+        red   += weight * i64::from(ptr.red8());
+        green += weight * i64::from(ptr.green8());
+        blue  += weight * i64::from(ptr.blue8());
+        alpha += weight * i64::from(ptr.alpha8());
         let ptr = pix.get((x_lr,y_lr+1));
         let weight = (POLY_SUBPIXEL_SCALE - x) * y;
-        red   += weight * i64::from(ptr.r);
-        green += weight * i64::from(ptr.g);
-        blue  += weight * i64::from(ptr.b);
-        alpha += weight * i64::from(ptr.a);
+        red   += weight * i64::from(ptr.red8());
+        green += weight * i64::from(ptr.green8());
+        blue  += weight * i64::from(ptr.blue8());
+        alpha += weight * i64::from(ptr.alpha8());
         let ptr = pix.get((x_lr+1,y_lr+1));
         let weight = x * y;
-        red   += weight * i64::from(ptr.r);
-        green += weight * i64::from(ptr.g);
-        blue  += weight * i64::from(ptr.b);
-        alpha += weight * i64::from(ptr.a);
+        red   += weight * i64::from(ptr.red8());
+        green += weight * i64::from(ptr.green8());
+        blue  += weight * i64::from(ptr.blue8());
+        alpha += weight * i64::from(ptr.alpha8());
         let red   = (red   >> (POLY_SUBPIXEL_SHIFT * 2)) as u8;
         let green = (green >> (POLY_SUBPIXEL_SHIFT * 2)) as u8;
         let blue  = (blue  >> (POLY_SUBPIXEL_SHIFT * 2)) as u8;
         let alpha = (alpha >> (POLY_SUBPIXEL_SHIFT * 2)) as u8;
-        Rgba8::new(red,green,blue,alpha)
+        Rgba8::from_raw(red,green,blue,alpha)
     }
 }
 #[derive(Debug)]
@@ -1137,7 +1136,7 @@ impl LineInterpolatorImage {
         let mut p0 = MAX_HALF_WIDTH + 2;
         let mut p1 = p0;
         let mut npix = 0;
-        self.colors[p1].clear();
+        self.colors[p1] = Rgba8::empty();
         if dist_end > 0 {
             if dist_start <= 0 {
                 self.colors[p1] = ren.pixel(dist_pict, s2);
@@ -1152,7 +1151,7 @@ impl LineInterpolatorImage {
             dist_start += self.di.dy_start;
             dist_pict  += self.di.dy_pict;
             dist_end   += self.di.dy_end;
-            self.colors[p1].clear();
+            self.colors[p1] = Rgba8::empty();
             if dist_end > 0 && dist_start <= 0 {
                 if self.lp.inc > 0 {
                     dist = -dist;
@@ -1175,7 +1174,7 @@ impl LineInterpolatorImage {
             dist_pict  -= self.di.dy_pict;
             dist_end   -= self.di.dy_end;
             p0 -= 1;
-            self.colors[p0].clear();
+            self.colors[p0] = Rgba8::empty();
             if dist_end > 0 && dist_start <= 0 {
                 if self.lp.inc > 0 {
                     dist = -dist;
@@ -1225,7 +1224,7 @@ impl LineInterpolatorImage {
         let mut p1 = p0;
 
         let mut npix = 0;
-        self.colors[p1].clear();
+        self.colors[p1] = Rgba8::empty();
         if dist_end > 0 {
             if dist_start <= 0 {
                 self.colors[p1] = ren.pixel(dist_pict, s2);
@@ -1240,7 +1239,7 @@ impl LineInterpolatorImage {
             dist_start -= self.di.dx_start;
             dist_pict  -= self.di.dx_pict;
             dist_end   -= self.di.dx_end;
-            self.colors[p1].clear();
+            self.colors[p1] = Rgba8::empty();
             if dist_end > 0 && dist_start <= 0 {
                 if self.lp.inc > 0 {
                     dist = -dist;
@@ -1263,7 +1262,7 @@ impl LineInterpolatorImage {
             dist_pict  += self.di.dx_pict;
             dist_end   += self.di.dx_end;
             p0 -= 1;
-            self.colors[p0].clear();
+            self.colors[p0] = Rgba8::empty();
             if dist_end > 0 && dist_start <= 0 {
                 if self.lp.inc > 0 {
                     dist = -dist;

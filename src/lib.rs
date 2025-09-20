@@ -133,6 +133,7 @@ pub mod paths;
 pub mod stroke;
 pub mod transform;
 pub mod color;
+pub mod color_value;
 pub mod pixfmt;
 pub mod base;
 pub mod clip;
@@ -161,6 +162,8 @@ pub use crate::stroke::*;
 pub use crate::transform::*;
 #[doc(hidden)]
 pub use crate::color::*;
+#[doc(hidden)]
+pub use crate::color_value::*;
 #[doc(hidden)]
 pub use crate::pixfmt::*;
 #[doc(hidden)]
@@ -202,34 +205,42 @@ pub trait VertexSource {
 /// Access Color properties and compoents
 pub trait Color: Debug + Copy {
     /// Get red value
-    fn red<T: ColorValueType>(&self) -> T;
+    fn red_<T: ColorValue>(&self) -> T;
     /// Get green value
-    fn green<T: ColorValueType>(&self) -> T;
+    fn green_<T: ColorValue>(&self) -> T;
     /// Get blue value
-    fn blue<T: ColorValueType>(&self) -> T;
+    fn blue_<T: ColorValue>(&self) -> T;
     /// Get alpha value
-    fn alpha<T: ColorValueType>(&self) -> T;
+    fn alpha_<T: ColorValue>(&self) -> T;
     /// Get red value [0,1] as f64
-    fn red64(&self) -> f64 { self.red() }
+    fn red64(&self) -> f64 { self.red_() }
     /// Get green value [0,1] as f64
-    fn green64(&self) -> f64 { self.green() }
+    fn green64(&self) -> f64 { self.green_() }
     /// Get blue value [0,1] as f64
-    fn blue64(&self) -> f64 { self.blue() }
+    fn blue64(&self) -> f64 { self.blue_() }
     /// Get alpha value [0,1] as f64
-    fn alpha64(&self) -> f64 { self.alpha() }
+    fn alpha64(&self) -> f64 { self.alpha_() }
     /// Get red value [0,255] as u8
-    fn red8(&self) -> u8 { self.red() }
+    fn red8(&self) -> u8 { self.red_::<U8>().0 }
     /// Get green value [0,255] as u8
-    fn green8(&self) -> u8 { self.green() }
+    fn green8(&self) -> u8 { self.green_::<U8>().0 }
     /// Get blue value [0,255] as u8
-    fn blue8(&self) -> u8 { self.blue() }
+    fn blue8(&self) -> u8 { self.blue_::<U8>().0 }
     /// Get alpha value [0,255] as u8
-    fn alpha8(&self) -> u8 { self.alpha() }
+    fn alpha8(&self) -> u8 { self.alpha_::<U8>().0 }
 
-    fn rgb<T: ColorValueType>(&self) -> Rgb<T> { Rgb::from_color(*self) }
-    fn rgba<T: ColorValueType>(&self) -> Rgba<T> { Rgba::from_color(*self) }
-    fn gray<T: ColorValueType>(&self) -> Gray<T> { Gray::from_color(*self) }
-    fn srgba<T: ColorValueType>(&self) -> Srgba<T> { Srgba::from_color(*self) }
+    fn rgb<T: ColorValue>(&self) -> Rgb<T> { Rgb::from_color(*self) }
+    fn rgb8(&self) -> Rgb<U8> { self.rgb() }
+    fn rgb64(&self) -> Rgb<f64> { self.rgb() }
+    fn rgba<T: ColorValue>(&self) -> Rgba<T> { Rgba::from_color(*self) }
+    fn rgba8(&self) -> Rgba<U8> { self.rgba() }
+    fn rgba64(&self) -> Rgba<f64> { self.rgba() }
+    fn gray<T: ColorValue>(&self) -> Gray<T> { Gray::from_color(*self) }
+    fn gray8(&self) -> Gray<U8> { self.gray() }
+    fn gray64(&self) -> Gray<f64> { self.gray() }
+    fn srgba<T: ColorValue>(&self) -> Srgba<T> { Srgba::from_color(*self) }
+    fn srgba8(&self) -> Srgba<U8> { self.srgba() }
+    fn srgba64(&self) -> Srgba<f64> { self.srgba() }
 
     /// Return if the color is completely transparent, alpha = 0.0
     fn is_transparent(&self) -> bool { self.alpha64() == 0.0 }

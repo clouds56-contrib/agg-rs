@@ -6,6 +6,7 @@ use crate::color::Gray8;
 use crate::pixfmt::Pixfmt;
 
 use crate::Color;
+use crate::FromRaw4;
 use crate::Pixel;
 use crate::Source;
 use crate::math::lerp_u8;
@@ -44,7 +45,7 @@ impl<T> AlphaMaskAdaptor<T> where Pixfmt<T>: Pixel + Source {
         assert_eq!(n, colors.len());
         for (i, color) in colors.iter().enumerate() {
             let pix = &mut self.rgb.get((x+i,y));
-            let alpha = u64::from(self.alpha.raw((x+i,y)).value);
+            let alpha = u64::from(self.alpha.raw((x+i,y)).luma.0);
             let pix = blend_pix(pix, color, alpha);
             self.rgb.set((x+i,y), pix);
         }
@@ -72,5 +73,5 @@ fn blend_pix<C1: Color, C2: Color>(p: &C1, c: &C2, cover: u64) -> Rgba8 {
     let blue  = lerp_u8(p.blue8(),  c.blue8(),  alpha);
     let alpha = lerp_u8(p.alpha8(), c.alpha8(), alpha);
 
-    Rgba8::new(red, green, blue, alpha)
+    Rgba8::from_raw(red, green, blue, alpha)
 }

@@ -132,7 +132,7 @@ impl<T> Pixfmt<T> where Pixfmt<T>: Pixel {
     ///     let black  = Rgba32::new(0.,0.,0.,1.);
     ///     pix.copy_vline(0,0,10, black);
     ///
-    ///     let black8 = Rgba8::from_color(black); // pix.get() returns Rgba8
+    ///     let black8 = black.rgba(); // pix.get() returns Rgba8
     ///     assert_eq!(pix.get((0,0)), black8);
     ///     assert_eq!(pix.get((0,1)), black8);
     ///     assert_eq!(pix.get((0,9)), black8);
@@ -160,19 +160,19 @@ impl<T> Pixfmt<T> where Pixfmt<T>: Pixel {
 impl Source for Pixfmt<Rgba8> {
     fn get(&self, id: (usize, usize)) -> Rgba8 {
         let p = &self.rbuf[id];
-        Rgba8::new(p[0],p[1],p[2],p[3])
+        Rgba8::from_slice(p)
     }
 }
 impl Source for Pixfmt<RgbaPre8> {
     fn get(&self, id: (usize, usize)) -> Rgba8 {
         let p = &self.rbuf[id];
-        Rgba8::new(p[0],p[1],p[2],p[3])
+        RgbaPre8::from_slice(p).rgba()
     }
 }
 impl Source for Pixfmt<Rgb8> {
     fn get(&self, id: (usize, usize)) -> Rgba8 {
         let p = &self.rbuf[id];
-        Rgba8::new(p[0],p[1],p[2],255)
+        Rgb8::from_slice(p).rgba()
     }
 }
 impl Source for Pixfmt<Rgba32> {
@@ -185,7 +185,7 @@ impl Source for Pixfmt<Rgba32> {
         let alpha : f32 = unsafe { std::mem::transmute::<[u8;4],f32>([p[12],p[13],p[14],p[15]]) };
 
         let c = Rgba32::new(red,green,blue,alpha);
-        Rgba8::from_color(c)
+        c.rgba()
     }
 }
 
@@ -213,7 +213,7 @@ impl Pixel for Pixfmt<Rgba8> {
     impl_pixel!();
     fn setn<C: Color>(&mut self, id: (usize, usize), n: usize, c: C) {
         let bpp = Self::bpp();
-        let c = Rgba8::from_color(c).into_slice();
+        let c = c.rgba8().into_slice();
         let p = &mut self.rbuf[id][..n*bpp];
         for chunk in p.chunks_mut(bpp) {
             chunk.copy_from_slice(&c);
@@ -222,7 +222,7 @@ impl Pixel for Pixfmt<Rgba8> {
     fn bpp() -> usize { 4 }
     fn cover_mask() -> u64 { 255 }
     fn set<C: Color>(&mut self, id: (usize, usize), c: C) {
-        let c = Rgba8::from_color(c);
+        let c = c.rgba8();
         assert!(! self.rbuf.data.is_empty() );
         self.rbuf[id][0] = c.red8();
         self.rbuf[id][1] = c.green8();
@@ -242,13 +242,13 @@ impl Pixel for Pixfmt<Rgba8> {
     fn blend_pix<C: Color>(&mut self, id: (usize, usize), c: C, cover: u64) {
         let alpha = multiply_u8(c.alpha8(), cover as u8);
         let pix0 = self.get(id); // Rgba8
-        let pix  = self.mix_pix(pix0, Rgba8::from_color(c), alpha);
+        let pix  = self.mix_pix(pix0, c.rgba(), alpha);
         self.set(id, pix);
     }
     fn fill<C: Color>(&mut self, color: C) {
         let n = 4;
         let bpp = Self::bpp();
-        let c = Rgba8::from_color(color).into_slice();
+        let c = color.rgba8().into_slice();
         let c2 = [ c[0],c[1],c[2],c[3],  c[0],c[1],c[2],c[3],  c[0],c[1],c[2],c[3],  c[0],c[1],c[2],c[3] ];
         let mut chunks = self.rbuf.data.chunks_exact_mut(bpp*n);
         while let Some(chunk) = chunks.next() {
@@ -265,14 +265,14 @@ impl Pixel for Pixfmt<Rgb8> {
     impl_pixel!();
     fn setn<C: Color>(&mut self, id: (usize, usize), n: usize, c: C) {
         let bpp = Self::bpp();
-        let c = Rgb8::from_color(c).into_slice();
+        let c = c.rgb8().into_slice();
         let p = &mut self.rbuf[id][..bpp*n];
         for chunk in p.chunks_mut(bpp) {
             chunk.copy_from_slice(&c);
         }
     }
     fn set<C: Color>(&mut self, id: (usize, usize), c: C) {
-        let c = Rgb8::from_color(c).into_slice();
+        let c = c.rgb8().into_slice();
         let p = &mut self.rbuf[id][..3];
         p.copy_from_slice(&c);
         //p[0] = c.red8();
@@ -283,13 +283,13 @@ impl Pixel for Pixfmt<Rgb8> {
     fn cover_mask() -> u64 { 255 }
     fn blend_pix<C: Color>(&mut self, id: (usize, usize), c: C, cover: u64) {
         let pix0 = self.raw(id);
-        let pix  = self.mix_pix(pix0, Rgb8::from_color(c), c.alpha8(), cover);
+        let pix  = self.mix_pix(pix0, c.rgb(), c.alpha8(), cover);
         self.set(id, pix);
     }
     fn fill<C: Color>(&mut self, color: C) {
         let n = 4;
         let bpp = Self::bpp();
-        let c = Rgb8::from_color(color).into_slice();
+        let c = color.rgb8().into_slice();
         let c2 = [ c[0],c[1],c[2],  c[0],c[1],c[2], c[0],c[1],c[2], c[0],c[1],c[2] ];
         let mut chunks = self.rbuf.data.chunks_exact_mut(bpp*n);
         while let Some(chunk) = chunks.next() {
@@ -304,7 +304,7 @@ impl Pixel for Pixfmt<Rgb8> {
 impl Pixfmt<Gray8> {
     fn mix_pix(&mut self, id: (usize,usize), c: Gray8, alpha: u8) -> Gray8 {
         let p = Gray8::from_slice( &self.rbuf[id] );
-        Gray8::new_with_alpha(lerp_u8(p.value, c.value, alpha), alpha)
+        Gray8::from_raw(lerp_u8(p.luma.0, c.luma.0, alpha), alpha)
     }
     pub fn raw(&self, id: (usize,usize)) -> Gray8 {
         Gray8::from_slice( &self.rbuf[id] )
@@ -324,16 +324,16 @@ impl Pixfmt<Rgba8> {
     ///
     /// **Change function name to over**
     fn mix_pix(&mut self, p: Rgba8, c: Rgba8, alpha: u8) -> Rgba8 {
-        let red   =    lerp_u8(p.r, c.r, alpha);
-        let green =    lerp_u8(p.g, c.g, alpha);
-        let blue  =    lerp_u8(p.b, c.b, alpha);
-        let alpha =    prelerp_u8(p.a, alpha, alpha);
-        Rgba8::new(red, green, blue, alpha)
+        let red   =    lerp_u8(p.red8(), c.red8(), alpha);
+        let green =    lerp_u8(p.green8(), c.green8(), alpha);
+        let blue  =    lerp_u8(p.blue8(), c.blue8(), alpha);
+        let alpha =    prelerp_u8(p.alpha8(), alpha, alpha);
+        Rgba8::from_raw(red, green, blue, alpha)
     }
     fn _blend_pix<C: Color>(&mut self, id: (usize, usize), c: C, cover: u64) {
         let alpha = multiply_u8(c.alpha8(), cover as u8);
         let pix0 = self.get(id);
-        let pix  = self.mix_pix(pix0, Rgba8::from_color(c), alpha);
+        let pix  = self.mix_pix(pix0, c.rgba(), alpha);
         self.set(id, pix);
     }
 }
@@ -358,8 +358,8 @@ impl Pixel for Pixfmt<RgbaPre8> {
     fn cover_mask() -> u64 { 255 }
     fn blend_pix<C: Color>(&mut self, id: (usize, usize), c: C, cover: u64) {
         let p = self.get(id);
-        let p0 = RgbaPre8::new(p.red8(), p.green8(), p.blue8(), p.alpha8());
-        let c0 = RgbaPre8::new(c.red8(), c.green8(), c.blue8(), c.alpha8());
+        let p0 = RgbaPre8::from_raw(p.red8(), p.green8(), p.blue8(), p.alpha8());
+        let c0 = RgbaPre8::from_raw(c.red8(), c.green8(), c.blue8(), c.alpha8());
         let p  = self.mix_pix(p0, c0, c.alpha8(), cover);
         self.set(id, p);
     }
@@ -381,7 +381,7 @@ impl Pixel for Pixfmt<RgbaPre8> {
 impl Pixfmt<Rgb8> {
     pub fn raw(&self, id: (usize, usize)) -> Rgb8 {
          let p = &self.rbuf[id];
-        Rgb8::new(p[0],p[1],p[2])
+        Rgb8::from_slice(p)
     }
     /// Compute **over** operator
     ///
@@ -396,10 +396,10 @@ impl Pixfmt<Rgb8> {
     ///
     fn mix_pix(&mut self, p: Rgb8, c: Rgb8, alpha: u8, cover: u64) -> Rgb8 {
         let alpha = multiply_u8(alpha, cover as u8);
-        let red   = lerp_u8(p.r, c.r, alpha);
-        let green = lerp_u8(p.g, c.g, alpha);
-        let blue  = lerp_u8(p.b, c.b, alpha);
-        Rgb8::new(red, green, blue)
+        let red   = lerp_u8(p.red8(), c.red8(), alpha);
+        let green = lerp_u8(p.green8(), c.green8(), alpha);
+        let blue  = lerp_u8(p.blue8(), c.blue8(), alpha);
+        Rgb8::from_raw(red, green, blue)
     }
 }
 impl Pixfmt<RgbaPre8> {
@@ -416,15 +416,15 @@ impl Pixfmt<RgbaPre8> {
     ///
     fn mix_pix(&mut self, p: RgbaPre8, c: RgbaPre8, alpha: u8, cover: u64) -> RgbaPre8 {
         let alpha = multiply_u8(alpha, cover as u8);
-        let red   = multiply_u8(c.r, cover as u8);
-        let green = multiply_u8(c.g, cover as u8);
-        let blue  = multiply_u8(c.b, cover as u8);
+        let red   = multiply_u8(c.red8(), cover as u8);
+        let green = multiply_u8(c.green8(), cover as u8);
+        let blue  = multiply_u8(c.blue8(), cover as u8);
 
-        let red   = prelerp_u8(p.r, red,   alpha);
-        let green = prelerp_u8(p.g, green, alpha);
-        let blue  = prelerp_u8(p.b, blue,  alpha);
-        let alpha = prelerp_u8(p.a, alpha, alpha);
-        RgbaPre8::new(red, green, blue, alpha)
+        let red   = prelerp_u8(p.red8(), red,   alpha);
+        let green = prelerp_u8(p.green8(), green, alpha);
+        let blue  = prelerp_u8(p.blue8(), blue,  alpha);
+        let alpha = prelerp_u8(p.alpha8(), alpha, alpha);
+        RgbaPre8::from_raw(red, green, blue, alpha)
     }
     pub fn drop_alpha(&self) -> Pixfmt<Rgb8> {
         let buf : Vec<_> = self.as_bytes().iter()
@@ -452,10 +452,10 @@ impl Pixel for Pixfmt<Rgba32> {
     fn set<C: Color>(&mut self, id: (usize, usize), c: C) {
         let c = Rgba32::from_color(c);
         assert!(self.rbuf.data.len() > 0);
-        let red   : [u8;4] = unsafe { std::mem::transmute(c.r) };
-        let green : [u8;4] = unsafe { std::mem::transmute(c.g) };
-        let blue  : [u8;4] = unsafe { std::mem::transmute(c.b) };
-        let alpha : [u8;4] = unsafe { std::mem::transmute(c.a) };
+        let red   : [u8;4] = unsafe { std::mem::transmute(c.red) };
+        let green : [u8;4] = unsafe { std::mem::transmute(c.green) };
+        let blue  : [u8;4] = unsafe { std::mem::transmute(c.blue) };
+        let alpha : [u8;4] = unsafe { std::mem::transmute(c.alpha) };
 
         for i in 0 .. 4 {
             self.rbuf[id][i]    = red[i];
@@ -499,8 +499,8 @@ impl Pixel for Pixfmt<Gray8> {
     }
     fn set<C: Color>(&mut self, id: (usize, usize), c: C) {
         let c = Gray8::from_color(c);
-        self.rbuf[id][0] = c.value;
-        self.rbuf[id][1] = c.alpha;
+        self.rbuf[id][0] = c.luma.0;
+        self.rbuf[id][1] = c.alpha.0;
     }
     fn cover_mask() -> u64 {  255  }
     fn bpp() -> usize { 2 }
@@ -542,15 +542,15 @@ impl<'a,T,C> PixfmtAlphaBlend<'a,T,C> where T: Pixel {
 impl PixfmtAlphaBlend<'_,Pixfmt<Rgb8>,Gray8> {
     fn component(&self, c: Rgb8) -> Gray8 {
         match self.offset {
-            0 => Gray8::new(c.r),
-            1 => Gray8::new(c.g),
-            2 => Gray8::new(c.b),
+            0 => Gray8::from_raw(c.red8(), 255),
+            1 => Gray8::from_raw(c.green8(), 255),
+            2 => Gray8::from_raw(c.blue8(), 255),
             _ => unreachable!("incorrect offset for Rgb8"),
         }
     }
     fn mix_pix(&mut self, id: (usize,usize), c: Gray8, alpha: u8) -> Gray8 {
         let p = self.component( Rgb8::from_slice( &self.ren.pixf.rbuf[id] ) );
-        Gray8::new_with_alpha(lerp_u8(p.value, c.value, alpha), alpha)
+        Gray8::from_raw(lerp_u8(p.luma.0, c.luma.0, alpha), alpha)
     }
 }
 
@@ -576,21 +576,21 @@ impl Pixel for PixfmtAlphaBlend<'_,Pixfmt<Rgb8>,Gray8> {
         }
     }
     fn setn<C: Color>(&mut self, id: (usize, usize), n: usize, c: C) {
-        let c = Rgb8::from_color(c);
+        let c = c.rgb8();
         for i in 0 .. n {
-            self.ren.pixf.rbuf[(id.0+i,id.1)][self.offset] = self.component(c).value;
+            self.ren.pixf.rbuf[(id.0+i,id.1)][self.offset] = self.component(c).luma.0;
         }
     }
     fn set<C: Color>(&mut self, id: (usize, usize), c: C) {
-        let c = Rgb8::from_color(c);
-        self.ren.pixf.rbuf[id][self.offset] = self.component(c).value;
+        let c = c.rgb();
+        self.ren.pixf.rbuf[id][self.offset] = self.component(c).luma.0;
     }
     fn cover_mask() -> u64 { Pixfmt::<Rgb8>::cover_mask() }
     fn bpp() -> usize { Pixfmt::<Rgb8>::bpp() }
     fn blend_pix<C: Color>(&mut self, id: (usize, usize), c: C, cover: u64) {
         let alpha = multiply_u8(c.alpha8(), cover as u8);
 
-        let c = Rgb8::from_color(c);
+        let c = c.rgb();
         let c0 = self.component(c);
         let p0 = self.mix_pix(id, c0, alpha);
         self.set(id, p0);
@@ -618,6 +618,7 @@ impl Pixel for PixfmtAlphaBlend<'_,Pixfmt<Rgb8>,Gray8> {
 
 #[cfg(test)]
 mod tests {
+    use crate::FromRaw4;
     use crate::NamedColor;
     use crate::Pixfmt;
     use crate::Pixel;
@@ -639,38 +640,38 @@ mod tests {
         p.copy_pixel(1,0, Rgb8::white());
         assert_eq!(p.get((1,0)), Rgba8::white());
 
-        let red = Rgba8::new(255,0,0,128);
+        let red = Rgba8::from_raw(255,0,0,128);
         p.copy_hline(0,1,10,red);
         for i in 0 .. 10 {
-            assert_eq!(p.get((i,1)), Rgba8::new(255,0,0,255));
+            assert_eq!(p.get((i,1)), Rgba8::from_raw(255,0,0,255));
         }
-        let yellow = Srgba8::new(128,255,0,128);
+        let yellow = Srgba8::from_raw(128,255,0,128);
         p.copy_hline(0,2,10,yellow);
         for i in 0 .. 10 {
-            assert_eq!(p.get((i,2)), Rgba8::new(55,255,0,255));
+            assert_eq!(p.get((i,2)), Rgba8::from_raw(55,255,0,255));
         }
-        let fuchsia = Rgba32::new(0.0,1.0,1.0,0.5);
+        let fuchsia = Rgba32::from_raw(0.0,1.0,1.0,0.5);
         p.copy_hline(0,3,10,fuchsia);
         for i in 0 .. 10 {
-            assert_eq!(p.get((i,3)), Rgba8::new(0,255,255,255));
+            assert_eq!(p.get((i,3)), Rgba8::from_raw(0,255,255,255));
         }
         p.clear();
-        assert_eq!(p.get((0,3)), Rgba8::new(255,255,255,255));
+        assert_eq!(p.get((0,3)), Rgba8::from_raw(255,255,255,255));
 
-        let red = Rgba8::new(255,0,0,128);
+        let red = Rgba8::from_raw(255,0,0,128);
         p.copy_vline(1,0,10,red);
         for i in 0 .. 10 {
-            assert_eq!(p.get((1,i)), Rgba8::new(255,0,0,255));
+            assert_eq!(p.get((1,i)), Rgba8::from_raw(255,0,0,255));
         }
-        let yellow = Srgba8::new(128,255,0,128);
+        let yellow = Srgba8::from_raw(128,255,0,128);
         p.copy_vline(2,0,10,yellow);
         for i in 0 .. 10 {
-            assert_eq!(p.get((2,i)), Rgba8::new(55,255,0,255));
+            assert_eq!(p.get((2,i)), Rgba8::from_raw(55,255,0,255));
         }
-        let fuchsia = Rgba32::new(0.0,1.0,1.0,0.5);
+        let fuchsia = Rgba32::from_raw(0.0,1.0,1.0,0.5);
         p.copy_vline(3,0,10,fuchsia);
         for i in 0 .. 10 {
-            assert_eq!(p.get((3,i)), Rgba8::new(0,255,255,255));
+            assert_eq!(p.get((3,i)), Rgba8::from_raw(0,255,255,255));
         }
 
         p.clear();
@@ -722,45 +723,45 @@ mod tests {
         let black  = Rgba8::black();
         let white  = Rgba8::white();
 
-        pix.copy_pixel(0,0,Rgba8::new(0,0,0,255));
+        pix.copy_pixel(0,0,Rgba8::from_raw(0,0,0,255));
         assert_eq!(pix.get((0,0)), black);
 
         let (alpha, beta, cover) = (255, 255, 255); // Copy Pixel
-        pix.copy_pixel(0,0,Rgba8::new(0,0,0,alpha));
-        pix.copy_or_blend_pix_with_cover((0,0), Rgba8::new(255,255,255,beta), cover);
+        pix.copy_pixel(0,0,Rgba8::from_raw(0,0,0,alpha));
+        pix.copy_or_blend_pix_with_cover((0,0), Rgba8::from_raw(255,255,255,beta), cover);
         assert_eq!(pix.get((0,0)), white);
 
         let (alpha, beta, cover) = (255, 255, 0); // Do Nothing, No Coverage
-        pix.copy_pixel(0,0,Rgba8::new(0,0,0,alpha));
-        pix.copy_or_blend_pix_with_cover((0,0), Rgba8::new(255,255,255,beta), cover);
+        pix.copy_pixel(0,0,Rgba8::from_raw(0,0,0,alpha));
+        pix.copy_or_blend_pix_with_cover((0,0), Rgba8::from_raw(255,255,255,beta), cover);
         assert_eq!(pix.get((0,0)), black);
 
         let (alpha, beta, cover) = (255, 0, 255); // Do Nothing, Transparent
-        pix.copy_pixel(0,0,Rgba8::new(0,0,0,alpha));
-        pix.copy_or_blend_pix_with_cover((0,0), Rgba8::new(255,255,255,beta), cover);
+        pix.copy_pixel(0,0,Rgba8::from_raw(0,0,0,alpha));
+        pix.copy_or_blend_pix_with_cover((0,0), Rgba8::from_raw(255,255,255,beta), cover);
         assert_eq!(pix.get((0,0)), black);
 
         let (alpha, beta, cover) = (255, 255, 128); // Partial Coverage, Blend
-        pix.copy_pixel(0,0,Rgba8::new(0,0,0,alpha));
-        pix.copy_or_blend_pix_with_cover((0,0), Rgba8::new(255,255,255,beta), cover);
-        assert_eq!(pix.get((0,0)), Rgba8::new(128,128,128,255));
+        pix.copy_pixel(0,0,Rgba8::from_raw(0,0,0,alpha));
+        pix.copy_or_blend_pix_with_cover((0,0), Rgba8::from_raw(255,255,255,beta), cover);
+        assert_eq!(pix.get((0,0)), Rgba8::from_raw(128,128,128,255));
 
         let (alpha, beta, cover) = (255, 128, 255); // Full Coverage, Alpha Color
-        pix.copy_pixel(0,0,Rgba8::new(0,0,0,alpha));
-        pix.copy_or_blend_pix_with_cover((0,0), Rgba8::new(255,255,255,beta), cover);
-        assert_eq!(pix.get((0,0)), Rgba8::new(128,128,128,255));
+        pix.copy_pixel(0,0,Rgba8::from_raw(0,0,0,alpha));
+        pix.copy_or_blend_pix_with_cover((0,0), Rgba8::from_raw(255,255,255,beta), cover);
+        assert_eq!(pix.get((0,0)), Rgba8::from_raw(128,128,128,255));
 
         let (alpha, beta, cover) = (128, 128, 255); // Partial Coverage, Blend
-        pix.copy_pixel(0,0,Rgba8::new(255,255,255,alpha));
-        assert_eq!(pix.get((0,0)), Rgba8::new(255,255,255,255)); // Alpha channel is ignored
-        pix.copy_or_blend_pix_with_cover((0,0), Rgba8::new(0,0,0,beta), cover);
-        assert_eq!(pix.get((0,0)), Rgba8::new(127,127,127,255));
+        pix.copy_pixel(0,0,Rgba8::from_raw(255,255,255,alpha));
+        assert_eq!(pix.get((0,0)), Rgba8::from_raw(255,255,255,255)); // Alpha channel is ignored
+        pix.copy_or_blend_pix_with_cover((0,0), Rgba8::from_raw(0,0,0,beta), cover);
+        assert_eq!(pix.get((0,0)), Rgba8::from_raw(127,127,127,255));
 
         let (alpha, beta, cover) = (128, 128, 128); // Partial Coverage, Blend
-        pix.copy_pixel(0,0,Rgba8::new(255,255,255,alpha));
-        assert_eq!(pix.get((0,0)), Rgba8::new(255,255,255,255)); // Alpha channel is ignored
-        pix.copy_or_blend_pix_with_cover((0,0), Rgba8::new(0,0,0,beta), cover);
-        assert_eq!(pix.get((0,0)), Rgba8::new(191,191,191,255));
+        pix.copy_pixel(0,0,Rgba8::from_raw(255,255,255,alpha));
+        assert_eq!(pix.get((0,0)), Rgba8::from_raw(255,255,255,255)); // Alpha channel is ignored
+        pix.copy_or_blend_pix_with_cover((0,0), Rgba8::from_raw(0,0,0,beta), cover);
+        assert_eq!(pix.get((0,0)), Rgba8::from_raw(191,191,191,255));
     }
 
     #[test]
@@ -770,45 +771,45 @@ mod tests {
         let black  = Rgba8::black();
         let white  = Rgba8::white();
 
-        pix.copy_pixel(0,0,Rgba8::new(0,0,0,255));
+        pix.copy_pixel(0,0,Rgba8::from_raw(0,0,0,255));
         assert_eq!(pix.get((0,0)), black);
 
         let (alpha, beta, cover) = (255, 255, 255); // Copy Pixel
-        pix.copy_pixel(0,0,Rgba8::new(0,0,0,alpha));
-        pix.copy_or_blend_pix_with_cover((0,0), Rgba8::new(255,255,255,beta), cover);
+        pix.copy_pixel(0,0,Rgba8::from_raw(0,0,0,alpha));
+        pix.copy_or_blend_pix_with_cover((0,0), Rgba8::from_raw(255,255,255,beta), cover);
         assert_eq!(pix.get((0,0)), white);
 
         let (alpha, beta, cover) = (255, 255, 0); // Do Nothing, No Coverage
-        pix.copy_pixel(0,0,Rgba8::new(0,0,0,alpha));
-        pix.copy_or_blend_pix_with_cover((0,0), Rgba8::new(255,255,255,beta), cover);
+        pix.copy_pixel(0,0,Rgba8::from_raw(0,0,0,alpha));
+        pix.copy_or_blend_pix_with_cover((0,0), Rgba8::from_raw(255,255,255,beta), cover);
         assert_eq!(pix.get((0,0)), black);
 
         let (alpha, beta, cover) = (255, 0, 255); // Do Nothing, Transparent
-        pix.copy_pixel(0,0,Rgba8::new(0,0,0,alpha));
-        pix.copy_or_blend_pix_with_cover((0,0), Rgba8::new(255,255,255,beta), cover);
+        pix.copy_pixel(0,0,Rgba8::from_raw(0,0,0,alpha));
+        pix.copy_or_blend_pix_with_cover((0,0), Rgba8::from_raw(255,255,255,beta), cover);
         assert_eq!(pix.get((0,0)), black);
 
         let (alpha, beta, cover) = (255, 255, 128); // Partial Coverage, Blend
-        pix.copy_pixel(0,0,Rgba8::new(0,0,0,alpha));
-        pix.copy_or_blend_pix_with_cover((0,0), Rgba8::new(255,255,255,beta), cover);
-        assert_eq!(pix.get((0,0)), Rgba8::new(128,128,128,255));
+        pix.copy_pixel(0,0,Rgba8::from_raw(0,0,0,alpha));
+        pix.copy_or_blend_pix_with_cover((0,0), Rgba8::from_raw(255,255,255,beta), cover);
+        assert_eq!(pix.get((0,0)), Rgba8::from_raw(128,128,128,255));
 
         let (alpha, beta, cover) = (255, 128, 255); // Full Coverage, Alpha Color
-        pix.copy_pixel(0,0,Rgba8::new(0,0,0,alpha));
-        pix.copy_or_blend_pix_with_cover((0,0), Rgba8::new(255,255,255,beta), cover);
-        assert_eq!(pix.get((0,0)), Rgba8::new(128,128,128,255));
+        pix.copy_pixel(0,0,Rgba8::from_raw(0,0,0,alpha));
+        pix.copy_or_blend_pix_with_cover((0,0), Rgba8::from_raw(255,255,255,beta), cover);
+        assert_eq!(pix.get((0,0)), Rgba8::from_raw(128,128,128,255));
 
         let (alpha, beta, cover) = (128, 128, 255); // Partial Coverage, Blend
-        pix.copy_pixel(0,0,Rgba8::new(255,255,255,alpha));
-        assert_eq!(pix.get((0,0)), Rgba8::new(255,255,255,128));
-        pix.copy_or_blend_pix_with_cover((0,0), Rgba8::new(0,0,0,beta), cover);
-        assert_eq!(pix.get((0,0)), Rgba8::new(127,127,127,192));
+        pix.copy_pixel(0,0,Rgba8::from_raw(255,255,255,alpha));
+        assert_eq!(pix.get((0,0)), Rgba8::from_raw(255,255,255,128));
+        pix.copy_or_blend_pix_with_cover((0,0), Rgba8::from_raw(0,0,0,beta), cover);
+        assert_eq!(pix.get((0,0)), Rgba8::from_raw(127,127,127,192));
 
         let (alpha, beta, cover) = (128, 128, 128); // Partial Coverage, Blend
-        pix.copy_pixel(0,0,Rgba8::new(255,255,255,alpha));
-        assert_eq!(pix.get((0,0)), Rgba8::new(255,255,255,128)); // Alpha channel is ignored
-        pix.copy_or_blend_pix_with_cover((0,0), Rgba8::new(0,0,0,beta), cover);
-        assert_eq!(pix.get((0,0)), Rgba8::new(191,191,191,160));
+        pix.copy_pixel(0,0,Rgba8::from_raw(255,255,255,alpha));
+        assert_eq!(pix.get((0,0)), Rgba8::from_raw(255,255,255,128)); // Alpha channel is ignored
+        pix.copy_or_blend_pix_with_cover((0,0), Rgba8::from_raw(0,0,0,beta), cover);
+        assert_eq!(pix.get((0,0)), Rgba8::from_raw(191,191,191,160));
     }
 
     #[test]
@@ -818,44 +819,44 @@ mod tests {
         let black  = Rgba8::black();
         let white  = Rgba8::white();
 
-        pix.copy_pixel(0,0,Rgba8::new(0,0,0,255));
+        pix.copy_pixel(0,0,Rgba8::from_raw(0,0,0,255));
         assert_eq!(pix.get((0,0)), black);
 
         let (alpha, beta, cover) = (255, 255, 255); // Copy Pixel
-        pix.copy_pixel(0,0,Rgba8::new(0,0,0,alpha));
-        pix.copy_or_blend_pix_with_cover((0,0), Rgba8::new(255,255,255,beta), cover);
+        pix.copy_pixel(0,0,Rgba8::from_raw(0,0,0,alpha));
+        pix.copy_or_blend_pix_with_cover((0,0), Rgba8::from_raw(255,255,255,beta), cover);
         assert_eq!(pix.get((0,0)), white);
 
         let (alpha, beta, cover) = (255, 255, 0); // Do Nothing, No Coverage
-        pix.copy_pixel(0,0,Rgba8::new(0,0,0,alpha));
-        pix.copy_or_blend_pix_with_cover((0,0), Rgba8::new(255,255,255,beta), cover);
+        pix.copy_pixel(0,0,Rgba8::from_raw(0,0,0,alpha));
+        pix.copy_or_blend_pix_with_cover((0,0), Rgba8::from_raw(255,255,255,beta), cover);
         assert_eq!(pix.get((0,0)), black);
 
         let (alpha, beta, cover) = (255, 0, 255); // Do Nothing, Transparent
-        pix.copy_pixel(0,0,Rgba8::new(0,0,0,alpha));
-        pix.copy_or_blend_pix_with_cover((0,0), Rgba8::new(255,255,255,beta), cover);
+        pix.copy_pixel(0,0,Rgba8::from_raw(0,0,0,alpha));
+        pix.copy_or_blend_pix_with_cover((0,0), Rgba8::from_raw(255,255,255,beta), cover);
         assert_eq!(pix.get((0,0)), black);
 
         let (alpha, beta, cover) = (255, 255, 128); // Partial Coverage, Blend
-        pix.copy_pixel(0,0,Rgba8::new(0,0,0,alpha));
-        pix.copy_or_blend_pix_with_cover((0,0), Rgba8::new(255,255,255,beta), cover);
-        assert_eq!(pix.get((0,0)), Rgba8::new(128,128,128,255));
+        pix.copy_pixel(0,0,Rgba8::from_raw(0,0,0,alpha));
+        pix.copy_or_blend_pix_with_cover((0,0), Rgba8::from_raw(255,255,255,beta), cover);
+        assert_eq!(pix.get((0,0)), Rgba8::from_raw(128,128,128,255));
 
         let (alpha, beta, cover) = (255, 128, 255); // Full Coverage, Alpha Color
-        pix.copy_pixel(0,0,Rgba8::new(0,0,0,alpha));
-        pix.copy_or_blend_pix_with_cover((0,0), Rgba8::new(255,255,255,beta), cover);
-        assert_eq!(pix.get((0,0)), Rgba8::new(255,255,255,255));
+        pix.copy_pixel(0,0,Rgba8::from_raw(0,0,0,alpha));
+        pix.copy_or_blend_pix_with_cover((0,0), Rgba8::from_raw(255,255,255,beta), cover);
+        assert_eq!(pix.get((0,0)), Rgba8::from_raw(255,255,255,255));
 
         let (alpha, beta, cover) = (128, 128, 255); // Partial Coverage, Blend
-        pix.copy_pixel(0,0,Rgba8::new(255,255,255,alpha));
-        assert_eq!(pix.get((0,0)), Rgba8::new(255,255,255,128));
-        pix.copy_or_blend_pix_with_cover((0,0), Rgba8::new(0,0,0,beta), cover);
-        assert_eq!(pix.get((0,0)), Rgba8::new(127,127,127,192));
+        pix.copy_pixel(0,0,Rgba8::from_raw(255,255,255,alpha));
+        assert_eq!(pix.get((0,0)), Rgba8::from_raw(255,255,255,128));
+        pix.copy_or_blend_pix_with_cover((0,0), Rgba8::from_raw(0,0,0,beta), cover);
+        assert_eq!(pix.get((0,0)), Rgba8::from_raw(127,127,127,192));
 
         let (alpha, beta, cover) = (128, 128, 128); // Partial Coverage, Blend
-        pix.copy_pixel(0,0,Rgba8::new(255,255,255,alpha));
-        assert_eq!(pix.get((0,0)), Rgba8::new(255,255,255,128)); // Alpha channel is ignored
-        pix.copy_or_blend_pix_with_cover((0,0), Rgba8::new(0,0,0,beta), cover);
-        assert_eq!(pix.get((0,0)), Rgba8::new(191,191,191,160));
+        pix.copy_pixel(0,0,Rgba8::from_raw(255,255,255,alpha));
+        assert_eq!(pix.get((0,0)), Rgba8::from_raw(255,255,255,128)); // Alpha channel is ignored
+        pix.copy_or_blend_pix_with_cover((0,0), Rgba8::from_raw(0,0,0,beta), cover);
+        assert_eq!(pix.get((0,0)), Rgba8::from_raw(191,191,191,160));
     }
 }
