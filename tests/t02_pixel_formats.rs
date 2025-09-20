@@ -1,13 +1,13 @@
 
 extern crate agg;
 
-use agg::{NamedColor, Pixel};
+use agg::prelude::*;
 
 fn draw_black_frame(pix: &mut agg::Pixfmt<agg::Rgb8>) {
     let w = pix.width();
     let h = pix.height();
     println!("w,h: {} {}", w,h);
-    let black = agg::Rgb8::black();
+    let black = agg::Rgb8::BLACK;
     for i in 0 .. h {
         pix.copy_pixel(0,   i, black);
         pix.copy_pixel(w-1, i, black);
@@ -27,7 +27,7 @@ fn t02_pixel_formats() {
     draw_black_frame(&mut pix);
 
     for i in 0 .. pix.height()/2 {
-        let c = agg::Rgb8::new(127,200,98);
+        let c = agg::Rgb8::from_raw(127,200,98);
         pix.copy_pixel(i, i, c);
     }
 

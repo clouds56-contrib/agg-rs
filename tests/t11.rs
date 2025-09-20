@@ -1,6 +1,6 @@
 
 extern crate agg;
-use agg::Render;
+use agg::prelude::*;
 
 #[test]
 fn t11_full() {
@@ -10,11 +10,11 @@ fn t11_full() {
 
     let mut ren_base = agg::RenderingBase::new(pixf);
 
-    ren_base.clear( agg::Rgba8::new(255, 255, 255, 255) );
+    ren_base.clear( agg::Rgba8::WHITE );
 
     let mut ren = agg::RenderingScanlineAASolid::with_base(&mut ren_base);
 
-    ren.color( agg::Rgba8::new(255,0,0,255) );
+    ren.color( agg::Rgba8::RED );
 
     let mut ras = agg::RasterizerScanline::new();
 
@@ -28,4 +28,3 @@ fn t11_full() {
 
     assert_eq!(agg::ppm::img_diff("tests/tmp/agg_test_11.png", "images/agg_test_11.png").unwrap(), true);
 }
-

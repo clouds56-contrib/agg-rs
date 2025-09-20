@@ -2,10 +2,10 @@ use std::u8;
 
 use crate::{luminance, math::{lerp_u8, multiply_u8, prelerp_u8}};
 
-use palette::{bool_mask::HasBoolMask, num::{IsValidDivisor, One, Real, Zero}};
+use palette::{bool_mask::HasBoolMask, num::{IsValidDivisor, MulAdd, MulSub, One, PartialCmp, Powf, Real, Zero}};
 
 
-#[derive(Copy, Clone, Debug, PartialEq, Hash)]
+#[derive(Copy, Clone, Debug, PartialEq, Hash, PartialOrd, Ord, Eq)]
 pub struct UFixed<T>(pub T);
 
 impl<T> UFixed<T> {
@@ -79,6 +79,56 @@ macro_rules! impl_num {
       }
     }
 
+    impl palette::num::Powf for UFixed<$ty> {
+      fn powf(self, n: Self) -> Self {
+        <Self as MulOps>::powf(self, n.to_f64())
+      }
+    }
+
+    impl palette::num::MulAdd for UFixed<$ty> {
+      fn mul_add(self, a: Self, b: Self) -> Self {
+        <Self as MulOps>::mul_add(self, a, b)
+      }
+    }
+
+    impl palette::num::MulSub for UFixed<$ty> {
+      fn mul_sub(self, a: Self, b: Self) -> Self {
+        <Self as MulOps>::mul_sub(self, a, b)
+      }
+    }
+
+    impl palette::num::PartialCmp for UFixed<$ty> {
+      #[inline]
+      fn lt(&self, other: &Self) -> Self::Mask {
+        self < other
+      }
+
+      #[inline]
+      fn lt_eq(&self, other: &Self) -> Self::Mask {
+        self <= other
+      }
+
+      #[inline]
+      fn eq(&self, other: &Self) -> Self::Mask {
+        self == other
+      }
+
+      #[inline]
+      fn neq(&self, other: &Self) -> Self::Mask {
+        self != other
+      }
+
+      #[inline]
+      fn gt_eq(&self, other: &Self) -> Self::Mask {
+        self >= other
+      }
+
+      #[inline]
+      fn gt(&self, other: &Self) -> Self::Mask {
+        self > other
+      }
+    }
+
     impl HasBoolMask for UFixed<$ty> {
       type Mask = bool;
     }
@@ -121,7 +171,7 @@ pub trait RealLike: Real + One + Zero + Copy + std::fmt::Debug + PartialEq<Self>
 impl_num!(u8 u16);
 impl_float!(f32 f64);
 
-pub trait MulOps: RealLike + std::ops::Mul<Output=Self> + std::ops::Div<Output=Self> + IsValidDivisor + HasBoolMask<Mask = bool> {
+pub trait MulOps: RealLike + std::ops::Mul<Output=Self> + std::ops::Div<Output=Self> + Powf + MulAdd + MulSub + PartialCmp + IsValidDivisor + HasBoolMask<Mask = bool> {
   /// Multiply two color values, clamping the result to [0, 1]
   fn mul(self, rhs: Self) -> Self {
     Self::from_f64(self.to_f64() * rhs.to_f64())
@@ -129,6 +179,20 @@ pub trait MulOps: RealLike + std::ops::Mul<Output=Self> + std::ops::Div<Output=S
 
   fn div(self, rhs: Self) -> Self {
     Self::from_f64(self.to_f64() / rhs.to_f64())
+  }
+
+  /// TODO: this powf is different from palette::num::Powf
+  /// because it takes f64 as exponent, not Self
+  fn powf(self, n: f64) -> Self {
+    Self::from_f64(self.to_f64().powf(n))
+  }
+
+  fn mul_add(self, a: Self, b: Self) -> Self {
+    Self::from_f64(self.to_f64() * a.to_f64() + b.to_f64())
+  }
+
+  fn mul_sub(self, a: Self, b: Self) -> Self {
+    Self::from_f64(self.to_f64() * a.to_f64() - b.to_f64())
   }
 
   /// Interpolator a value between two end points pre-calculated by alpha

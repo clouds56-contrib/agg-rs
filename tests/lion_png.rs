@@ -1,14 +1,14 @@
 
+extern crate agg;
+use agg::prelude::*;
 use std::fs;
 
-use agg::{NamedColor, Render};
-
-fn parse_lion() -> (Vec<agg::Path>, Vec<agg::Rgba8>){
+fn parse_lion(arrange_orientations: bool) -> (Vec<agg::Path>, Vec<agg::Rgba8>){
     let txt = fs::read_to_string("tests/lion.txt").unwrap();
     let mut paths = vec![];
     let mut colors = vec![];
     let mut path = agg::Path::new();
-    let mut color = agg::Rgba8::black();
+    let mut color = agg::Rgba8::BLACK;
     let mut cmd = agg::PathCommand::Stop;
 
     for line in txt.lines() {
@@ -25,7 +25,7 @@ fn parse_lion() -> (Vec<agg::Path>, Vec<agg::Rgba8>){
                 colors.push(color);
             }
             path = agg::Path::new();
-            color =  agg::Rgba8::new(r,g,b,255);
+            color = agg::Rgba8::from_raw(r,g,b,255);
         } else {
             for val in v {
                 if val == "M" {
@@ -56,42 +56,58 @@ fn parse_lion() -> (Vec<agg::Path>, Vec<agg::Rgba8>){
         paths.push(path);
     }
     assert_eq!(paths.len(), colors.len());
+    if arrange_orientations {
+        paths.iter_mut().for_each(|p| p.arrange_orientations(agg::PathOrientation::Clockwise));
+    }
     (paths, colors)
 }
 
-#[test]
-fn lion_png() {
-    let (w,h) = (400,400);
-
-    let (paths, colors) = parse_lion();
-    let pixf = agg::Pixfmt::<agg::Rgb8>::new(w,h);
-    let mut ren_base = agg::RenderingBase::new(pixf);
-    ren_base.clear( agg::Rgba8::new(255, 255, 255, 255) );
-    let mut ren = agg::RenderingScanlineBinSolid::with_base(&mut ren_base);
-    ren.color( agg::Rgba8::new(255,0,0,255) );
-
-    let mut ras = agg::RasterizerScanline::new();
-
+// Helper that recenters paths to the middle of a w x h pixel image and
+// returns a Vec of ConvTransform wrappers ready for rendering.
+fn transform_paths(paths: Vec<agg::Path>, w: f64, h: f64) -> Vec<agg::ConvTransform> {
     if paths.len() == 0 {
-        return;
+        return Vec::new();
     }
     let p = paths[0].vertices[0];
     let mut r = agg::Rectangle::new(p.x,p.y,p.x,p.y);
     for p in &paths {
         if let Some(rp) = agg::bounding_rect(p) {
+            //eprintln!("dx,dy: {:?}", rp);
             r.expand_rect(&rp);
         }
     }
+    //eprintln!("dx,dy: {:?}", r);
     let g_base_dx = (r.x2() - r.x1())/2.0;
     let g_base_dy = (r.y2() - r.y1())/2.0;
     let mut mtx = agg::Transform::new();
-
+    //eprintln!("dx,dy: {} {}", -g_base_dx, -g_base_dy);
+    //eprintln!("dx,dy: {} {}", w/2.0, h/2.0);
     mtx.translate(-g_base_dx, -g_base_dy);
-    mtx.translate((w/2) as f64, (h/2) as f64);
-
+    mtx.translate(w/2.0, h/2.0);
+    //mtx.translate(0.0, 0.0);
     let t : Vec<_> = paths.into_iter()
         .map(|p| agg::ConvTransform::new(p, mtx.clone()))
         .collect();
+    println!("polygons: {}", t.len());
+    t
+}
+
+mod tests {
+use super::*;
+#[test]
+fn lion_png() {
+    let (w,h) = (400,400);
+
+    let (paths, colors) = parse_lion(false);
+    let pixf = agg::Pixfmt::<agg::Rgb8>::new(w,h);
+    let mut ren_base = agg::RenderingBase::new(pixf);
+    ren_base.clear( agg::Rgba8::WHITE );
+    let mut ren = agg::RenderingScanlineBinSolid::with_base(&mut ren_base);
+    ren.color( agg::Rgba8::RED );
+
+    let mut ras = agg::RasterizerScanline::new();
+
+    let t = transform_paths(paths, w as f64, h as f64);
 
     agg::render_all_paths(&mut ras, &mut ren, &t, &colors);
 
@@ -100,4 +116,140 @@ fn lion_png() {
     if ! agg::ppm::img_diff("tests/tmp/lion.png", "images/lion.png").unwrap() {
         panic!("PNG Images differ");
     }
+}
+
+#[test]
+fn lion_cw() {
+    let (w,h) = (400,400);
+
+    let (paths, colors) = parse_lion(true);
+    let pixf = agg::Pixfmt::<agg::Rgb8>::new(w,h);
+    let mut ren_base = agg::RenderingBase::new(pixf);
+    ren_base.clear( agg::Rgba8::WHITE );
+    let mut ren = agg::RenderingScanlineBinSolid::with_base(&mut ren_base);
+    ren.color( agg::Rgba8::RED );
+
+    let mut ras = agg::RasterizerScanline::new();
+
+    let t = transform_paths(paths, w as f64, h as f64);
+
+    agg::render_all_paths(&mut ras, &mut ren, &t, &colors);
+
+    ren.to_file("tests/tmp/lion_cw.png").unwrap();
+
+    assert_eq!(agg::ppm::img_diff("tests/tmp/lion_cw.png", "images/lion_cw.png").unwrap(), true);
+
+}
+// compare -verbose -metric AE lion.ppm ./tests/lion.ppm blarg.ppm
+
+#[test]
+fn lion_cw_aa() {
+    let (w,h) = (400,400);
+
+    let (paths, colors) = parse_lion(true);
+    let pixf = agg::Pixfmt::<agg::Rgb8>::new(w,h);
+    let mut ren_base = agg::RenderingBase::new(pixf);
+    ren_base.clear( agg::Rgba8::WHITE );
+    let mut ren = agg::RenderingScanlineAASolid::with_base(&mut ren_base);
+    ren.color( agg::Rgba8::RED );
+
+    let mut ras = agg::RasterizerScanline::new();
+
+    let t = transform_paths(paths, w as f64, h as f64);
+
+    agg::render_all_paths(&mut ras, &mut ren, &t, &colors);
+
+    ren.to_file("tests/tmp/lion_cw_aa.png").unwrap();
+
+    assert_eq!(agg::ppm::img_diff("tests/tmp/lion_cw_aa.png", "images/lion_cw_aa.png").unwrap(), true);
+
+}
+// compare -verbose -metric AE lion.ppm ./tests/lion.ppm blarg.ppm
+
+#[test]
+fn lion_cw_aa_srgba() {
+    let (w,h) = (400,400);
+
+    let (paths, colors) = parse_lion(true);
+    let pixf = agg::Pixfmt::<agg::Rgb8>::new(w,h);
+    let mut ren_base = agg::RenderingBase::new(pixf);
+    //ren_base.clear( agg::Srgba8::new([255, 255, 255, 255]) );
+    ren_base.clear( agg::Rgba8::WHITE );
+    let mut ren = agg::RenderingScanlineAASolid::with_base(&mut ren_base);
+    //ren.color( &agg::Srgba8::new([255,0,0,255]) );
+    ren.color( agg::Rgba8::RED );
+
+    let mut ras = agg::RasterizerScanline::new();
+
+    let colors = colors.into_iter().map(|c| c.srgba8()).collect::<Vec<_>>();
+    let t = transform_paths(paths, w as f64, h as f64);
+
+    agg::render_all_paths(&mut ras, &mut ren, &t, &colors);
+
+    ren.to_file("tests/tmp/lion_cw_aa_srgba.png").unwrap();
+
+    assert_eq!(agg::ppm::img_diff("tests/tmp/lion_cw_aa_srgba.png", "images/lion_cw_aa_srgba.png").unwrap(), true);
+
+}
+// compare -verbose -metric AE lion.ppm ./tests/lion.ppm blarg.ppm
+
+#[test]
+fn lion_outline_width1() {
+    let (w,h) = (400,400);
+
+    let (paths, colors) = parse_lion(true);
+    let pixf = agg::Pixfmt::<agg::Rgb8>::new(w,h);
+    let mut ren_base = agg::RenderingBase::new(pixf);
+    //ren_base.clear( agg::Srgba8::new([255, 255, 255, 255]) );
+    ren_base.clear( agg::Rgba8::WHITE );
+    let mut ren = agg::RenderingScanlineAASolid::with_base(&mut ren_base);
+    //ren.color( &agg::Srgba8::new([255,0,0,255]) );
+    ren.color( agg::Rgba8::RED );
+
+    let mut ras = agg::RasterizerScanline::new();
+
+    let colors = colors.into_iter().map(|c| c.srgba8()).collect::<Vec<_>>();
+    let t = transform_paths(paths, w as f64, h as f64);
+
+    let mut stroke : Vec<_> = t.into_iter()
+    .map(|p| agg::Stroke::new( p ))
+    .collect();
+stroke.iter_mut().for_each(|p| p.width(1.0));
+agg::render_all_paths(&mut ras, &mut ren, &stroke, &colors);
+
+ren.to_file("tests/tmp/lion_outline_width1.png").unwrap();
+assert!(agg::ppm::img_diff("tests/tmp/lion_outline_width1.png", "images/lion_outline_width1.png").unwrap());
+
+}
+
+#[test]
+fn lion_outline() {
+    let (w,h) = (400,400);
+
+    let (paths, colors) = parse_lion(true);
+    let pixf = agg::Pixfmt::<agg::Rgb8>::new(w,h);
+    let mut ren_base = agg::RenderingBase::new(pixf);
+    //ren_base.clear( agg::Srgba8::new([255, 255, 255, 255]) );
+    ren_base.clear( agg::Rgba8::WHITE );
+    let mut ren = agg::RenderingScanlineAASolid::with_base(&mut ren_base);
+    //ren.color( &agg::Srgba8::new([255,0,0,255]) );
+    ren.color( agg::Rgba8::RED );
+
+    let mut ras = agg::RasterizerScanline::new();
+
+    let colors = colors.into_iter().map(|c| c.srgba8()).collect::<Vec<_>>();
+    let t = transform_paths(paths, w as f64, h as f64);
+
+    let mut stroke : Vec<_> = t.into_iter()
+    .map(|p| agg::Stroke::new( p ))
+    .collect();
+    stroke.iter_mut().for_each(|p| p.width(7.0));
+    agg::render_all_paths(&mut ras, &mut ren, &stroke, &colors);
+
+    ren.to_file("tests/tmp/lion_outline.png").unwrap();
+    assert_eq!(agg::ppm::img_diff("tests/tmp/lion_outline.png", "images/lion_outline.png").unwrap(), true);
+
+}
+// compare -verbose -metric AE lion.ppm ./tests/lion.ppm diff.ppm
+
 }

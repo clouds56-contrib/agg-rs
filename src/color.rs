@@ -319,7 +319,7 @@ impl<T: ColorValue> IntoRaw4 for Srgba<T> {
 }
 impl<T: ColorValue> FromColor for Srgba<T> {
     fn from_color<C: Color>(c: C) -> Self {
-        Self::new(c.red_(), c.green_(), c.blue_(), c.alpha_())
+        Self::new(c.red_::<T>().to_srgb(), c.green_::<T>().to_srgb(), c.blue_::<T>().to_srgb(), c.alpha_())
     }
 }
 
@@ -463,6 +463,9 @@ mod tests {
         let t = s.rgba8();
         assert_eq!(t.into_raw(), (8,78,244,128));
         assert_eq!((t.red8(), t.green8(), t.blue8(), t.alpha8()), (8,78,244,128));
+        let s2 = t.srgba8();
+        assert_eq!(s2.into_raw(), (50,150,250,128));
+        assert_eq!((s2.red8(), s2.green8(), s2.blue8(), s2.alpha8()), (8,78,244,128));
     }
 
     #[test]
