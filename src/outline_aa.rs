@@ -9,7 +9,7 @@
 //!     // Create Image and Rendering Base
 //!     let pix = Pixfmt::<Rgb8>::new(100,100);
 //!     let mut ren_base = agg::RenderingBase::new(pix);
-//!     ren_base.clear( Rgba8::new(255, 255, 255, 255) );
+//!     ren_base.clear( Rgba8::WHITE );
 //!
 //!     // Create Outline Rendering, set color and width
 //!     let mut ren = RendererOutlineAA::with_base(&mut ren_base);
@@ -426,7 +426,7 @@ impl<'a,T> RendererOutlineAA<'a,T> where T: Pixel {
     /// Create Outline Renderer with a [`RenderingBase`](../base/struct.RenderingBase.html)
     pub fn with_base(ren: &'a mut RenderingBase<T>) -> Self {
         let profile = LineProfileAA::new();
-        Self { ren, color: Rgba8::black(), clip_box: None, profile }
+        Self { ren, color: Rgba8::BLACK, clip_box: None, profile }
     }
     /// Set width of the line
     pub fn width(&mut self, width: f64) {

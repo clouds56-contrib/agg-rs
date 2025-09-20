@@ -60,10 +60,13 @@ pub trait IntoRaw4: Sized {
 }
 
 pub trait NamedColor {
-    fn empty() -> Self;
-    fn white() -> Self;
-    fn black() -> Self;
-    fn gray_color<T: ColorValue>(g: T, a: T) -> Self;
+    const EMPTY: Self;
+    const WHITE: Self;
+    const BLACK: Self;
+    const RED: Self;
+    const GREEN: Self;
+    const BLUE: Self;
+    fn gray_color<T: ColorValue>(value: T) -> Self;
 }
 
 pub type Rgba<T> = palette::rgb::LinSrgba<T>;
@@ -111,18 +114,15 @@ impl<T: ColorValue> FromColor for Rgba<T> {
 
 
 impl<T: ColorValue> NamedColor for Rgba<T> {
-    fn empty() -> Self {
-        Self::new(T::ZERO, T::ZERO, T::ZERO, T::ZERO)
-    }
-    fn white() -> Self {
-        Self::new(T::ONE, T::ONE, T::ONE, T::ONE)
-    }
-    fn black() -> Self {
-        Self::new(T::ZERO, T::ZERO, T::ZERO, T::ONE)
-    }
-    fn gray_color<T2: ColorValue>(gray: T2, alpha: T2) -> Self {
-        let gray = gray.as_color_();
-        Self::new(gray, gray, gray, alpha.as_color_())
+    const EMPTY: Self = Self::new(T::ZERO, T::ZERO, T::ZERO, T::ZERO);
+    const WHITE: Self = Self::new(T::ONE, T::ONE, T::ONE, T::ONE);
+    const BLACK: Self = Self::new(T::ZERO, T::ZERO, T::ZERO, T::ONE);
+    const RED:   Self = Self::new(T::ONE, T::ZERO, T::ZERO, T::ONE);
+    const GREEN: Self = Self::new(T::ZERO, T::ONE, T::ZERO, T::ONE);
+    const BLUE:  Self = Self::new(T::ZERO, T::ZERO, T::ONE, T::ONE);
+    fn gray_color<T2: ColorValue>(value: T2) -> Self {
+        let value = value.as_color_();
+        Self::new(value, value, value, T::ONE)
     }
 }
 
@@ -159,22 +159,16 @@ impl<T: ColorValue> FromColor for Gray<T> {
     }
 }
 
-impl<T: ColorValue> NamedColor for Gray<T> {
-    fn empty() -> Self {
-        Self::new(T::ZERO, T::ZERO)
-    }
-    fn white() -> Self {
-        Self::new(T::ONE, T::ONE)
-    }
-    fn black() -> Self {
-        Self::new(T::ZERO, T::ONE)
-    }
-    fn gray_color<T2: ColorValue>(g: T2, a: T2) -> Self {
-        Self::new(g.as_color_(), a.as_color_())
-    }
-}
+// impl<T: ColorValue> NamedColor for Gray<T> {
+//     const BLACK: Self = Self::new(T::ZERO, T::ONE);
+//     const WHITE: Self = Self::new(T::ONE, T::ONE);
+//     const EMPTY: Self = Self::new(T::ZERO, T::ZERO);
+//     const RED:   Self = Self::new(T::luminance(T::ONE, T::ZERO, T::ZERO), T::ONE);
+//     const GREEN: Self = Self::new(T::luminance(T::ZERO, T::ONE, T::ZERO), T::ONE);
+//     const BLUE:  Self = Self::new(T::luminance(T::ZERO, T::ZERO, T::ONE), T::ONE);
+// }
 
-pub fn luminance(red: f64, green: f64, blue: f64) -> f64 {
+pub const fn luminance(red: f64, green: f64, blue: f64) -> f64 {
     0.2126 * red + 0.7152 * green + 0.0722 * blue
 }
 
@@ -219,18 +213,15 @@ impl<T: ColorValue> FromColor for Rgb<T> {
 }
 
 impl<T: ColorValue> NamedColor for Rgb<T> {
-    fn empty() -> Self {
-        Self::new(T::ZERO, T::ZERO, T::ZERO)
-    }
-    fn white() -> Self {
-        Self::new(T::ONE, T::ONE, T::ONE)
-    }
-    fn black() -> Self {
-        Self::new(T::ZERO, T::ZERO, T::ZERO)
-    }
-    fn gray_color<T2: ColorValue>(gray: T2, _: T2) -> Self {
-        let gray = gray.as_color_();
-        Self::new(gray, gray, gray)
+    const EMPTY: Self = Self::new(T::ZERO, T::ZERO, T::ZERO);
+    const WHITE: Self = Self::new(T::ONE, T::ONE, T::ONE);
+    const BLACK: Self = Self::new(T::ZERO, T::ZERO, T::ZERO);
+    const RED:   Self = Self::new(T::ONE, T::ZERO, T::ZERO);
+    const GREEN: Self = Self::new(T::ZERO, T::ONE, T::ZERO);
+    const BLUE:  Self = Self::new(T::ZERO, T::ZERO, T::ONE);
+    fn gray_color<T2: ColorValue>(value: T2) -> Self {
+        let value = value.as_color_();
+        Self::new(value, value, value)
     }
 }
 
@@ -295,21 +286,16 @@ impl<T: ColorValue> FromColor for RgbaPre<T> {
     }
 }
 
-impl<T: ColorValue> NamedColor for RgbaPre<T>
-where
-    Rgb<T>: Premultiply<Scalar = T>,
-{
-    fn empty() -> Self {
-        Rgba::empty().premultiply()
-    }
-    fn white() -> Self {
-        Rgba::white().premultiply()
-    }
-    fn black() -> Self {
-        Rgba::black().premultiply()
-    }
-    fn gray_color<T2: ColorValue>(gray: T2, alpha: T2) -> Self {
-        Rgba::gray_color(gray, alpha).premultiply()
+impl<T: ColorValue> NamedColor for RgbaPre<T> {
+    const EMPTY: Self = Self { color: Rgb::new(T::ZERO, T::ZERO, T::ZERO), alpha: T::ZERO };
+    const BLACK: Self = Self { color: Rgb::new(T::ZERO, T::ZERO, T::ZERO), alpha: T::ONE };
+    const WHITE: Self = Self { color: Rgb::new(T::ONE, T::ONE, T::ONE), alpha: T::ONE };
+    const RED:   Self = Self { color: Rgb::new(T::ONE, T::ZERO, T::ZERO), alpha: T::ONE };
+    const GREEN: Self = Self { color: Rgb::new(T::ZERO, T::ONE, T::ZERO), alpha: T::ONE };
+    const BLUE:  Self = Self { color: Rgb::new(T::ZERO, T::ZERO, T::ONE), alpha: T::ONE };
+
+    fn gray_color<T2: ColorValue>(value: T2) -> Self {
+        Rgba::gray_color(value).premultiply()
     }
 }
 
@@ -334,6 +320,20 @@ impl<T: ColorValue> IntoRaw4 for Srgba<T> {
 impl<T: ColorValue> FromColor for Srgba<T> {
     fn from_color<C: Color>(c: C) -> Self {
         Self::new(c.red_(), c.green_(), c.blue_(), c.alpha_())
+    }
+}
+
+impl<T: ColorValue> NamedColor for Srgba<T> {
+    const EMPTY: Self = Self::new(T::ZERO, T::ZERO, T::ZERO, T::ZERO);
+    const WHITE: Self = Self::new(T::ONE, T::ONE, T::ONE, T::ONE);
+    const BLACK: Self = Self::new(T::ZERO, T::ZERO, T::ZERO, T::ONE);
+    const RED:   Self = Self::new(T::ONE, T::ZERO, T::ZERO, T::ONE);
+    const GREEN: Self = Self::new(T::ZERO, T::ONE, T::ZERO, T::ONE);
+    const BLUE:  Self = Self::new(T::ZERO, T::ZERO, T::ONE, T::ONE);
+
+    fn gray_color<T2: ColorValue>(value: T2) -> Self {
+        let value = value.as_color_();
+        Self::new(value, value, value, T::ONE)
     }
 }
 
@@ -413,13 +413,13 @@ mod tests {
     }
     #[test]
     fn rgb8_test() {
-        let w = Rgb8::white();
+        let w = Rgb8::WHITE;
         assert_eq!(w.into_raw(), (255,255,255));
         assert_eq!((w.red8(), w.green8(), w.blue8()), (255,255,255));
-        let w = Rgb8::black();
+        let w = Rgb8::BLACK;
         assert_eq!(w.into_raw(), (0,0,0));
         assert_eq!((w.red8(), w.green8(), w.blue8()), (0,0,0));
-        let w = Rgb8::gray_color(0.5, 1.0);
+        let w = Rgb8::gray_color(0.5);
         assert_eq!(w.into_raw(), (128,128,128));
         assert_eq!((w.red8(), w.green8(), w.blue8()), (128,128,128));
         // let w = Rgb8::from_slice(&[1, 2, 3]);
@@ -439,16 +439,16 @@ mod tests {
     }
     #[test]
     fn rgba8_test() {
-        let c = Rgba8::white();
+        let c = Rgba8::WHITE;
         assert_eq!(c.into_raw(), (255,255,255,255));
         assert_eq!((c.red8(), c.green8(), c.blue8(), c.alpha8()), (255,255,255,255));
-        let c = Rgba8::black();
+        let c = Rgba8::BLACK;
         assert_eq!(c.into_raw(), (0,0,0,255));
         assert_eq!((c.red8(), c.green8(), c.blue8(), c.alpha8()), (0,0,0,255));
         let c = Rgba8::from_raw(255, 90, 84, 72);
         assert_eq!(c.into_raw(), (255,90,84,72));
         assert_eq!((c.red8(), c.green8(), c.blue8(), c.alpha8()), (255,90,84,72));
-        let c = Rgba8::empty();
+        let c = Rgba8::EMPTY;
         assert_eq!(c.into_raw(), (0,0,0,0));
         assert_eq!((c.red8(), c.green8(), c.blue8(), c.alpha8()), (0,0,0,0));
         let c = Rgba8::from_raw(255, 255, 255, 128);
@@ -467,10 +467,10 @@ mod tests {
 
     #[test]
     fn rgba_pre_test() {
-        let c = RgbaPre8::white();
+        let c = RgbaPre8::WHITE;
         assert_eq!(c.into_raw(), (255,255,255,255));
         assert_eq!((c.red8(), c.green8(), c.blue8(), c.alpha8()), (255,255,255,255));
-        let c = RgbaPre8::black();
+        let c = RgbaPre8::BLACK;
         assert_eq!(c.into_raw(), (0,0,0,255));
         assert_eq!((c.red8(), c.green8(), c.blue8(), c.alpha8()), (0,0,0,255));
         let c = RgbaPre8::from_raw(255, 90, 84, 72);

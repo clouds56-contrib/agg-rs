@@ -4,7 +4,7 @@
 //!     use agg::{RendererPrimatives,RasterizerOutline};
 //!     let pix = Pixfmt::<Rgb8>::new(100,100);
 //!     let mut ren_base = agg::RenderingBase::new(pix);
-//!     ren_base.clear( Rgba8::new(255, 255, 255, 255) );
+//!     ren_base.clear( Rgba8::WHITE );
 //!
 //!     let mut ren = RendererPrimatives::with_base(&mut ren_base);
 //!     ren.line_color(agg::Rgba8::new(0,0,0,255));
@@ -126,8 +126,8 @@ pub struct RendererPrimatives<'a,T> where T: 'a {
 impl<'a,T> RendererPrimatives<'a,T> where T: Pixel {
     /// Create new Primative Rendering with a [`RenderingBase`](../base/struct.RenderingBase.html)
     pub fn with_base(base: &'a mut RenderingBase<T>) -> Self {
-        let fill_color = Rgba8::black();
-        let line_color = Rgba8::black();
+        let fill_color = Rgba8::BLACK;
+        let line_color = Rgba8::BLACK;
         Self { base, fill_color, line_color,
                x: Subpixel::from(0),
                y: Subpixel::from(0)

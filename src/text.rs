@@ -189,7 +189,7 @@ pub fn line_height(font: &ft::Face) -> f64 {
 pub fn draw_text<T>(txt: &str, x: i64, y: i64, font: &ft::Face, ren_base: &mut RenderingBase<T>)
     where T: Pixel
 {
-    let color = Rgba8::black();
+    let color = Rgba8::BLACK;
     let (mut x, mut y) = (x,y);
     let width  = string_width(txt, font);
     let height = line_height(font);
@@ -278,7 +278,7 @@ impl<'a> Label<'a> {
                 txt: txt.to_string(), x, y,
                 xa: XAlign::Left,
                 ya: YAlign::Bottom,
-                color: Rgba8::black(),
+                color: Rgba8::BLACK,
                 size,
                 font
             }

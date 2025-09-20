@@ -1,18 +1,17 @@
 
 type PixRgb8 = agg::Pixfmt<agg::Rgb8>;
+use agg::prelude::*;
 use agg::Gray8;
 use agg::PixfmtAlphaBlend;
 
 
-#[test]
-fn component_rendering_000() {
-    let alpha = 0;
+fn draw(alpha: u8, filename: &str) {
     let (w, h) = (320, 320);
 
     let pixf = agg::Pixfmt::<agg::Rgb8>::new(w, h);
     let mut ren_base = agg::RenderingBase::new(pixf);
-    ren_base.clear(agg::Rgba8::new(255,255,255,255));
-    let g8 = Gray8::new_with_alpha(0,alpha);
+    ren_base.clear(agg::Rgba8::WHITE);
+    let g8 = Gray8::from_raw(0,alpha);
 
     let w2 = (w/2) as f64;
     let h2 = (h/2) as f64;
@@ -41,7 +40,21 @@ fn component_rendering_000() {
         agg::render_scanlines_aa_solid(&mut ras, &mut rbb, g8);
     }
 
+    ren_base.to_file(format!("tests/tmp/{}", filename)).unwrap();
+    assert_eq!(agg::ppm::img_diff(format!("tests/tmp/{}", filename), format!("images/{}", filename)).unwrap(), true);
+}
 
-    ren_base.to_file("tests/tmp/component_rendering_000.png").unwrap();
-    assert_eq!(agg::ppm::img_diff("tests/tmp/component_rendering_000.png", "images/component_rendering_000.png").unwrap(), true)
+#[test]
+fn component_rendering_000() {
+    draw(0, "component_rendering_000.png");
+}
+
+#[test]
+fn component_rendering_128() {
+    draw(128, "component_rendering_128.png");
+}
+
+#[test]
+fn component_rendering_255() {
+    draw(255, "component_rendering_255.png");
 }

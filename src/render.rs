@@ -150,7 +150,7 @@ impl SpanGradient {
             dd = 1;
         }
         let ncolors = self.color.len() as i64;
-        let mut span = vec![Rgb8::white() ; len];
+        let mut span = vec![Rgb8::WHITE ; len];
 
         interp.begin(x as f64 + 0.5, y as f64 + 0.5, len);
 
@@ -272,7 +272,7 @@ impl<T> Render for RenderingScanlineAA<'_,T> where T: Pixel {
 impl<'a,T> RenderingScanlineBinSolid<'a,T> where T: Pixel {
     /// Create a new Renderer from a Rendering Base
     pub fn with_base(base: &'a mut RenderingBase<T>) -> Self {
-        let color = Rgba8::black();
+        let color = Rgba8::BLACK;
         Self { base, color }
     }
     pub fn as_bytes(&self) -> &[u8] {
@@ -291,7 +291,7 @@ impl<'a,T> RenderingScanlineAA<'a,T> where T: Pixel {
 impl<'a,T> RenderingScanlineAASolid<'a,T> where T: Pixel {
     /// Create a new Renderer from a Rendering Base
     pub fn with_base(base: &'a mut RenderingBase<T>) -> Self {
-        let color = Rgba8::black();
+        let color = Rgba8::BLACK;
         Self { base, color }
     }
     pub fn as_bytes(&self) -> &[u8] {
@@ -784,7 +784,7 @@ impl LineImagePattern {
         }
         //const color_type* s1;
         //const color_type* s2;
-        let none = Rgba8::empty();
+        let none = Rgba8::EMPTY;
         let dill = self.dilation as usize;
         for y in 0 .. dill {
             //s1 = self.buf.row_ptr(self.height + self.dilation - 1) + self.dilation;
@@ -981,7 +981,7 @@ impl LineInterpolatorImage {
         let mut step = 0;
         let start = pattern_start + (max_extent + 2) * pattern_width;
         let mut dist_pos = vec![0i64; MAX_HALF_WIDTH + 1];
-        let colors = vec![Rgba8::black(); MAX_HALF_WIDTH * 2 + 4];
+        let colors = vec![Rgba8::BLACK; MAX_HALF_WIDTH * 2 + 4];
         let mut di = DistanceInterpolator4::new(lp.x1, lp.y1, lp.x2, lp.y2,
                                                 sx, sy, ex, ey, lp.len, scale_x,
                                                 lp.x1 & ! POLY_SUBPIXEL_MASK,
@@ -1136,7 +1136,7 @@ impl LineInterpolatorImage {
         let mut p0 = MAX_HALF_WIDTH + 2;
         let mut p1 = p0;
         let mut npix = 0;
-        self.colors[p1] = Rgba8::empty();
+        self.colors[p1] = Rgba8::EMPTY;
         if dist_end > 0 {
             if dist_start <= 0 {
                 self.colors[p1] = ren.pixel(dist_pict, s2);
@@ -1151,7 +1151,7 @@ impl LineInterpolatorImage {
             dist_start += self.di.dy_start;
             dist_pict  += self.di.dy_pict;
             dist_end   += self.di.dy_end;
-            self.colors[p1] = Rgba8::empty();
+            self.colors[p1] = Rgba8::EMPTY;
             if dist_end > 0 && dist_start <= 0 {
                 if self.lp.inc > 0 {
                     dist = -dist;
@@ -1174,7 +1174,7 @@ impl LineInterpolatorImage {
             dist_pict  -= self.di.dy_pict;
             dist_end   -= self.di.dy_end;
             p0 -= 1;
-            self.colors[p0] = Rgba8::empty();
+            self.colors[p0] = Rgba8::EMPTY;
             if dist_end > 0 && dist_start <= 0 {
                 if self.lp.inc > 0 {
                     dist = -dist;
@@ -1224,7 +1224,7 @@ impl LineInterpolatorImage {
         let mut p1 = p0;
 
         let mut npix = 0;
-        self.colors[p1] = Rgba8::empty();
+        self.colors[p1] = Rgba8::EMPTY;
         if dist_end > 0 {
             if dist_start <= 0 {
                 self.colors[p1] = ren.pixel(dist_pict, s2);
@@ -1239,7 +1239,7 @@ impl LineInterpolatorImage {
             dist_start -= self.di.dx_start;
             dist_pict  -= self.di.dx_pict;
             dist_end   -= self.di.dx_end;
-            self.colors[p1] = Rgba8::empty();
+            self.colors[p1] = Rgba8::EMPTY;
             if dist_end > 0 && dist_start <= 0 {
                 if self.lp.inc > 0 {
                     dist = -dist;
@@ -1262,7 +1262,7 @@ impl LineInterpolatorImage {
             dist_pict  += self.di.dx_pict;
             dist_end   += self.di.dx_end;
             p0 -= 1;
-            self.colors[p0] = Rgba8::empty();
+            self.colors[p0] = Rgba8::EMPTY;
             if dist_end > 0 && dist_start <= 0 {
                 if self.lp.inc > 0 {
                     dist = -dist;

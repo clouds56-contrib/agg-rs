@@ -83,7 +83,7 @@ impl<T> Pixfmt<T> where Pixfmt<T>: Pixel {
     ///     use agg::{NamedColor,Source,Pixfmt,Rgba8};
     ///
     ///     let mut pix = Pixfmt::<Rgba8>::new(1,2);
-    ///     let black = Rgba8::black();
+    ///     let black = Rgba8::BLACK;
     ///     pix.copy_pixel(0,1, black);
     ///     assert_eq!(pix.get((0,0)), Rgba8{r:0, g:0, b:0, a:0});
     ///     assert_eq!(pix.get((0,1)), black);
@@ -104,7 +104,7 @@ impl<T> Pixfmt<T> where Pixfmt<T>: Pixel {
     ///     use agg::{NamedColor,Source,Pixfmt,Rgb8,Rgba8};
     ///
     ///     let mut pix = Pixfmt::<Rgb8>::new(10,1);
-    ///     let black = Rgba8::black();
+    ///     let black = Rgba8::BLACK;
     ///     pix.copy_hline(0,0,10, black);
     ///     assert_eq!(pix.get((0,0)), black);
     ///     assert_eq!(pix.get((1,0)), black);
@@ -632,12 +632,12 @@ mod tests {
         let mut p = Pixfmt::<Rgb8>::new(10,10);
         assert_eq!(p.rbuf.data.len(),300);
 
-        p.copy_pixel(0,0, Rgb8::black());
-        assert_eq!(p.get((0,0)), Rgba8::black());
+        p.copy_pixel(0,0, Rgb8::BLACK);
+        assert_eq!(p.get((0,0)), Rgba8::BLACK);
 
-        assert_ne!(p.get((1,0)), Rgba8::white());
-        p.copy_pixel(1,0, Rgb8::white());
-        assert_eq!(p.get((1,0)), Rgba8::white());
+        assert_ne!(p.get((1,0)), Rgba8::WHITE);
+        p.copy_pixel(1,0, Rgb8::WHITE);
+        assert_eq!(p.get((1,0)), Rgba8::WHITE);
 
         let red = Rgba8::from_raw(255,0,0,128);
         p.copy_hline(0,1,10,red);
@@ -674,44 +674,44 @@ mod tests {
         }
 
         p.clear();
-        p.copy_pixel(11,11,Rgb8::black());
+        p.copy_pixel(11,11,Rgb8::BLACK);
         for i in 0 .. 10 {
             for j in 0 .. 10 {
-                assert_eq!(p.get((i,j)), Rgba8::white());
+                assert_eq!(p.get((i,j)), Rgba8::WHITE);
             }
         }
-        p.copy_hline(0,0,20,Rgb8::black());
+        p.copy_hline(0,0,20,Rgb8::BLACK);
         for i in 0 .. 10 {
-            assert_eq!(p.get((i,0)), Rgba8::black());
+            assert_eq!(p.get((i,0)), Rgba8::BLACK);
         }
-        p.copy_hline(5,1,20,Rgb8::black());
+        p.copy_hline(5,1,20,Rgb8::BLACK);
         for i in 5 .. 10 {
-            assert_eq!(p.get((i,1)), Rgba8::black());
+            assert_eq!(p.get((i,1)), Rgba8::BLACK);
         }
 
         p.clear();
-        p.copy_vline(0,0,20,Rgb8::black());
+        p.copy_vline(0,0,20,Rgb8::BLACK);
         for i in 0 .. 10 {
-            assert_eq!(p.get((0,i)), Rgba8::black());
+            assert_eq!(p.get((0,i)), Rgba8::BLACK);
         }
 
         p.clear();
-        p.copy_vline(1,5,20,Rgb8::black());
+        p.copy_vline(1,5,20,Rgb8::BLACK);
         for i in 0 .. 5 {
-            assert_eq!(p.get((1,i)), Rgba8::white(),"pix({},{}): {:?}",1,i,p.get((1,i)));
+            assert_eq!(p.get((1,i)), Rgba8::WHITE,"pix({},{}): {:?}",1,i,p.get((1,i)));
         }
         for i in 5 .. 10 {
-            assert_eq!(p.get((1,i)), Rgba8::black(),"pix({},{}): {:?}",1,i,p.get((1,i)));
+            assert_eq!(p.get((1,i)), Rgba8::BLACK,"pix({},{}): {:?}",1,i,p.get((1,i)));
         }
-        p.copy_vline(2,3,5,Rgb8::black());
+        p.copy_vline(2,3,5,Rgb8::BLACK);
         for i in 0 .. 3 {
-            assert_eq!(p.get((2,i)), Rgba8::white(),"pix({},{}): {:?}",2,i,p.get((2,i)));
+            assert_eq!(p.get((2,i)), Rgba8::WHITE,"pix({},{}): {:?}",2,i,p.get((2,i)));
         }
         for i in 3 .. 8 {
-            assert_eq!(p.get((2,i)), Rgba8::black(),"pix({},{}): {:?}",2,i,p.get((2,i)));
+            assert_eq!(p.get((2,i)), Rgba8::BLACK,"pix({},{}): {:?}",2,i,p.get((2,i)));
         }
         for i in 8 .. 10 {
-            assert_eq!(p.get((2,i)), Rgba8::white(),"pix({},{}): {:?}",2,i,p.get((2,i)));
+            assert_eq!(p.get((2,i)), Rgba8::WHITE,"pix({},{}): {:?}",2,i,p.get((2,i)));
         }
     }
 
@@ -719,8 +719,8 @@ mod tests {
     fn pixfmt_rgb8_test() {
 
         let mut pix = Pixfmt::<Rgb8>::new(1,1);
-        let black  = Rgba8::black();
-        let white  = Rgba8::white();
+        let black  = Rgba8::BLACK;
+        let white  = Rgba8::WHITE;
 
         pix.copy_pixel(0,0,Rgba8::from_raw(0,0,0,255));
         assert_eq!(pix.get((0,0)), black);
@@ -767,8 +767,8 @@ mod tests {
     fn pixfmt_rgba8_test() {
 
         let mut pix = Pixfmt::<Rgba8>::new(1,1);
-        let black  = Rgba8::black();
-        let white  = Rgba8::white();
+        let black  = Rgba8::BLACK;
+        let white  = Rgba8::WHITE;
 
         pix.copy_pixel(0,0,Rgba8::from_raw(0,0,0,255));
         assert_eq!(pix.get((0,0)), black);
@@ -815,8 +815,8 @@ mod tests {
     fn pixfmt_rgba8pre_test() {
 
         let mut pix = Pixfmt::<RgbaPre8>::new(1,1);
-        let black  = Rgba8::black();
-        let white  = Rgba8::white();
+        let black  = Rgba8::BLACK;
+        let white  = Rgba8::WHITE;
 
         pix.copy_pixel(0,0,Rgba8::from_raw(0,0,0,255));
         assert_eq!(pix.get((0,0)), black);

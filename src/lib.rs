@@ -31,7 +31,7 @@
 //!       // Create a blank image 10x10 pixels
 //!       let pix = agg::Pixfmt::<agg::Rgb8>::new(100,100);
 //!       let mut ren_base = agg::RenderingBase::new(pix);
-//!       ren_base.clear(agg::Rgba8::white());
+//!       ren_base.clear(agg::Rgba8::WHITE);
 //!
 //!       // Draw a polygon from (10,10) - (50,90) - (90,10)
 //!       let mut ras = agg::RasterizerScanline::new();
@@ -41,7 +41,7 @@
 //!
 //!       // Render the line to the image
 //!       let mut ren = agg::RenderingScanlineAASolid::with_base(&mut ren_base);
-//!       ren.color(agg::Rgba8::black());
+//!       ren.color(agg::Rgba8::BLACK);
 //!       agg::render_scanlines(&mut ras, &mut ren);
 //!
 //!       // Save the image to a file
@@ -54,7 +54,7 @@
 //!        use agg::{RendererOutlineAA,RasterizerOutlineAA};
 //!        let pix = Pixfmt::<Rgb8>::new(100,100);
 //!        let mut ren_base = agg::RenderingBase::new(pix);
-//!        ren_base.clear( Rgba8::new(255, 255, 255, 255) );
+//!        ren_base.clear( Rgba8::WHITE );
 //!
 //!        let mut ren = RendererOutlineAA::with_base(&mut ren_base);
 //!        ren.color(agg::Rgba8::new(102,77,26,255));
@@ -79,7 +79,7 @@
 //!
 //!        let pix = Pixfmt::<Rgb8>::new(100,100);
 //!        let mut ren_base = agg::RenderingBase::new(pix);
-//!        ren_base.clear( Rgba8::new(255, 255, 255, 255) );
+//!        ren_base.clear( Rgba8::WHITE );
 //!
 //!        let mut ren = RendererPrimatives::with_base(&mut ren_base);
 //!        ren.line_color(agg::Rgba8::new(0,0,0,255));
@@ -323,8 +323,8 @@ pub trait Pixel {
     ///     use agg::{NamedColor,Source,Pixfmt,Rgb8,Rgba8,Pixel};
     ///
     ///     let mut pix = Pixfmt::<Rgb8>::new(1,1);
-    ///     let black  = Rgba8::black();
-    ///     let white  = Rgba8::white();
+    ///     let black  = Rgba8::BLACK;
+    ///     let white  = Rgba8::WHITE;
     ///     pix.copy_pixel(0,0,black);
     ///     assert_eq!(pix.get((0,0)), black);
     ///
@@ -490,4 +490,11 @@ pub(crate) trait DistanceInterpolator {
     fn inc_y(&mut self, dx: i64);
     fn dec_x(&mut self, dy: i64);
     fn dec_y(&mut self, dx: i64);
+}
+
+pub mod prelude {
+    pub use crate::{
+        Color, NamedColor as _, FromRaw2 as _, FromColor as _, FromRaw3 as _, FromRaw4 as _,
+        Render as _, Pixel as _,
+    };
 }
