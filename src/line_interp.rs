@@ -2,13 +2,13 @@ use crate::render::LineInterpolator;
 use crate::render::LineInterpolatorImage;
 //use crate::render::RendererPrimatives;
 
-use crate::MAX_HALF_WIDTH;
-use crate::POLY_MR_SUBPIXEL_SHIFT;
-use crate::POLY_SUBPIXEL_SHIFT;
-use crate::POLY_SUBPIXEL_MASK;
-use crate::POLY_SUBPIXEL_SCALE;
 use crate::DistanceInterpolator;
 use crate::RenderOutline;
+use crate::MAX_HALF_WIDTH;
+use crate::POLY_MR_SUBPIXEL_SHIFT;
+use crate::POLY_SUBPIXEL_MASK;
+use crate::POLY_SUBPIXEL_SCALE;
+use crate::POLY_SUBPIXEL_SHIFT;
 
 /// Line Interpolator AA
 #[derive(Debug)]
@@ -45,7 +45,11 @@ pub(crate) struct LineInterpolatorAA {
 impl LineInterpolatorAA {
     /// Create new Line Interpolator AA
     fn new(lp: LineParameters, subpixel_width: i64) -> Self {
-        let len = if lp.vertical == (lp.inc > 0) { -lp.len } else { lp.len };
+        let len = if lp.vertical == (lp.inc > 0) {
+            -lp.len
+        } else {
+            lp.len
+        };
         let x = lp.x1 >> POLY_SUBPIXEL_SHIFT;
         let y = lp.y1 >> POLY_SUBPIXEL_SHIFT;
         let old_x = x;
@@ -59,14 +63,14 @@ impl LineInterpolatorAA {
         let max_extent = (width + POLY_SUBPIXEL_MASK) >> POLY_SUBPIXEL_SHIFT;
         let step = 0;
         let y1 = if lp.vertical {
-            (lp.x2-lp.x1) << POLY_SUBPIXEL_SHIFT
+            (lp.x2 - lp.x1) << POLY_SUBPIXEL_SHIFT
         } else {
-            (lp.y2-lp.y1) << POLY_SUBPIXEL_SHIFT
+            (lp.y2 - lp.y1) << POLY_SUBPIXEL_SHIFT
         };
         let n = if lp.vertical {
-            (lp.y2-lp.y1).abs()
+            (lp.y2 - lp.y1).abs()
         } else {
-            (lp.x2-lp.x1).abs() + 1
+            (lp.x2 - lp.x1).abs() + 1
         };
 
         // Setup Number Interpolator from 0 .. y1 with n segments
@@ -80,23 +84,36 @@ impl LineInterpolatorAA {
         // Get Distances along the line
         let mut dist = vec![0i64; MAX_HALF_WIDTH + 1];
         let stop = width + POLY_SUBPIXEL_SCALE * 2;
-        for i in 0 .. MAX_HALF_WIDTH {
+        for i in 0..MAX_HALF_WIDTH {
             dist[i] = li.y;
             if li.y >= stop {
                 break;
             }
             li.inc();
         }
-        dist[MAX_HALF_WIDTH] = 0x7FFF_0000 ;
+        dist[MAX_HALF_WIDTH] = 0x7FFF_0000;
         // Setup covers to 0
         let covers = vec![0u64; MAX_HALF_WIDTH * 2 + 4];
-        Self { lp, li: m_li, len, x, y, old_x, old_y, count,
-               width, max_extent, step,
-               dist, covers }
+        Self {
+            lp,
+            li: m_li,
+            len,
+            x,
+            y,
+            old_x,
+            old_y,
+            count,
+            width,
+            max_extent,
+            step,
+            dist,
+            covers,
+        }
     }
     /// Step the Line forward horizontally
     pub(crate) fn step_hor_base<DI>(&mut self, di: &mut DI) -> i64
-    where DI: DistanceInterpolator
+    where
+        DI: DistanceInterpolator,
     {
         // Increment the Interpolator
         self.li.inc();
@@ -116,7 +133,8 @@ impl LineInterpolatorAA {
         di.dist() / self.len
     }
     pub(crate) fn step_ver_base<DI>(&mut self, di: &mut DI) -> i64
-    where DI: DistanceInterpolator
+    where
+        DI: DistanceInterpolator,
     {
         self.li.inc();
         self.y += self.lp.inc;
@@ -147,18 +165,30 @@ impl AA0 {
     pub fn new(lp: LineParameters, subpixel_width: i64) -> Self {
         let mut li = LineInterpolatorAA::new(lp, subpixel_width);
         li.li.adjust_forward();
-        Self { li, di: DistanceInterpolator1::new(lp.x1,lp.y1,lp.x2,lp.y2,
-                                                  lp.x1 & ! POLY_SUBPIXEL_MASK,
-                                                  lp.y1 & ! POLY_SUBPIXEL_MASK)
+        Self {
+            li,
+            di: DistanceInterpolator1::new(
+                lp.x1,
+                lp.y1,
+                lp.x2,
+                lp.y2,
+                lp.x1 & !POLY_SUBPIXEL_MASK,
+                lp.y1 & !POLY_SUBPIXEL_MASK,
+            ),
         }
     }
     /// Size of the Interpolation
-    pub fn count(&self) -> i64 {     self.li.count    }
+    pub fn count(&self) -> i64 {
+        self.li.count
+    }
     /// Return if the line is more Vertical than horizontal
-    pub fn vertical(&self) -> bool { self.li.lp.vertical    }
+    pub fn vertical(&self) -> bool {
+        self.li.lp.vertical
+    }
     /// Conduct a horizontal step, used for "horizontal lines"
     pub fn step_hor<R>(&mut self, ren: &mut R) -> bool
-        where R: RenderOutline
+    where
+        R: RenderOutline,
     {
         // Step the Interpolator horizontally and get the width
         //   projected onto the vertical
@@ -189,10 +219,12 @@ impl AA0 {
             dist = self.li.dist[dy] + s1;
         }
         // Draw Line using coverages
-        ren.blend_solid_vspan(self.li.x,
-                              self.li.y - dy as i64 + 1,
-                              (p1 - p0) as i64,
-                              &self.li.covers[p0..]);
+        ren.blend_solid_vspan(
+            self.li.x,
+            self.li.y - dy as i64 + 1,
+            (p1 - p0) as i64,
+            &self.li.covers[p0..],
+        );
         // Step the Line Interpolator AA
         self.li.step += 1;
         self.li.step < self.li.count
@@ -215,16 +247,18 @@ impl AA0 {
 
         dx = 1;
         dist = self.li.dist[dx] + s1;
-        while dist  <= self.li.width {
+        while dist <= self.li.width {
             p0 -= 1;
             self.li.covers[p0] = ren.cover(dist);
             dx += 1;
             dist = self.li.dist[dx] + s1;
         }
-        ren.blend_solid_hspan(self.li.x - dx as i64 + 1,
-                              self.li.y,
-                              (p1 - p0) as i64,
-                              &self.li.covers[p0..]);
+        ren.blend_solid_hspan(
+            self.li.x - dx as i64 + 1,
+            self.li.y,
+            (p1 - p0) as i64,
+            &self.li.covers[p0..],
+        );
         self.li.step += 1;
         self.li.step < self.li.count
     }
@@ -237,10 +271,17 @@ pub(crate) struct AA1 {
 impl AA1 {
     pub fn new(lp: LineParameters, sx: i64, sy: i64, subpixel_width: i64) -> Self {
         let mut li = LineInterpolatorAA::new(lp, subpixel_width);
-        let mut di =  DistanceInterpolator2::new(lp.x1,lp.y1,lp.x2,lp.y2, sx, sy,
-                                                 lp.x1 & ! POLY_SUBPIXEL_MASK,
-                                                 lp.y1 & ! POLY_SUBPIXEL_MASK,
-                                                 true);
+        let mut di = DistanceInterpolator2::new(
+            lp.x1,
+            lp.y1,
+            lp.x2,
+            lp.y2,
+            sx,
+            sy,
+            lp.x1 & !POLY_SUBPIXEL_MASK,
+            lp.y1 & !POLY_SUBPIXEL_MASK,
+            true,
+        );
         let mut npix = 1;
         if lp.vertical {
             loop {
@@ -332,7 +373,9 @@ impl AA1 {
         Self { li, di }
     }
     //pub fn count(&self) -> i64 {        self.li.count    }
-    pub fn vertical(&self) -> bool {        self.li.lp.vertical    }
+    pub fn vertical(&self) -> bool {
+        self.li.lp.vertical
+    }
     pub fn step_hor<R: RenderOutline>(&mut self, ren: &mut R) -> bool {
         let s1 = self.li.step_hor_base(&mut self.di);
 
@@ -349,7 +392,7 @@ impl AA1 {
         while dist <= self.li.width {
             dist_start -= self.di.dx_start;
             self.li.covers[p1] = 0;
-            if dist_start <= 0  {
+            if dist_start <= 0 {
                 self.li.covers[p1] = ren.cover(dist);
             }
             p1 += 1;
@@ -370,13 +413,14 @@ impl AA1 {
             dy += 1;
             dist = self.li.dist[dy] + s1;
         }
-        ren.blend_solid_vspan(self.li.x,
-                              self.li.y - dy as i64 + 1,
-                              (p1 - p0) as i64,
-                              &self.li.covers[p0..]);
+        ren.blend_solid_vspan(
+            self.li.x,
+            self.li.y - dy as i64 + 1,
+            (p1 - p0) as i64,
+            &self.li.covers[p0..],
+        );
         self.li.step += 1;
         self.li.step < self.li.count
-
     }
     pub fn step_ver<R: RenderOutline>(&mut self, ren: &mut R) -> bool {
         let s1 = self.li.step_ver_base(&mut self.di);
@@ -414,10 +458,12 @@ impl AA1 {
             dx += 1;
             dist = self.li.dist[dx] + s1;
         }
-        ren.blend_solid_hspan(self.li.x - dx as i64 + 1,
-                              self.li.y,
-                              (p1 - p0) as i64,
-                              &self.li.covers[p0..]);
+        ren.blend_solid_hspan(
+            self.li.x - dx as i64 + 1,
+            self.li.y,
+            (p1 - p0) as i64,
+            &self.li.covers[p0..],
+        );
         self.li.step += 1;
         self.li.step < self.li.count
     }
@@ -430,16 +476,25 @@ pub(crate) struct AA2 {
 impl AA2 {
     pub fn new(lp: LineParameters, ex: i64, ey: i64, subpixel_width: i64) -> Self {
         let mut li = LineInterpolatorAA::new(lp, subpixel_width);
-        let di = DistanceInterpolator2::new(lp.x1,lp.y1,lp.x2,lp.y2, ex, ey,
-                                            lp.x1 & ! POLY_SUBPIXEL_MASK,
-                                            lp.y1 & ! POLY_SUBPIXEL_MASK,
-                                            false);
+        let di = DistanceInterpolator2::new(
+            lp.x1,
+            lp.y1,
+            lp.x2,
+            lp.y2,
+            ex,
+            ey,
+            lp.x1 & !POLY_SUBPIXEL_MASK,
+            lp.y1 & !POLY_SUBPIXEL_MASK,
+            false,
+        );
         li.li.adjust_forward();
         li.step -= li.max_extent;
-        Self {  li, di }
+        Self { li, di }
     }
     //pub fn count(&self) -> i64 {        self.li.count    }
-    pub fn vertical(&self) -> bool {        self.li.lp.vertical    }
+    pub fn vertical(&self) -> bool {
+        self.li.lp.vertical
+    }
     pub fn step_hor<R: RenderOutline>(&mut self, ren: &mut R) -> bool {
         let s1 = self.li.step_hor_base(&mut self.di);
         let mut p0 = MAX_HALF_WIDTH + 2;
@@ -483,10 +538,12 @@ impl AA2 {
             dy += 1;
             dist = self.li.dist[dy] + s1;
         }
-        ren.blend_solid_vspan(self.li.x,
-                              self.li.y - dy as i64 + 1,
-                              (p1 - p0) as i64,
-                              &self.li.covers[p0..]);
+        ren.blend_solid_vspan(
+            self.li.x,
+            self.li.y - dy as i64 + 1,
+            (p1 - p0) as i64,
+            &self.li.covers[p0..],
+        );
         self.li.step += 1;
         npix != 0 && self.li.step < self.li.count
     }
@@ -510,7 +567,7 @@ impl AA2 {
         while dist <= self.li.width {
             dist_end += self.di.dy_start;
             self.li.covers[p1] = 0;
-            if dist_end > 0  {
+            if dist_end > 0 {
                 self.li.covers[p1] = ren.cover(dist);
                 npix += 1;
             }
@@ -533,10 +590,12 @@ impl AA2 {
             dx += 1;
             dist = self.li.dist[dx] + s1;
         }
-        ren.blend_solid_hspan(self.li.x - dx as i64 + 1,
-                              self.li.y,
-                              (p1 - p0) as i64,
-                              &self.li.covers[p0..]);
+        ren.blend_solid_hspan(
+            self.li.x - dx as i64 + 1,
+            self.li.y,
+            (p1 - p0) as i64,
+            &self.li.covers[p0..],
+        );
         self.li.step += 1;
         npix != 0 && self.li.step < self.li.count
     }
@@ -547,12 +606,27 @@ pub(crate) struct AA3 {
     li: LineInterpolatorAA,
 }
 impl AA3 {
-    pub fn new(lp: LineParameters, sx: i64, sy: i64, ex: i64, ey: i64, subpixel_width: i64) -> Self {
+    pub fn new(
+        lp: LineParameters,
+        sx: i64,
+        sy: i64,
+        ex: i64,
+        ey: i64,
+        subpixel_width: i64,
+    ) -> Self {
         let mut li = LineInterpolatorAA::new(lp, subpixel_width);
-        let mut di = DistanceInterpolator3::new(lp.x1, lp.y1, lp.x2, lp.y2,
-                                            sx, sy, ex, ey,
-                                            lp.x1 & ! POLY_SUBPIXEL_MASK,
-                                            lp.y1 & ! POLY_SUBPIXEL_MASK);
+        let mut di = DistanceInterpolator3::new(
+            lp.x1,
+            lp.y1,
+            lp.x2,
+            lp.y2,
+            sx,
+            sy,
+            ex,
+            ey,
+            lp.x1 & !POLY_SUBPIXEL_MASK,
+            lp.y1 & !POLY_SUBPIXEL_MASK,
+        );
         let mut npix = 1;
         if lp.vertical {
             loop {
@@ -648,14 +722,16 @@ impl AA3 {
         Self { li, di }
     }
     //pub fn count(&self) -> i64 {        self.li.count    }
-    pub fn vertical(&self) -> bool {        self.li.lp.vertical    }
+    pub fn vertical(&self) -> bool {
+        self.li.lp.vertical
+    }
     pub fn step_hor<R: RenderOutline>(&mut self, ren: &mut R) -> bool {
         let s1 = self.li.step_hor_base(&mut self.di);
         let mut p0 = MAX_HALF_WIDTH + 2;
         let mut p1 = p0;
 
         let mut dist_start = self.di.dist_start;
-        let mut dist_end   = self.di.dist_end;
+        let mut dist_end = self.di.dist_end;
 
         let mut npix = 0;
         self.li.covers[p1] = 0;
@@ -671,7 +747,7 @@ impl AA3 {
         let mut dist = self.li.dist[dy] - s1;
         while dist <= self.li.width {
             dist_start -= self.di.dx_start;
-            dist_end   -= self.di.dx_end;
+            dist_end -= self.di.dx_end;
             self.li.covers[p1] = 0;
             if dist_end > 0 && dist_start <= 0 {
                 self.li.covers[p1] = ren.cover(dist);
@@ -684,11 +760,11 @@ impl AA3 {
 
         dy = 1;
         dist_start = self.di.dist_start;
-        dist_end   = self.di.dist_end;
+        dist_end = self.di.dist_end;
         dist = self.li.dist[dy] + s1;
         while dist <= self.li.width {
             dist_start += self.di.dx_start;
-            dist_end   += self.di.dx_end;
+            dist_end += self.di.dx_end;
             p0 -= 1;
             self.li.covers[p0] = 0;
             if dist_end > 0 && dist_start <= 0 {
@@ -697,13 +773,14 @@ impl AA3 {
             }
             dy += 1;
         }
-        ren.blend_solid_vspan(self.li.x,
-                              self.li.y - dy as i64 + 1,
-                              (p1 - p0) as i64,
-                              &self.li.covers[p0..]);
+        ren.blend_solid_vspan(
+            self.li.x,
+            self.li.y - dy as i64 + 1,
+            (p1 - p0) as i64,
+            &self.li.covers[p0..],
+        );
         self.li.step -= 1;
         npix != 0 && self.li.step < self.li.count
-
     }
     pub fn step_ver<R: RenderOutline>(&mut self, ren: &mut R) -> bool {
         let s1 = self.li.step_ver_base(&mut self.di);
@@ -711,7 +788,7 @@ impl AA3 {
         let mut p1 = p0;
 
         let mut dist_start = self.di.dist_start;
-        let mut dist_end   = self.di.dist_end;
+        let mut dist_end = self.di.dist_end;
 
         let mut npix = 0;
         self.li.covers[p1] = 0;
@@ -727,7 +804,7 @@ impl AA3 {
         let mut dist = self.li.dist[dx] - s1;
         while dist <= self.li.width {
             dist_start += self.di.dy_start;
-            dist_end   += self.di.dy_end;
+            dist_end += self.di.dy_end;
             self.li.covers[p1] = 0;
             if dist_end > 0 && dist_start <= 0 {
                 self.li.covers[p1] = ren.cover(dist);
@@ -740,11 +817,11 @@ impl AA3 {
 
         dx = 1;
         dist_start = self.di.dist_start;
-        dist_end   = self.di.dist_end;
+        dist_end = self.di.dist_end;
         dist = self.li.dist[dx] + s1;
         while dist <= self.li.width {
             dist_start -= self.di.dy_start;
-            dist_end   -= self.di.dy_end;
+            dist_end -= self.di.dy_end;
             p0 -= 1;
             self.li.covers[p0] = 0;
             if dist_end > 0 && dist_start <= 0 {
@@ -754,13 +831,14 @@ impl AA3 {
             dx += 1;
             dist = self.li.dist[dx] + s1;
         }
-        ren.blend_solid_hspan(self.li.x - dx as i64 + 1,
-                              self.li.y,
-                              (p1 - p0) as i64,
-                              &self.li.covers[p0..p1]);
+        ren.blend_solid_hspan(
+            self.li.x - dx as i64 + 1,
+            self.li.y,
+            (p1 - p0) as i64,
+            &self.li.covers[p0..p1],
+        );
         self.li.step -= 1;
-        npix != 0&& self.li.step < self.li.count
-
+        npix != 0 && self.li.step < self.li.count
     }
 }
 
@@ -780,16 +858,23 @@ impl DistanceInterpolator00 {
         let dy1 = line_mr(y1) - line_mr(yc);
         let dx2 = line_mr(x2) - line_mr(xc);
         let dy2 = line_mr(y2) - line_mr(yc);
-        let dist1 = (line_mr(x + POLY_SUBPIXEL_SCALE/2) - line_mr(x1)) * dy1 -
-                    (line_mr(y + POLY_SUBPIXEL_SCALE/2) - line_mr(y1)) * dx1;
-        let dist2 = (line_mr(x + POLY_SUBPIXEL_SCALE/2) - line_mr(x2)) * dy2 -
-                    (line_mr(y + POLY_SUBPIXEL_SCALE/2) - line_mr(y2)) * dx2;
+        let dist1 = (line_mr(x + POLY_SUBPIXEL_SCALE / 2) - line_mr(x1)) * dy1
+            - (line_mr(y + POLY_SUBPIXEL_SCALE / 2) - line_mr(y1)) * dx1;
+        let dist2 = (line_mr(x + POLY_SUBPIXEL_SCALE / 2) - line_mr(x2)) * dy2
+            - (line_mr(y + POLY_SUBPIXEL_SCALE / 2) - line_mr(y2)) * dx2;
         let dx1 = dx1 << POLY_MR_SUBPIXEL_SHIFT;
         let dy1 = dy1 << POLY_MR_SUBPIXEL_SHIFT;
         let dx2 = dx2 << POLY_MR_SUBPIXEL_SHIFT;
         let dy2 = dy2 << POLY_MR_SUBPIXEL_SHIFT;
 
-        Self { dx1, dy1, dx2, dy2, dist1, dist2 }
+        Self {
+            dx1,
+            dy1,
+            dx2,
+            dy2,
+            dist1,
+            dist2,
+        }
     }
     pub fn inc_x(&mut self) {
         self.dist1 += self.dy1;
@@ -807,8 +892,8 @@ impl DistanceInterpolator0 {
     pub fn new(x1: i64, y1: i64, x2: i64, y2: i64, x: i64, y: i64) -> Self {
         let dx = line_mr(x2) - line_mr(x1);
         let dy = line_mr(y2) - line_mr(y1);
-        let dist = (line_mr(x + POLY_SUBPIXEL_SCALE/2) - line_mr(x2)) * dy -
-                   (line_mr(y + POLY_SUBPIXEL_SCALE/2) - line_mr(y2)) * dx;
+        let dist = (line_mr(x + POLY_SUBPIXEL_SCALE / 2) - line_mr(x2)) * dy
+            - (line_mr(y + POLY_SUBPIXEL_SCALE / 2) - line_mr(y2)) * dx;
         let dx = dx << POLY_MR_SUBPIXEL_SHIFT;
         let dy = dy << POLY_MR_SUBPIXEL_SHIFT;
         Self { dx, dy, dist }
@@ -825,7 +910,7 @@ struct DistanceInterpolator1 {
     /// y distance from point 1 to point 2 in Subpixel Coordinates
     dy: i64,
     /// Distance
-    pub dist: i64
+    pub dist: i64,
 }
 #[derive(Debug)]
 struct DistanceInterpolator2 {
@@ -851,17 +936,21 @@ struct DistanceInterpolator3 {
 impl DistanceInterpolator1 {
     /// Create a new Distance Interpolator
     pub fn new(x1: i64, y1: i64, x2: i64, y2: i64, x: i64, y: i64) -> Self {
-        let dx = x2-x1; // pixels
-        let dy = y2-y1; // pixels
-        let dist_fp = (x + POLY_SUBPIXEL_SCALE/2 - x2) as f64 * dy as f64 -
-                      (y + POLY_SUBPIXEL_SCALE/2 - y2) as f64 * dx as f64;
+        let dx = x2 - x1; // pixels
+        let dy = y2 - y1; // pixels
+        let dist_fp = (x + POLY_SUBPIXEL_SCALE / 2 - x2) as f64 * dy as f64
+            - (y + POLY_SUBPIXEL_SCALE / 2 - y2) as f64 * dx as f64;
         let dist = dist_fp.round() as i64;
         let dx = dx << POLY_SUBPIXEL_SHIFT; // subpixels
         let dy = dy << POLY_SUBPIXEL_SHIFT; // subpixels
         Self { dist, dx, dy }
     }
-    pub fn dx(&self) -> i64 { self.dx }
-    pub fn dy(&self) -> i64 { self.dy }
+    pub fn dx(&self) -> i64 {
+        self.dx
+    }
+    pub fn dy(&self) -> i64 {
+        self.dy
+    }
 }
 impl DistanceInterpolator for DistanceInterpolator1 {
     /// Return the current distance
@@ -918,32 +1007,47 @@ impl DistanceInterpolator for DistanceInterpolator1 {
     }
 }
 
-
 pub(crate) fn line_mr(x: i64) -> i64 {
     x >> (POLY_SUBPIXEL_SHIFT - POLY_MR_SUBPIXEL_SHIFT)
 }
 
 impl DistanceInterpolator2 {
-    pub fn new(x1: i64, y1: i64, x2: i64, y2: i64,
-               sx: i64, sy: i64, x: i64, y: i64, start: bool) -> Self {
-        let dx = x2-x1;
-        let dy = y2-y1;
+    pub fn new(
+        x1: i64,
+        y1: i64,
+        x2: i64,
+        y2: i64,
+        sx: i64,
+        sy: i64,
+        x: i64,
+        y: i64,
+        start: bool,
+    ) -> Self {
+        let dx = x2 - x1;
+        let dy = y2 - y1;
         let (dx_start, dy_start) = if start {
             (line_mr(sx) - line_mr(x1), line_mr(sy) - line_mr(y1))
         } else {
             (line_mr(sx) - line_mr(x2), line_mr(sy) - line_mr(y2))
         };
-        let dist = (x + POLY_SUBPIXEL_SCALE/2 - x2) as f64 * dy as f64 -
-                   (y + POLY_SUBPIXEL_SCALE/2 - y2) as f64 * dx as f64;
+        let dist = (x + POLY_SUBPIXEL_SCALE / 2 - x2) as f64 * dy as f64
+            - (y + POLY_SUBPIXEL_SCALE / 2 - y2) as f64 * dx as f64;
         let dist = dist.round() as i64;
-        let dist_start = (line_mr(x + POLY_SUBPIXEL_SCALE/2) - line_mr(sx)) * dy_start -
-                         (line_mr(y + POLY_SUBPIXEL_SCALE/2) - line_mr(sy)) * dx_start;
+        let dist_start = (line_mr(x + POLY_SUBPIXEL_SCALE / 2) - line_mr(sx)) * dy_start
+            - (line_mr(y + POLY_SUBPIXEL_SCALE / 2) - line_mr(sy)) * dx_start;
         let dx = dx << POLY_SUBPIXEL_SHIFT;
         let dy = dy << POLY_SUBPIXEL_SHIFT;
         let dx_start = dx_start << POLY_MR_SUBPIXEL_SHIFT;
         let dy_start = dy_start << POLY_MR_SUBPIXEL_SHIFT;
 
-        Self { dx, dy, dx_start, dy_start, dist, dist_start }
+        Self {
+            dx,
+            dy,
+            dx_start,
+            dy_start,
+            dist,
+            dist_start,
+        }
     }
 }
 
@@ -952,83 +1056,99 @@ impl DistanceInterpolator for DistanceInterpolator2 {
         self.dist
     }
     fn inc_x(&mut self, dy: i64) {
-        self.dist       += self.dy;
+        self.dist += self.dy;
         self.dist_start += self.dy_start;
         if dy > 0 {
-            self.dist       -= self.dx;
+            self.dist -= self.dx;
             self.dist_start -= self.dx_start;
         }
         if dy < 0 {
-            self.dist       += self.dx;
+            self.dist += self.dx;
             self.dist_start += self.dx_start;
         }
     }
     fn inc_y(&mut self, dx: i64) {
-        self.dist       -= self.dx;
+        self.dist -= self.dx;
         self.dist_start -= self.dx_start;
         if dx > 0 {
-            self.dist       += self.dy;
+            self.dist += self.dy;
             self.dist_start += self.dy_start;
         }
         if dx < 0 {
-            self.dist       -= self.dy;
+            self.dist -= self.dy;
             self.dist_start -= self.dy_start;
         }
     }
     fn dec_x(&mut self, dy: i64) {
-        self.dist       -= self.dy;
+        self.dist -= self.dy;
         self.dist_start -= self.dy_start;
         if dy > 0 {
-            self.dist       -= self.dx;
+            self.dist -= self.dx;
             self.dist_start -= self.dx_start;
         }
         if dy < 0 {
-            self.dist       += self.dx;
+            self.dist += self.dx;
             self.dist_start += self.dx_start;
         }
     }
     fn dec_y(&mut self, dx: i64) {
-        self.dist       += self.dx;
+        self.dist += self.dx;
         self.dist_start += self.dx_start;
         if dx > 0 {
-            self.dist       += self.dy;
+            self.dist += self.dy;
             self.dist_start += self.dy_start;
         }
         if dx < 0 {
-            self.dist       -= self.dy;
+            self.dist -= self.dy;
             self.dist_start -= self.dy_start;
         }
     }
 }
 
 impl DistanceInterpolator3 {
-    pub fn new(x1: i64, y1: i64, x2: i64, y2: i64,
-               sx: i64, sy: i64, ex: i64, ey: i64,
-               x: i64, y: i64) -> Self {
-        let dx = x2-x1;
-        let dy = y2-y1;
+    pub fn new(
+        x1: i64,
+        y1: i64,
+        x2: i64,
+        y2: i64,
+        sx: i64,
+        sy: i64,
+        ex: i64,
+        ey: i64,
+        x: i64,
+        y: i64,
+    ) -> Self {
+        let dx = x2 - x1;
+        let dy = y2 - y1;
         let dx_start = line_mr(sx) - line_mr(x1);
         let dy_start = line_mr(sy) - line_mr(y1);
-        let dx_end   = line_mr(ex) - line_mr(x2);
-        let dy_end   = line_mr(ey) - line_mr(y2);
+        let dx_end = line_mr(ex) - line_mr(x2);
+        let dy_end = line_mr(ey) - line_mr(y2);
 
-        let dist = (x + POLY_SUBPIXEL_SCALE/2 - x2) as f64 * dy as f64 -
-                   (y + POLY_SUBPIXEL_SCALE/2 - y2) as f64 * dx as f64;
+        let dist = (x + POLY_SUBPIXEL_SCALE / 2 - x2) as f64 * dy as f64
+            - (y + POLY_SUBPIXEL_SCALE / 2 - y2) as f64 * dx as f64;
         let dist = dist.round() as i64;
-        let dist_start = (line_mr(x + POLY_SUBPIXEL_SCALE/2) - line_mr(sx)) * dy_start -
-                         (line_mr(y + POLY_SUBPIXEL_SCALE/2) - line_mr(sy)) * dx_start;
-        let dist_end   = (line_mr(x + POLY_SUBPIXEL_SCALE/2) - line_mr(ex)) * dy_end -
-                         (line_mr(y + POLY_SUBPIXEL_SCALE/2) - line_mr(ey)) * dx_end;
-
+        let dist_start = (line_mr(x + POLY_SUBPIXEL_SCALE / 2) - line_mr(sx)) * dy_start
+            - (line_mr(y + POLY_SUBPIXEL_SCALE / 2) - line_mr(sy)) * dx_start;
+        let dist_end = (line_mr(x + POLY_SUBPIXEL_SCALE / 2) - line_mr(ex)) * dy_end
+            - (line_mr(y + POLY_SUBPIXEL_SCALE / 2) - line_mr(ey)) * dx_end;
 
         let dx = dx << POLY_SUBPIXEL_SHIFT;
         let dy = dy << POLY_SUBPIXEL_SHIFT;
         let dx_start = dx_start << POLY_MR_SUBPIXEL_SHIFT;
         let dy_start = dy_start << POLY_MR_SUBPIXEL_SHIFT;
-        let dx_end   = dx_end << POLY_MR_SUBPIXEL_SHIFT;
-        let dy_end   = dy_end << POLY_MR_SUBPIXEL_SHIFT;
+        let dx_end = dx_end << POLY_MR_SUBPIXEL_SHIFT;
+        let dy_end = dy_end << POLY_MR_SUBPIXEL_SHIFT;
         Self {
-            dx, dy, dx_start, dy_start, dx_end, dy_end, dist_start, dist_end, dist
+            dx,
+            dy,
+            dx_start,
+            dy_start,
+            dx_end,
+            dy_end,
+            dist_start,
+            dist_end,
+            dist,
         }
     }
 }
@@ -1038,69 +1158,68 @@ impl DistanceInterpolator for DistanceInterpolator3 {
         self.dist
     }
     fn inc_x(&mut self, dy: i64) {
-        self.dist       += self.dy;
+        self.dist += self.dy;
         self.dist_start += self.dy_start;
-        self.dist_end   += self.dy_end;
+        self.dist_end += self.dy_end;
         if dy > 0 {
-            self.dist       -= self.dx;
+            self.dist -= self.dx;
             self.dist_start -= self.dx_start;
-            self.dist_end   -= self.dx_end;
+            self.dist_end -= self.dx_end;
         }
         if dy < 0 {
-            self.dist       += self.dx;
+            self.dist += self.dx;
             self.dist_start += self.dx_start;
-            self.dist_end   += self.dx_end;
+            self.dist_end += self.dx_end;
         }
     }
     fn inc_y(&mut self, dx: i64) {
-        self.dist       -= self.dx;
+        self.dist -= self.dx;
         self.dist_start -= self.dx_start;
-        self.dist_end   -= self.dx_end;
+        self.dist_end -= self.dx_end;
         if dx > 0 {
-            self.dist       += self.dy;
+            self.dist += self.dy;
             self.dist_start += self.dy_start;
-            self.dist_end   += self.dy_end;
+            self.dist_end += self.dy_end;
         }
         if dx < 0 {
-            self.dist       -= self.dy;
+            self.dist -= self.dy;
             self.dist_start -= self.dy_start;
-            self.dist_end   -= self.dy_end;
+            self.dist_end -= self.dy_end;
         }
     }
     fn dec_x(&mut self, dy: i64) {
-        self.dist       -= self.dy;
+        self.dist -= self.dy;
         self.dist_start -= self.dy_start;
-        self.dist_end   -= self.dy_end;
+        self.dist_end -= self.dy_end;
         if dy > 0 {
-            self.dist       -= self.dx;
+            self.dist -= self.dx;
             self.dist_start -= self.dx_start;
-            self.dist_end   -= self.dx_end;
+            self.dist_end -= self.dx_end;
         }
         if dy < 0 {
-            self.dist       += self.dx;
+            self.dist += self.dx;
             self.dist_start += self.dx_start;
-            self.dist_end   += self.dx_end;
+            self.dist_end += self.dx_end;
         }
     }
     fn dec_y(&mut self, dx: i64) {
-        self.dist       += self.dx;
+        self.dist += self.dx;
         self.dist_start += self.dx_start;
-        self.dist_end   += self.dx_end;
+        self.dist_end += self.dx_end;
         if dx > 0 {
-            self.dist       += self.dy;
+            self.dist += self.dy;
             self.dist_start += self.dy_start;
-            self.dist_end   += self.dy_end;
+            self.dist_end += self.dy_end;
         }
         if dx < 0 {
-            self.dist       -= self.dy;
+            self.dist -= self.dy;
             self.dist_start -= self.dy_start;
-            self.dist_end   -= self.dy_end;
+            self.dist_end -= self.dy_end;
         }
     }
 }
 
-
-#[derive(Debug,Default)]
+#[derive(Debug, Default)]
 pub(crate) struct DrawVars {
     pub idx: usize,
     pub x1: i64,
@@ -1120,11 +1239,13 @@ pub(crate) struct DrawVars {
 
 impl DrawVars {
     pub fn new() -> Self {
-        Self { .. Default::default() }
+        Self {
+            ..Default::default()
+        }
     }
 }
 /// Line Parameters
-#[derive(Debug,Default,Copy,Clone)]
+#[derive(Debug, Default, Copy, Clone)]
 pub struct LineParameters {
     /// Starting x position
     pub x1: i64,
@@ -1176,25 +1297,38 @@ pub struct LineParameters {
 impl LineParameters {
     /// Create a new Line Parameter
     pub fn new(x1: i64, y1: i64, x2: i64, y2: i64, len: i64) -> Self {
-        let dx = (x2-x1).abs();
-        let dy = (y2-y1).abs();
+        let dx = (x2 - x1).abs();
+        let dy = (y2 - y1).abs();
         let vertical = dy >= dx;
         let sx = if x2 > x1 { 1 } else { -1 };
         let sy = if y2 > y1 { 1 } else { -1 };
         let inc = if vertical { sy } else { sx };
         let octant = (sy & 4) as usize | (sx & 2) as usize | vertical as usize;
-        Self {x1,y1,x2,y2,len,dx,dy,vertical,sx,sy,inc,octant}
+        Self {
+            x1,
+            y1,
+            x2,
+            y2,
+            len,
+            dx,
+            dy,
+            vertical,
+            sx,
+            sy,
+            inc,
+            octant,
+        }
     }
     /// Return the general direction of the line, see octant description
     pub fn diagonal_quadrant(&self) -> u8 {
-        let quads = [0,1,2,1,0,3,2,3];
-        quads[ self.octant ]
+        let quads = [0, 1, 2, 1, 0, 3, 2, 3];
+        quads[self.octant]
     }
     /// Split a Line Parameter into two parts
     pub fn divide(&self) -> (LineParameters, LineParameters) {
-        let xmid = (self.x1+self.x2) / 2;
-        let ymid = (self.y1+self.y2) / 2;
-        let len2  = self.len / 2;
+        let xmid = (self.x1 + self.x2) / 2;
+        let ymid = (self.y1 + self.y2) / 2;
+        let len2 = self.len / 2;
 
         let lp1 = LineParameters::new(self.x1, self.y1, xmid, ymid, len2);
         let lp2 = LineParameters::new(xmid, ymid, self.x2, self.y2, len2);
@@ -1226,11 +1360,11 @@ impl LineParameters {
     /// (Bisectrix)[https://en.wikipedia.org/wiki/Bisection]
     ///
     pub fn fix_degenerate_bisectrix_end(&self, x: i64, y: i64) -> (i64, i64) {
-        let d = self.fix_degenerate_bisectrix_setup(x,y);
+        let d = self.fix_degenerate_bisectrix_setup(x, y);
         if d < POLY_SUBPIXEL_SCALE / 2 {
             (self.x2 + (self.y2 - self.y1), self.y2 - (self.x2 - self.x1))
         } else {
-            (x,y)
+            (x, y)
         }
     }
     /// Move an begin point bisectrix that lies on the line
@@ -1244,11 +1378,11 @@ impl LineParameters {
     /// (Bisectrix)[https://en.wikipedia.org/wiki/Bisection]
     ///
     pub fn fix_degenerate_bisectrix_start(&self, x: i64, y: i64) -> (i64, i64) {
-        let d = self.fix_degenerate_bisectrix_setup(x,y);
+        let d = self.fix_degenerate_bisectrix_setup(x, y);
         if d < POLY_SUBPIXEL_SCALE / 2 {
             (self.x1 + (self.y2 - self.y1), self.y1 - (self.x2 - self.x1))
         } else {
-            (x,y)
+            (x, y)
         }
     }
     /// Create a new Interpolator
@@ -1268,26 +1402,49 @@ impl LineParameters {
         AA3::new(*self, sx, sy, ex, ey, subpixel_width)
     }
     /// Create a new Interpolator for an Image
-    pub fn interp_image(&self, sx: i64, sy: i64, ex: i64, ey: i64, subpixel_width: i64, pattern_start: i64, pattern_width: i64, scale_x: f64) -> LineInterpolatorImage {
-        LineInterpolatorImage::new(*self, sx, sy, ex, ey,
-                                   subpixel_width, pattern_start,
-                                   pattern_width, scale_x)
+    pub fn interp_image(
+        &self,
+        sx: i64,
+        sy: i64,
+        ex: i64,
+        ey: i64,
+        subpixel_width: i64,
+        pattern_start: i64,
+        pattern_width: i64,
+        scale_x: f64,
+    ) -> LineInterpolatorImage {
+        LineInterpolatorImage::new(
+            *self,
+            sx,
+            sy,
+            ex,
+            ey,
+            subpixel_width,
+            pattern_start,
+            pattern_width,
+            scale_x,
+        )
     }
 }
 
-
 #[cfg(test)]
 mod tests {
-    use super::DistanceInterpolator1;
     use super::DistanceInterpolator;
+    use super::DistanceInterpolator1;
     use crate::POLY_SUBPIXEL_MASK;
     #[test]
+    #[allow(clippy::erasing_op)]
     fn test_di1() {
-        let mut d = DistanceInterpolator1::new(10, 10, 30, 10,
-                                               10 & ! POLY_SUBPIXEL_MASK,
-                                               10 & ! POLY_SUBPIXEL_MASK);
-        assert_eq!(d.dx(), 20<<8);
-        assert_eq!(d.dy(), 0<<8);
+        let mut d = DistanceInterpolator1::new(
+            10,
+            10,
+            30,
+            10,
+            10 & !POLY_SUBPIXEL_MASK,
+            10 & !POLY_SUBPIXEL_MASK,
+        );
+        assert_eq!(d.dx(), 20 << 8);
+        assert_eq!(d.dy(), 0 << 8);
         assert_eq!(d.dist, -2360);
         d.inc_x(1);
         assert_eq!(d.dist, -7480);
@@ -1296,11 +1453,16 @@ mod tests {
         d.inc_x(1);
         assert_eq!(d.dist, -17720);
 
-        let mut d = DistanceInterpolator1::new(0, 0, 30, 0,
-                                               0 & ! POLY_SUBPIXEL_MASK,
-                                               0 & ! POLY_SUBPIXEL_MASK);
+        let mut d = DistanceInterpolator1::new(
+            0,
+            0,
+            30,
+            0,
+            0 & !POLY_SUBPIXEL_MASK,
+            0 & !POLY_SUBPIXEL_MASK,
+        );
         assert_eq!(d.dx(), 7680); // 30 << 8
-        assert_eq!(d.dy(), 0);    //  0 << 8
+        assert_eq!(d.dy(), 0); //  0 << 8
         assert_eq!(d.dist, -3840);
         d.inc_x(1);
         assert_eq!(d.dist, -11520);
@@ -1310,18 +1472,23 @@ mod tests {
         assert_eq!(d.dist, -26880);
     }
 
-    use super::LineParameters;
     use super::LineInterpolatorAA;
+    use super::LineParameters;
     #[test]
     fn test_line_interpolator_aa() {
-        let (x1,y1) = (0,0);
-        let (x2,y2) = (100, 50);
+        let (x1, y1) = (0, 0);
+        let (x2, y2) = (100, 50);
         let length = 100;
-        let lp = LineParameters::new(x1,y1, x2,y2, length);
-        let mut di = DistanceInterpolator1::new(lp.x1, lp.y1, lp.x2, lp.y2,
-                                            lp.x1 & ! POLY_SUBPIXEL_MASK,
-                                            lp.y1 & ! POLY_SUBPIXEL_MASK);
-        let mut aa = LineInterpolatorAA::new(lp, 10<<8);
+        let lp = LineParameters::new(x1, y1, x2, y2, length);
+        let mut di = DistanceInterpolator1::new(
+            lp.x1,
+            lp.y1,
+            lp.x2,
+            lp.y2,
+            lp.x1 & !POLY_SUBPIXEL_MASK,
+            lp.y1 & !POLY_SUBPIXEL_MASK,
+        );
+        let mut aa = LineInterpolatorAA::new(lp, 10 << 8);
         let v = aa.step_hor_base(&mut di);
         assert_eq!(v, 64);
         let v = aa.step_hor_base(&mut di);
@@ -1330,9 +1497,5 @@ mod tests {
         assert_eq!(v, 64);
         let v = aa.step_hor_base(&mut di);
         assert_eq!(v, 192);
-        
     }
-
-    
 }
-

@@ -33,34 +33,37 @@
 //!
 //! ![Output](https://raw.githubusercontent.com/savage13/agg/master/images/outline_aa.png)
 //!
-use crate::stroke::LineJoin;
+use crate::base::RenderingBase;
+use crate::clip::Rectangle;
+use crate::color::Rgba8;
+use crate::line_interp::DistanceInterpolator0;
+use crate::line_interp::DistanceInterpolator00;
+use crate::line_interp::DrawVars;
+use crate::line_interp::LineParameters;
 use crate::paths::PathCommand;
 use crate::paths::Vertex;
-use crate::line_interp::LineParameters;
-use crate::line_interp::DrawVars;
-use crate::line_interp::DistanceInterpolator00;
-use crate::line_interp::DistanceInterpolator0;
-use crate::base::RenderingBase;
-use crate::color::Rgba8;
-use crate::clip::Rectangle;
-use crate::render::clip_line_segment;
 use crate::raster::len_i64_xy;
+use crate::render::clip_line_segment;
+use crate::render::LINE_MAX_LENGTH;
+use crate::stroke::LineJoin;
+use crate::Color;
 use crate::NamedColor;
 use crate::Pixel;
-use crate::Color;
 use crate::RenderOutline;
-use crate::render::LINE_MAX_LENGTH;
 use crate::MAX_HALF_WIDTH;
-use crate::POLY_SUBPIXEL_SHIFT;
 use crate::POLY_SUBPIXEL_MASK;
+use crate::POLY_SUBPIXEL_SHIFT;
 
+use crate::raster::len_i64;
 use crate::DrawOutline;
 use crate::VertexSource;
-use crate::raster::len_i64;
 use crate::POLY_SUBPIXEL_SCALE;
 
 /// Outline Rasterizer with Anti-Aliasing
-pub struct RasterizerOutlineAA<'a,T> where T: DrawOutline {
+pub struct RasterizerOutlineAA<'a, T>
+where
+    T: DrawOutline,
+{
     ren: &'a mut T,
     start_x: i64,
     start_y: i64,
@@ -69,7 +72,10 @@ pub struct RasterizerOutlineAA<'a,T> where T: DrawOutline {
     line_join: LineJoin,
 }
 
-impl<'a,T> RasterizerOutlineAA<'a, T> where T: DrawOutline {
+impl<'a, T> RasterizerOutlineAA<'a, T>
+where
+    T: DrawOutline,
+{
     /// Create and connect an Outline Rasterizer to a Renderer
     pub fn with_renderer(ren: &'a mut T) -> Self {
         let line_join = if ren.accurate_join_only() {
@@ -77,8 +83,14 @@ impl<'a,T> RasterizerOutlineAA<'a, T> where T: DrawOutline {
         } else {
             LineJoin::Round
         };
-        Self { ren, start_x: 0, start_y: 0, vertices: vec![],
-               round_cap: false, line_join }
+        Self {
+            ren,
+            start_x: 0,
+            start_y: 0,
+            vertices: vec![],
+            round_cap: false,
+            line_join,
+        }
     }
     /// Set Rounded End Caps
     pub fn round_cap(&mut self, on: bool) {
@@ -103,60 +115,63 @@ impl<'a,T> RasterizerOutlineAA<'a, T> where T: DrawOutline {
     pub fn move_to_d(&mut self, x: f64, y: f64) {
         let x = self.conv(x);
         let y = self.conv(y);
-        self.move_to( x, y );
+        self.move_to(x, y);
     }
     /// Draw a line from the current point to (`x`,`y`)
     pub fn line_to_d(&mut self, x: f64, y: f64) {
         let x = self.conv(x);
         let y = self.conv(y);
-        self.line_to( x, y );
+        self.line_to(x, y);
     }
     fn move_to(&mut self, x: i64, y: i64) {
         self.start_x = x;
         self.start_y = y;
-        self.vertices.push( Vertex::move_to(x, y) );
+        self.vertices.push(Vertex::move_to(x, y));
     }
     fn line_to(&mut self, x: i64, y: i64) {
         let n = self.vertices.len();
         if n > 1 {
-            let v0 = self.vertices[n-1];
-            let v1 = self.vertices[n-2];
-            let len = len_i64(&v0,&v1);
+            let v0 = self.vertices[n - 1];
+            let v1 = self.vertices[n - 2];
+            let len = len_i64(&v0, &v1);
             if len < POLY_SUBPIXEL_SCALE + POLY_SUBPIXEL_SCALE / 2 {
                 self.vertices.pop();
             }
-
         }
-        self.vertices.push( Vertex::line_to(x, y) );
+        self.vertices.push(Vertex::line_to(x, y));
     }
     /// Close the current path
     pub fn close_path(&mut self) {
         self.line_to(self.start_x, self.start_y);
     }
-    fn cmp_dist_start(d: i64) -> bool { d > 0 }
-    fn cmp_dist_end  (d: i64) -> bool { d <= 0 }
+    fn cmp_dist_start(d: i64) -> bool {
+        d > 0
+    }
+    fn cmp_dist_end(d: i64) -> bool {
+        d <= 0
+    }
     fn draw_two_points(&mut self) {
         debug_assert!(self.vertices.len() == 2);
         let p1 = self.vertices.first().unwrap();
         let p2 = self.vertices.last().unwrap();
-        let (x1,y1) = (p1.x, p1.y);
-        let (x2,y2) = (p2.x, p2.y);
-        let lprev = len_i64(p1,p2);
-        let lp = LineParameters::new(x1,y1, x2,y2, lprev);
+        let (x1, y1) = (p1.x, p1.y);
+        let (x2, y2) = (p2.x, p2.y);
+        let lprev = len_i64(p1, p2);
+        let lp = LineParameters::new(x1, y1, x2, y2, lprev);
         if self.round_cap {
-            self.ren.semidot(Self::cmp_dist_start,
-                             x1, y1,
-                             x1 + (y2-y1),
-                             y1 - (x2-x1));
+            self.ren
+                .semidot(Self::cmp_dist_start, x1, y1, x1 + (y2 - y1), y1 - (x2 - x1));
         }
-        self.ren.line3(&lp,
-                       x1 + (y2-y1), y1 - (x2-x1),
-                       x2 + (y2-y1), y2 - (x2-x1));
+        self.ren.line3(
+            &lp,
+            x1 + (y2 - y1),
+            y1 - (x2 - x1),
+            x2 + (y2 - y1),
+            y2 - (x2 - x1),
+        );
         if self.round_cap {
-            self.ren.semidot(Self::cmp_dist_end,
-                             x2, y2,
-                             x2 + (y2-y1),
-                             y2 - (x2-x1));
+            self.ren
+                .semidot(Self::cmp_dist_end, x2, y2, x2 + (y2 - y1), y2 - (x2 - x1));
         }
     }
     fn draw_three_points(&mut self) {
@@ -165,39 +180,50 @@ impl<'a,T> RasterizerOutlineAA<'a, T> where T: DrawOutline {
         let p1 = v.next().unwrap();
         let p2 = v.next().unwrap();
         let p3 = v.next().unwrap();
-        let (x1,y1) = (p1.x, p1.y);
-        let (x2,y2) = (p2.x, p2.y);
-        let (x3,y3) = (p3.x, p3.y);
-        let lprev = len_i64(p1,p2);
-        let lnext = len_i64(p2,p3);
+        let (x1, y1) = (p1.x, p1.y);
+        let (x2, y2) = (p2.x, p2.y);
+        let (x3, y3) = (p3.x, p3.y);
+        let lprev = len_i64(p1, p2);
+        let lnext = len_i64(p2, p3);
         let lp1 = LineParameters::new(x1, y1, x2, y2, lprev);
         let lp2 = LineParameters::new(x2, y2, x3, y3, lnext);
         if self.round_cap {
-            self.ren.semidot(Self::cmp_dist_start,
-                             x1, y1,
-                             x1 + (y2-y1),
-                             y1 - (x2-x1));
+            self.ren
+                .semidot(Self::cmp_dist_start, x1, y1, x1 + (y2 - y1), y1 - (x2 - x1));
         }
         if self.line_join == LineJoin::Round {
-            self.ren.line3(&lp1,
-                           x1 + (y2-y1), y1 - (x2-x1),
-                           x2 + (y2-y1), y2 - (x2-x1));
-            self.ren.pie(x2, y2,
-                         x2 + (y2-y1), y2 - (x2-x1),
-                         x2 + (y3-y2), y2 - (x3-x2));
-            self.ren.line3(&lp2,
-                           x2 + (y3-y2), y2 - (x3-x2),
-                           x3 + (y3-y2), y3 - (x3-x2));
+            self.ren.line3(
+                &lp1,
+                x1 + (y2 - y1),
+                y1 - (x2 - x1),
+                x2 + (y2 - y1),
+                y2 - (x2 - x1),
+            );
+            self.ren.pie(
+                x2,
+                y2,
+                x2 + (y2 - y1),
+                y2 - (x2 - x1),
+                x2 + (y3 - y2),
+                y2 - (x3 - x2),
+            );
+            self.ren.line3(
+                &lp2,
+                x2 + (y3 - y2),
+                y2 - (x3 - x2),
+                x3 + (y3 - y2),
+                y3 - (x3 - x2),
+            );
         } else {
             let (xb1, yb1) = Self::bisectrix(&lp1, &lp2);
-            self.ren.line3(&lp1, x1 + (y2-y1), y1 - (x2-x1), xb1, yb1);
-            self.ren.line3(&lp2, xb1, yb1, x3 + (y3-y2), y3 - (x3-x2));
+            self.ren
+                .line3(&lp1, x1 + (y2 - y1), y1 - (x2 - x1), xb1, yb1);
+            self.ren
+                .line3(&lp2, xb1, yb1, x3 + (y3 - y2), y3 - (x3 - x2));
         }
         if self.round_cap {
-            self.ren.semidot(Self::cmp_dist_end,
-                             x3, y3,
-                             x3 + (y3-y2),
-                             y3 - (x3-x2));
+            self.ren
+                .semidot(Self::cmp_dist_end, x3, y3, x3 + (y3 - y2), y3 - (x3 - x2));
         }
     }
     fn draw_many_points(&mut self) {
@@ -215,22 +241,22 @@ impl<'a,T> RasterizerOutlineAA<'a, T> where T: DrawOutline {
 
         let mut dv = DrawVars::new();
         dv.idx = 3;
-        let lprev = len_i64(&v1,&v2);
-        dv.lcurr  = len_i64(&v2,&v3);
-        dv.lnext  = len_i64(&v3,&v4);
-        let prev = LineParameters::new(x1,y1, x2, y2, lprev); // pt1 -> pt2
+        let lprev = len_i64(&v1, &v2);
+        dv.lcurr = len_i64(&v2, &v3);
+        dv.lnext = len_i64(&v3, &v4);
+        let prev = LineParameters::new(x1, y1, x2, y2, lprev); // pt1 -> pt2
         dv.x1 = v3.x;
         dv.y1 = v3.y;
-        dv.curr = LineParameters::new(x2,y2, dv.x1, dv.y1, dv.lcurr); // pt2 -> pt3
+        dv.curr = LineParameters::new(x2, y2, dv.x1, dv.y1, dv.lcurr); // pt2 -> pt3
         dv.x2 = v4.x;
         dv.y2 = v4.y;
-        dv.next = LineParameters::new(dv.x1,dv.y1, dv.x2, dv.y2, dv.lnext); // pt3 -> pt4
+        dv.next = LineParameters::new(dv.x1, dv.y1, dv.x2, dv.y2, dv.lnext); // pt3 -> pt4
         dv.xb1 = 0;
         dv.xb2 = 0;
         dv.yb1 = 0;
         dv.yb2 = 0;
         dv.flags = match self.line_join {
-            LineJoin::MiterRevert | LineJoin::Bevel | LineJoin::MiterRound => { 3 },
+            LineJoin::MiterRevert | LineJoin::Bevel | LineJoin::MiterRound => 3,
             LineJoin::None => 3,
             LineJoin::MiterAccurate => 0,
             LineJoin::Miter | LineJoin::Round => {
@@ -245,54 +271,75 @@ impl<'a,T> RasterizerOutlineAA<'a, T> where T: DrawOutline {
             }
         };
         if self.round_cap {
-            self.ren.semidot(Self::cmp_dist_start, x1,y1, x1 + (y2-y1), y1 - (x2-x1));
+            self.ren
+                .semidot(Self::cmp_dist_start, x1, y1, x1 + (y2 - y1), y1 - (x2 - x1));
         }
         if (dv.flags & 1) == 0 {
             if self.line_join == LineJoin::Round {
-                self.ren.line3(&prev,
-                               x1 + (y2-y1), y1 - (x2-x1),
-                               x2 + (y2-y1), y2 - (x2-x1));
-                self.ren.pie(prev.x2, prev.y2,
-                             x2 + (y2-y1), y2 - (x2-x1),
-                             dv.curr.x1 + (dv.curr.y2-dv.curr.y1),
-                             dv.curr.y1 + (dv.curr.x2-dv.curr.x1));
+                self.ren.line3(
+                    &prev,
+                    x1 + (y2 - y1),
+                    y1 - (x2 - x1),
+                    x2 + (y2 - y1),
+                    y2 - (x2 - x1),
+                );
+                self.ren.pie(
+                    prev.x2,
+                    prev.y2,
+                    x2 + (y2 - y1),
+                    y2 - (x2 - x1),
+                    dv.curr.x1 + (dv.curr.y2 - dv.curr.y1),
+                    dv.curr.y1 + (dv.curr.x2 - dv.curr.x1),
+                );
             } else {
-                let(xb1, yb1) = Self::bisectrix(&prev, &dv.curr);
-                self.ren.line3(&prev,
-                               x1 + (y2-y1), y1 - (x2-x1), xb1, yb1);
+                let (xb1, yb1) = Self::bisectrix(&prev, &dv.curr);
+                self.ren
+                    .line3(&prev, x1 + (y2 - y1), y1 - (x2 - x1), xb1, yb1);
                 dv.xb1 = xb1;
                 dv.yb1 = yb1;
             }
         } else {
-            self.ren.line1(&prev, x1 + (y2-y1), y1-(x2-x1));
+            self.ren.line1(&prev, x1 + (y2 - y1), y1 - (x2 - x1));
         }
         if (dv.flags & 2) == 0 && self.line_join != LineJoin::Round {
             let (xb2, yb2) = Self::bisectrix(&dv.curr, &dv.next);
             dv.xb2 = xb2;
             dv.yb2 = yb2;
         }
-        self.draw(&mut dv, 1, self.vertices.len()-2);
+        self.draw(&mut dv, 1, self.vertices.len() - 2);
         if (dv.flags & 1) == 0 {
             if self.line_join == LineJoin::Round {
-                self.ren.line3(&dv.curr,
-                               dv.curr.x1 + (dv.curr.y2-dv.curr.y1),
-                               dv.curr.y1 - (dv.curr.x2 - dv.curr.x1),
-                               dv.curr.x2 + (dv.curr.y2 - dv.curr.y1),
-                               dv.curr.y2 - (dv.curr.x2 - dv.curr.x1));
+                self.ren.line3(
+                    &dv.curr,
+                    dv.curr.x1 + (dv.curr.y2 - dv.curr.y1),
+                    dv.curr.y1 - (dv.curr.x2 - dv.curr.x1),
+                    dv.curr.x2 + (dv.curr.y2 - dv.curr.y1),
+                    dv.curr.y2 - (dv.curr.x2 - dv.curr.x1),
+                );
             } else {
-                self.ren.line3(&dv.curr, dv.xb1, dv.yb1,
-                               dv.curr.x2 + (dv.curr.y2 - dv.curr.y1),
-                               dv.curr.y2 - (dv.curr.x2 - dv.curr.x1));
+                self.ren.line3(
+                    &dv.curr,
+                    dv.xb1,
+                    dv.yb1,
+                    dv.curr.x2 + (dv.curr.y2 - dv.curr.y1),
+                    dv.curr.y2 - (dv.curr.x2 - dv.curr.x1),
+                );
             }
         } else {
-            self.ren.line2(&dv.curr,
-                         dv.curr.x2 + (dv.curr.y2 - dv.curr.y1),
-                         dv.curr.y2 - (dv.curr.x2 - dv.curr.x1));
+            self.ren.line2(
+                &dv.curr,
+                dv.curr.x2 + (dv.curr.y2 - dv.curr.y1),
+                dv.curr.y2 - (dv.curr.x2 - dv.curr.x1),
+            );
         }
         if self.round_cap {
-            self.ren.semidot(Self::cmp_dist_end, dv.curr.x2, dv.curr.y2,
-                             dv.curr.x2 + (dv.curr.y2 - dv.curr.y1),
-                             dv.curr.y2 - (dv.curr.x2 - dv.curr.x1));
+            self.ren.semidot(
+                Self::cmp_dist_end,
+                dv.curr.x2,
+                dv.curr.y2,
+                dv.curr.x2 + (dv.curr.y2 - dv.curr.y1),
+                dv.curr.y2 - (dv.curr.x2 - dv.curr.x1),
+            );
         }
     }
     /// Render the current path
@@ -315,7 +362,7 @@ impl<'a,T> RasterizerOutlineAA<'a, T> where T: DrawOutline {
         self.vertices.clear();
     }
     fn draw(&mut self, dv: &mut DrawVars, start: usize, end: usize) {
-        for _i in start .. end {
+        for _i in start..end {
             if self.line_join == LineJoin::Round {
                 dv.xb1 = dv.curr.x1 + (dv.curr.y2 - dv.curr.y1);
                 dv.yb1 = dv.curr.y1 - (dv.curr.x2 - dv.curr.x1);
@@ -327,14 +374,17 @@ impl<'a,T> RasterizerOutlineAA<'a, T> where T: DrawOutline {
                 1 => self.ren.line2(&dv.curr, dv.xb2, dv.yb2),
                 2 => self.ren.line1(&dv.curr, dv.xb1, dv.yb1),
                 3 => self.ren.line0(&dv.curr),
-                _ => unreachable!("flag value not covered")
+                _ => unreachable!("flag value not covered"),
             }
             if self.line_join == LineJoin::Round && (dv.flags & 2) == 0 {
-                self.ren.pie(dv.curr.x2, dv.curr.y2,
-                             dv.curr.x2 + (dv.curr.y2 - dv.curr.y1),
-                             dv.curr.y2 - (dv.curr.x2 - dv.curr.x1),
-                             dv.curr.x2 + (dv.next.y2 - dv.next.y1),
-                             dv.curr.y2 - (dv.next.x2 - dv.next.x1));
+                self.ren.pie(
+                    dv.curr.x2,
+                    dv.curr.y2,
+                    dv.curr.x2 + (dv.curr.y2 - dv.curr.y1),
+                    dv.curr.y2 - (dv.curr.x2 - dv.curr.x1),
+                    dv.curr.x2 + (dv.next.y2 - dv.next.y1),
+                    dv.curr.y2 - (dv.next.x2 - dv.next.x1),
+                );
             }
             // Increment to next segment
             dv.x1 = dv.x2;
@@ -350,7 +400,7 @@ impl<'a,T> RasterizerOutlineAA<'a, T> where T: DrawOutline {
             let v = self.vertices[dv.idx];
             dv.x2 = v.x;
             dv.y2 = v.y;
-            dv.lnext = len_i64(&v0,&v);
+            dv.lnext = len_i64(&v0, &v);
 
             dv.curr = dv.next;
             dv.next = LineParameters::new(dv.x1, dv.y1, dv.x2, dv.y2, dv.lnext);
@@ -366,20 +416,20 @@ impl<'a,T> RasterizerOutlineAA<'a, T> where T: DrawOutline {
                         dv.flags |= 1 << 1;
                     }
                     if (dv.flags & 2) == 0 {
-                        let (xb2,yb2) = Self::bisectrix(&dv.curr, &dv.next);
+                        let (xb2, yb2) = Self::bisectrix(&dv.curr, &dv.next);
                         dv.xb2 = xb2;
                         dv.yb2 = yb2;
                     }
-                },
+                }
                 LineJoin::Round => {
                     dv.flags >>= 1;
                     if dv.curr.diagonal_quadrant() == dv.next.diagonal_quadrant() {
                         dv.flags |= 1 << 1;
                     }
-                },
+                }
                 LineJoin::MiterAccurate => {
                     dv.flags = 0;
-                    let (xb2,yb2) = Self::bisectrix(&dv.curr, &dv.next);
+                    let (xb2, yb2) = Self::bisectrix(&dv.curr, &dv.next);
                     dv.xb2 = xb2;
                     dv.yb2 = yb2;
                 }
@@ -394,8 +444,9 @@ impl<'a,T> RasterizerOutlineAA<'a, T> where T: DrawOutline {
         //All bisectrices must be on the right of the line
         //If the next point is on the left (l1 => l2.2)
         //then the bisectix should be rotated by 180 degrees.
-        if ((l2.x2 - l2.x1) as f64 * (l2.y1 - l1.y1) as f64) <
-            ((l2.y2 - l2.y1) as f64 * (l2.x1 - l1.x1) as f64 + 100.0) {
+        if ((l2.x2 - l2.x1) as f64 * (l2.y1 - l1.y1) as f64)
+            < ((l2.y2 - l2.y1) as f64 * (l2.x1 - l1.x1) as f64 + 100.0)
+        {
             tx -= (tx - l2.x1 as f64) * 2.0;
             ty -= (ty - l2.y1 as f64) * 2.0;
         }
@@ -406,28 +457,35 @@ impl<'a,T> RasterizerOutlineAA<'a, T> where T: DrawOutline {
         if ((dx * dx + dy * dy).sqrt() as i64) < POLY_SUBPIXEL_SCALE {
             let x = (l2.x1 + l2.x1 + (l2.y1 - l1.y1) + (l2.y2 - l2.y1)) >> 1;
             let y = (l2.y1 + l2.y1 - (l2.x1 - l1.x1) - (l2.x2 - l2.x1)) >> 1;
-            (x,y)
+            (x, y)
         } else {
-            (tx.round() as i64,ty.round() as i64)
+            (tx.round() as i64, ty.round() as i64)
         }
     }
 }
 
-
 #[derive(Debug)]
 /// Outline Renderer with Anti-Aliasing
-pub struct RendererOutlineAA<'a,T>  {
+pub struct RendererOutlineAA<'a, T> {
     ren: &'a mut RenderingBase<T>,
     color: Rgba8,
     clip_box: Option<Rectangle<i64>>,
     profile: LineProfileAA,
 }
 
-impl<'a,T> RendererOutlineAA<'a,T> where T: Pixel {
+impl<'a, T> RendererOutlineAA<'a, T>
+where
+    T: Pixel,
+{
     /// Create Outline Renderer with a [`RenderingBase`](../base/struct.RenderingBase.html)
     pub fn with_base(ren: &'a mut RenderingBase<T>) -> Self {
         let profile = LineProfileAA::new();
-        Self { ren, color: Rgba8::BLACK, clip_box: None, profile }
+        Self {
+            ren,
+            color: Rgba8::BLACK,
+            clip_box: None,
+            profile,
+        }
     }
     /// Set width of the line
     pub fn width(&mut self, width: f64) {
@@ -465,34 +523,30 @@ impl<'a,T> RendererOutlineAA<'a,T> where T: Pixel {
         let mut li = lp.interp0(self.subpixel_width());
         if li.count() > 0 {
             if li.vertical() {
-                while li.step_ver(self) {
-                }
+                while li.step_ver(self) {}
             } else {
-                while li.step_hor(self) {
-                }
+                while li.step_hor(self) {}
             }
         }
     }
     fn line1_no_clip(&mut self, lp: &LineParameters, sx: i64, sy: i64) {
         if lp.len > LINE_MAX_LENGTH {
             let (lp1, lp2) = lp.divide();
-            self.line1_no_clip(&lp1, (lp.x1 + sx)>>1, (lp.y1+sy)>>1);
-            self.line1_no_clip(&lp2, lp.x2 + (lp.y1 + lp1.y1), lp1.y2 - (lp1.x2-lp1.x1));
+            self.line1_no_clip(&lp1, (lp.x1 + sx) >> 1, (lp.y1 + sy) >> 1);
+            self.line1_no_clip(&lp2, lp.x2 + (lp.y1 + lp1.y1), lp1.y2 - (lp1.x2 - lp1.x1));
             return;
         }
         let (sx, sy) = lp.fix_degenerate_bisectrix_start(sx, sy);
         let mut li = lp.interp1(sx, sy, self.subpixel_width());
         if li.vertical() {
-            while li.step_ver(self) {
-            }
+            while li.step_ver(self) {}
         } else {
-            while li.step_hor(self) {
-            }
+            while li.step_hor(self) {}
         }
     }
     fn line2_no_clip(&mut self, lp: &LineParameters, ex: i64, ey: i64) {
         if lp.len > LINE_MAX_LENGTH {
-            let (lp1,lp2) = lp.divide();
+            let (lp1, lp2) = lp.divide();
             self.line2_no_clip(&lp1, lp1.x2 + (lp1.y2 - lp1.y1), lp1.y2 - (lp1.x2 - lp1.x1));
             self.line2_no_clip(&lp2, (lp.x2 + ex) >> 1, (lp.y2 + ey) >> 1);
             return;
@@ -500,11 +554,9 @@ impl<'a,T> RendererOutlineAA<'a,T> where T: Pixel {
         let (ex, ey) = lp.fix_degenerate_bisectrix_end(ex, ey);
         let mut li = lp.interp2(ex, ey, self.subpixel_width());
         if li.vertical() {
-            while li.step_ver(self) {
-            }
+            while li.step_ver(self) {}
         } else {
-            while li.step_hor(self) {
-            }
+            while li.step_hor(self) {}
         }
     }
     fn line3_no_clip(&mut self, lp: &LineParameters, sx: i64, sy: i64, ex: i64, ey: i64) {
@@ -520,16 +572,24 @@ impl<'a,T> RendererOutlineAA<'a,T> where T: Pixel {
         let (ex, ey) = lp.fix_degenerate_bisectrix_end(ex, ey);
         let mut li = lp.interp3(sx, sy, ex, ey, self.subpixel_width());
         if li.vertical() {
-            while li.step_ver(self) {
-            }
+            while li.step_ver(self) {}
         } else {
-            while li.step_hor(self) {
-            }
+            while li.step_hor(self) {}
         }
     }
 
-    fn semidot_hline<F>(&mut self, cmp: F, xc1: i64, yc1: i64, xc2: i64, yc2: i64, x1: i64, y1: i64, x2: i64)
-    where F: Fn(i64) -> bool
+    fn semidot_hline<F>(
+        &mut self,
+        cmp: F,
+        xc1: i64,
+        yc1: i64,
+        xc2: i64,
+        yc2: i64,
+        x1: i64,
+        y1: i64,
+        x2: i64,
+    ) where
+        F: Fn(i64) -> bool,
     {
         let mut x1 = x1;
         let mut covers = [0u64; MAX_HALF_WIDTH * 2 + 4];
@@ -540,14 +600,14 @@ impl<'a,T> RendererOutlineAA<'a,T> where T: Pixel {
         let w = self.subpixel_width();
 
         let mut di = DistanceInterpolator0::new(xc1, yc1, xc2, yc2, x, y);
-        x += POLY_SUBPIXEL_SCALE/2;
-        y += POLY_SUBPIXEL_SCALE/2;
+        x += POLY_SUBPIXEL_SCALE / 2;
+        y += POLY_SUBPIXEL_SCALE / 2;
 
         let x0 = x1;
         let mut dx = x - xc1;
         let dy = y - yc1;
         loop {
-            let d = ((dx*dx + dy*dy) as f64).sqrt() as i64;
+            let d = ((dx * dx + dy * dy) as f64).sqrt() as i64;
             covers[p1] = 0;
             if cmp(di.dist) && d <= w {
                 covers[p1] = self.cover(d);
@@ -560,13 +620,22 @@ impl<'a,T> RendererOutlineAA<'a,T> where T: Pixel {
                 break;
             }
         }
-        self.ren.blend_solid_hspan(x0, y1,
-                                   (p1 - p0) as i64,
-                                   self.color,
-                                   &covers);
+        self.ren
+            .blend_solid_hspan(x0, y1, (p1 - p0) as i64, self.color, &covers);
     }
 
-    fn pie_hline(&mut self, xc: i64, yc: i64, xp1: i64, yp1: i64, xp2: i64, yp2: i64, xh1: i64, yh1: i64, xh2: i64) {
+    fn pie_hline(
+        &mut self,
+        xc: i64,
+        yc: i64,
+        xp1: i64,
+        yp1: i64,
+        xp2: i64,
+        yp2: i64,
+        xh1: i64,
+        yh1: i64,
+        xh2: i64,
+    ) {
         if let Some(clip_box) = self.clip_box {
             if clip_box.clip_flags(xc, yc) != 0 {
                 return;
@@ -581,16 +650,15 @@ impl<'a,T> RendererOutlineAA<'a,T> where T: Pixel {
         let mut y = yh1 << POLY_SUBPIXEL_SHIFT;
         let w = self.subpixel_width();
 
-        let mut di = DistanceInterpolator00::new(xc, yc, xp1, yp1, xp2, yp2,
-                                                 x, y);
-        x += POLY_SUBPIXEL_SCALE/2;
-        y += POLY_SUBPIXEL_SCALE/2;
+        let mut di = DistanceInterpolator00::new(xc, yc, xp1, yp1, xp2, yp2, x, y);
+        x += POLY_SUBPIXEL_SCALE / 2;
+        y += POLY_SUBPIXEL_SCALE / 2;
 
         let xh0 = xh1;
         let mut dx = x - xc;
         let dy = y - yc;
         loop {
-            let d = ((dx*dx + dy*dy) as f64).sqrt() as i64;
+            let d = ((dx * dx + dy * dy) as f64).sqrt() as i64;
             covers[p1] = 0;
             if di.dist1 <= 0 && di.dist2 > 0 && d <= w {
                 covers[p1] = self.cover(d);
@@ -603,41 +671,42 @@ impl<'a,T> RendererOutlineAA<'a,T> where T: Pixel {
                 break;
             }
         }
-        self.ren.blend_solid_hspan(xh0, yh1,
-                                   (p1 - p0) as i64,
-                                   self.color,
-                                   &covers);
-
+        self.ren
+            .blend_solid_hspan(xh0, yh1, (p1 - p0) as i64, self.color, &covers);
     }
-
 }
 
-impl<T> RenderOutline for RendererOutlineAA<'_, T> where T: Pixel {
+impl<T> RenderOutline for RendererOutlineAA<'_, T>
+where
+    T: Pixel,
+{
     fn cover(&self, d: i64) -> u64 {
         let subpixel_shift = POLY_SUBPIXEL_SHIFT;
         let subpixel_scale = 1 << subpixel_shift;
         let index = d + i64::from(subpixel_scale) * 2;
         assert!(index >= 0);
-        u64::from( self.profile.profile[index as usize] )
+        u64::from(self.profile.profile[index as usize])
     }
     fn blend_solid_hspan(&mut self, x: i64, y: i64, len: i64, covers: &[u64]) {
-        self.ren.blend_solid_hspan(x, y, len,  self.color, covers);
+        self.ren.blend_solid_hspan(x, y, len, self.color, covers);
     }
     fn blend_solid_vspan(&mut self, x: i64, y: i64, len: i64, covers: &[u64]) {
-        self.ren.blend_solid_vspan(x, y, len,  self.color, covers);
+        self.ren.blend_solid_vspan(x, y, len, self.color, covers);
     }
 }
 
-impl<T> DrawOutline for RendererOutlineAA<'_, T> where T: Pixel {
+impl<T> DrawOutline for RendererOutlineAA<'_, T>
+where
+    T: Pixel,
+{
     fn line3(&mut self, lp: &LineParameters, sx: i64, sy: i64, ex: i64, ey: i64) {
         if let Some(clip_box) = self.clip_box {
-            let (x1,y1,x2,y2,flags) = clip_line_segment(lp.x1, lp.y1, lp.x2, lp.y2, clip_box);
+            let (x1, y1, x2, y2, flags) = clip_line_segment(lp.x1, lp.y1, lp.x2, lp.y2, clip_box);
             if (flags & 4) == 0 {
-                let (mut sx, mut sy, mut ex, mut ey) = (sx,sy,ex,ey);
-                if flags != 0{
-                    let lp2 = LineParameters::new(x1,y1,x2,y2,
-                                                  len_i64_xy(x1, y1, x2, y2));
-                    if flags & 1 != 0{
+                let (mut sx, mut sy, mut ex, mut ey) = (sx, sy, ex, ey);
+                if flags != 0 {
+                    let lp2 = LineParameters::new(x1, y1, x2, y2, len_i64_xy(x1, y1, x2, y2));
+                    if flags & 1 != 0 {
                         sx = x1 + (y2 - y1);
                         sy = y1 - (x2 - x1);
                     } else {
@@ -646,7 +715,7 @@ impl<T> DrawOutline for RendererOutlineAA<'_, T> where T: Pixel {
                             sy = (lp.y1 + sy) >> 1;
                         }
                     }
-                    if flags & 2 != 0{
+                    if flags & 2 != 0 {
                         ex = x2 + (y2 - y1);
                         ey = y2 - (x2 - x1);
                     } else {
@@ -665,7 +734,8 @@ impl<T> DrawOutline for RendererOutlineAA<'_, T> where T: Pixel {
         }
     }
     fn semidot<F>(&mut self, cmp: F, xc1: i64, yc1: i64, xc2: i64, yc2: i64)
-    where F: Fn(i64) -> bool
+    where
+        F: Fn(i64) -> bool,
     {
         if let Some(clip_box) = self.clip_box {
             if clip_box.clip_flags(xc1, yc1) != 0 {
@@ -690,8 +760,8 @@ impl<T> DrawOutline for RendererOutlineAA<'_, T> where T: Pixel {
             dy += ei.dy;
 
             if dy != dy0 {
-                self.semidot_hline(&cmp, xc1, yc1, xc2, yc2, x-dx0, y+dy0, x+dx0);
-                self.semidot_hline(&cmp, xc1, yc1, xc2, yc2, x-dx0, y-dy0, x+dx0);
+                self.semidot_hline(&cmp, xc1, yc1, xc2, yc2, x - dx0, y + dy0, x + dx0);
+                self.semidot_hline(&cmp, xc1, yc1, xc2, yc2, x - dx0, y - dy0, x + dx0);
             }
             dx0 = dx;
             dy0 = dy;
@@ -700,7 +770,7 @@ impl<T> DrawOutline for RendererOutlineAA<'_, T> where T: Pixel {
                 break;
             }
         }
-        self.semidot_hline(&cmp, xc1, yc1, xc2, yc2, x-dx0, y+dy0, x+dx0);
+        self.semidot_hline(&cmp, xc1, yc1, xc2, yc2, x - dx0, y + dy0, x + dx0);
     }
 
     fn pie(&mut self, xc: i64, yc: i64, x1: i64, y1: i64, x2: i64, y2: i64) {
@@ -721,8 +791,8 @@ impl<T> DrawOutline for RendererOutlineAA<'_, T> where T: Pixel {
             dy += ei.dy;
 
             if dy != dy0 {
-                self.pie_hline(xc, yc, x1, y1, x2, y2, x-dx0, y+dy0, x+dx0);
-                self.pie_hline(xc, yc, x1, y1, x2, y2, x-dx0, y-dy0, x+dx0);
+                self.pie_hline(xc, yc, x1, y1, x2, y2, x - dx0, y + dy0, x + dx0);
+                self.pie_hline(xc, yc, x1, y1, x2, y2, x - dx0, y - dy0, x + dx0);
             }
             dx0 = dx;
             dy0 = dy;
@@ -731,19 +801,19 @@ impl<T> DrawOutline for RendererOutlineAA<'_, T> where T: Pixel {
                 break;
             }
         }
-        self.pie_hline(xc, yc, x1, y1, x2, y2, x-dx0, y+dy0, x+dx0);
-
+        self.pie_hline(xc, yc, x1, y1, x2, y2, x - dx0, y + dy0, x + dx0);
     }
     /// Draw a Line Segment, clipping if necessary
     ///
     fn line0(&mut self, lp: &LineParameters) {
         if let Some(clip_box) = self.clip_box {
-            let (x1,y1,x2,y2,flags) = clip_line_segment(lp.x1,lp.y1,lp.x2,lp.y2,clip_box);
-            if flags & 4 == 0 { // Line in Visible
-                if flags != 0 { // Line is Clipped
+            let (x1, y1, x2, y2, flags) = clip_line_segment(lp.x1, lp.y1, lp.x2, lp.y2, clip_box);
+            if flags & 4 == 0 {
+                // Line in Visible
+                if flags != 0 {
+                    // Line is Clipped
                     // Create new Line from clipped lines and draw
-                    let lp2 = LineParameters::new(x1, y1, x2, y2,
-                                                  len_i64_xy(x1,y1,x2,y2));
+                    let lp2 = LineParameters::new(x1, y1, x2, y2, len_i64_xy(x1, y1, x2, y2));
                     self.line0_no_clip(&lp2);
                 } else {
                     // Line is not Clipped
@@ -757,16 +827,16 @@ impl<T> DrawOutline for RendererOutlineAA<'_, T> where T: Pixel {
     }
     fn line1(&mut self, lp: &LineParameters, sx: i64, sy: i64) {
         if let Some(clip_box) = self.clip_box {
-            let (x1,y1,x2,y2,flags) = clip_line_segment(lp.x1,lp.y1,lp.x2,lp.y2, clip_box);
+            let (x1, y1, x2, y2, flags) = clip_line_segment(lp.x1, lp.y1, lp.x2, lp.y2, clip_box);
             if flags & 4 == 0 {
-                if flags != 0{
-                    let (mut sx, mut sy) = (sx,sy);
-                    let lp2 = LineParameters::new(x1,y1,x2,y2, len_i64_xy(x1,y1,x2,y2));
+                if flags != 0 {
+                    let (mut sx, mut sy) = (sx, sy);
+                    let lp2 = LineParameters::new(x1, y1, x2, y2, len_i64_xy(x1, y1, x2, y2));
                     if flags & 1 == 0 {
-                        sx = x1 + (y2-y1);
-                        sy = y1 - (x2-x1);
+                        sx = x1 + (y2 - y1);
+                        sy = y1 - (x2 - x1);
                     } else {
-                        while (sx - lp.x1).abs() + (sy-lp.y1).abs() > lp2.len {
+                        while (sx - lp.x1).abs() + (sy - lp.y1).abs() > lp2.len {
                             sx = (lp.x1 + sx) >> 1;
                             sy = (lp.y1 + sy) >> 1;
                         }
@@ -782,14 +852,14 @@ impl<T> DrawOutline for RendererOutlineAA<'_, T> where T: Pixel {
     }
     fn line2(&mut self, lp: &LineParameters, ex: i64, ey: i64) {
         if let Some(clip_box) = self.clip_box {
-            let (x1,y1,x2,y2,flags) = clip_line_segment(lp.x1,lp.y1,lp.x2,lp.y2, clip_box);
+            let (x1, y1, x2, y2, flags) = clip_line_segment(lp.x1, lp.y1, lp.x2, lp.y2, clip_box);
             if flags & 4 == 0 {
                 if flags != 0 {
-                    let (mut ex,mut ey) = (ex,ey);
-                    let lp2 = LineParameters::new(x1,y1,x2,y2, len_i64_xy(x1,y1,x2,y2));
-                    if flags & 2 != 0{
-                        ex = x2 + (y2-y1);
-                        ey = y2 + (x2-x1);
+                    let (mut ex, mut ey) = (ex, ey);
+                    let lp2 = LineParameters::new(x1, y1, x2, y2, len_i64_xy(x1, y1, x2, y2));
+                    if flags & 2 != 0 {
+                        ex = x2 + (y2 - y1);
+                        ey = y2 + (x2 - x1);
                     } else {
                         while (ex - lp.x2).abs() + (ey - lp.y2).abs() > lp2.len {
                             ex = (lp.x2 + ex) >> 1;
@@ -809,12 +879,12 @@ impl<T> DrawOutline for RendererOutlineAA<'_, T> where T: Pixel {
         self.color = color.rgba();
     }
 
-    fn accurate_join_only(&self) -> bool{
+    fn accurate_join_only(&self) -> bool {
         false
     }
 }
 
-#[derive(Debug,Default)]
+#[derive(Debug, Default)]
 /// Profile of a Line
 struct LineProfileAA {
     min_width: f64,
@@ -829,11 +899,14 @@ impl LineProfileAA {
     ///
     /// Width is initialized to 0.0
     pub fn new() -> Self {
-        let gamma : Vec<_> = (0..POLY_SUBPIXEL_SCALE).map(|x| x as u8).collect();
-        let mut s = Self { min_width: 1.0,
-                           smoother_width: 1.0,
-                           subpixel_width: 0,
-                           profile: vec![], gamma };
+        let gamma: Vec<_> = (0..POLY_SUBPIXEL_SCALE).map(|x| x as u8).collect();
+        let mut s = Self {
+            min_width: 1.0,
+            smoother_width: 1.0,
+            subpixel_width: 0,
+            profile: vec![],
+            gamma,
+        };
         s.width(0.0);
         s
     }
@@ -922,36 +995,37 @@ impl LineProfileAA {
         self.profile(center_width + smoother_width);
 
         // Width in Subpixel scales
-        let subpixel_center_width : usize   = (center_width * subpixel_scale as f64) as usize;
-        let subpixel_smoother_width : usize = (smoother_width * subpixel_scale as f64) as usize;
+        let subpixel_center_width: usize = (center_width * subpixel_scale as f64) as usize;
+        let subpixel_smoother_width: usize = (smoother_width * subpixel_scale as f64) as usize;
         //
-        let n_smoother = self.profile.len() -
-            subpixel_smoother_width -
-            subpixel_center_width -
-            subpixel_scale*2;
+        let n_smoother = self.profile.len()
+            - subpixel_smoother_width
+            - subpixel_center_width
+            - subpixel_scale * 2;
 
         // Center and Smoother Width Offsets
-        let ch_center   = subpixel_scale*2;
+        let ch_center = subpixel_scale * 2;
         let ch_smoother = ch_center + subpixel_center_width;
 
         // Fill center portion of the profile (on one side) base_val
         let val = self.gamma[(base_val * f64::from(aa_mask)) as usize];
-        for i in 0 .. subpixel_center_width {
+        for i in 0..subpixel_center_width {
             self.profile[ch_center + i] = val;
         }
         // Fill smoother portion of the profile with value decreasing linearly
-        for i  in 0 .. subpixel_smoother_width {
-            let k = ((base_val - base_val * (i as f64 / subpixel_smoother_width as f64)) * f64::from(aa_mask)) as usize;
+        for i in 0..subpixel_smoother_width {
+            let k = ((base_val - base_val * (i as f64 / subpixel_smoother_width as f64))
+                * f64::from(aa_mask)) as usize;
             self.profile[ch_smoother + i] = self.gamma[k];
         }
 
         // Remainder is essentially 0.0
         let val = self.gamma[0];
-        for i in 0 .. n_smoother  {
+        for i in 0..n_smoother {
             self.profile[ch_smoother + subpixel_smoother_width + i] = val;
         }
         // Copy to other side
-        for i in 0 .. subpixel_scale*2 {
+        for i in 0..subpixel_scale * 2 {
             self.profile[ch_center - 1 - i] = self.profile[ch_center + i]
         }
     }
@@ -984,7 +1058,17 @@ impl EllipseInterpolator {
         let inc_y = -ry * two_rx2;
         let cur_f = 0;
 
-        Self { rx2, ry2, two_rx2, two_ry2, dx, dy, inc_x, inc_y, cur_f }
+        Self {
+            rx2,
+            ry2,
+            two_rx2,
+            two_ry2,
+            dx,
+            dy,
+            inc_x,
+            inc_y,
+            cur_f,
+        }
     }
 
     /// Increment the Interpolator
@@ -998,7 +1082,7 @@ impl EllipseInterpolator {
 
         let mut my = self.cur_f + self.inc_y + self.rx2;
         let fy = my;
-        if my < 0  {
+        if my < 0 {
             my = -my;
         }
 

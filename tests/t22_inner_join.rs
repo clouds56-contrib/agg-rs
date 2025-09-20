@@ -1,20 +1,19 @@
-
-use agg::{Pixfmt,Rgb8,Rgba8};
 use agg::prelude::*;
+use agg::{Pixfmt, Rgb8, Rgba8};
 
 #[test]
 fn t22_inner_join() {
-
-    let pix = Pixfmt::<Rgb8>::new(400,100);
+    let pix = Pixfmt::<Rgb8>::new(400, 100);
     let mut ren_base = agg::RenderingBase::new(pix);
-    ren_base.clear( Rgba8::WHITE );
+    ren_base.clear(Rgba8::WHITE);
 
-    let joins = [ agg::InnerJoin::Miter,
-                  agg::InnerJoin::Round,
-                  agg::InnerJoin::Bevel,
-                  agg::InnerJoin::Jag,
+    let joins = [
+        agg::InnerJoin::Miter,
+        agg::InnerJoin::Round,
+        agg::InnerJoin::Bevel,
+        agg::InnerJoin::Jag,
     ];
-    for (i,join) in joins.iter().enumerate() {
+    for (i, join) in joins.iter().enumerate() {
         let dx = 100.0 * i as f64;
         let mut path = agg::Path::new();
         path.move_to(10.0 + dx, 70.0);
@@ -23,7 +22,7 @@ fn t22_inner_join() {
 
         let mut stroke = agg::Stroke::new(path);
         stroke.width(25.0);
-        stroke.inner_join( *join );
+        stroke.inner_join(*join);
 
         let mut ras = agg::RasterizerScanline::new();
         ras.add_path(&stroke);
@@ -33,31 +32,32 @@ fn t22_inner_join() {
     }
     let mut ras = agg::RasterizerScanline::new();
     let mut ren = agg::RenderingScanlineAASolid::with_base(&mut ren_base);
-    text(&mut ras, &mut ren,  29.0, 90.0, "Miter");
+    text(&mut ras, &mut ren, 29.0, 90.0, "Miter");
     text(&mut ras, &mut ren, 125.0, 90.0, "Round");
     text(&mut ras, &mut ren, 225.0, 90.0, "Bevel");
     text(&mut ras, &mut ren, 332.0, 90.0, "Jag");
 
     ren_base.to_file("tests/tmp/inner_join.png").unwrap();
     assert!(agg::ppm::img_diff("tests/tmp/inner_join.png", "images/inner_join.png").unwrap());
-
 }
 
-
-fn text<T>(ras: &mut agg::RasterizerScanline,
-           ren: &mut agg::RenderingScanlineAASolid<T>,
-           x: f64, y: f64, txt: &str)
-    where T: agg::Pixel
+fn text<T>(
+    ras: &mut agg::RasterizerScanline,
+    ren: &mut agg::RenderingScanlineAASolid<T>,
+    x: f64,
+    y: f64,
+    txt: &str,
+) where
+    T: agg::Pixel,
 {
     let mut t = agg::GsvText::new();
     t.size(12.0, 0.0);
     t.text(txt);
-    t.start_point(x,y);
+    t.start_point(x, y);
     t.flip(true);
     let mut stroke = agg::Stroke::new(t);
     stroke.width(1.0);
     ras.add_path(&stroke);
     ren.color(agg::Rgba8::BLACK);
     agg::render_scanlines(ras, ren);
-
 }
