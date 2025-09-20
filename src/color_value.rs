@@ -1,31 +1,45 @@
-use std::u8;
+use crate::{
+  luminance,
+  math::{lerp_u8, multiply_u8, prelerp_u8},
+};
 
-use crate::{luminance, math::{lerp_u8, multiply_u8, prelerp_u8}};
-
-use palette::{bool_mask::HasBoolMask, num::{IsValidDivisor, MulAdd, MulSub, One, PartialCmp, Powf, Real, Zero}};
-
+use palette::{
+  bool_mask::HasBoolMask,
+  num::{IsValidDivisor, MulAdd, MulSub, One, PartialCmp, Powf, Real, Zero},
+};
 
 #[derive(Copy, Clone, Debug, PartialEq, Hash, PartialOrd, Ord, Eq)]
 pub struct UFixed<T>(pub T);
 
 impl<T> UFixed<T> {
-  pub fn new(v: T) -> Self { Self(v) }
+  pub fn new(v: T) -> Self {
+    Self(v)
+  }
 }
 
 impl<T> std::ops::Deref for UFixed<T> {
   type Target = T;
-  fn deref(&self) -> &Self::Target { &self.0 }
+  fn deref(&self) -> &Self::Target {
+    &self.0
+  }
 }
 impl<T> std::ops::DerefMut for UFixed<T> {
-  fn deref_mut(&mut self) -> &mut Self::Target { &mut self.0 }
+  fn deref_mut(&mut self) -> &mut Self::Target {
+    &mut self.0
+  }
 }
-impl<T> std::fmt::Display for UFixed<T> where T: std::fmt::Display {
+impl<T> std::fmt::Display for UFixed<T>
+where
+  T: std::fmt::Display,
+{
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
     write!(f, "{}", self.0)
   }
 }
 impl<T> From<T> for UFixed<T> {
-  fn from(v: T) -> Self { Self(v) }
+  fn from(v: T) -> Self {
+    Self(v)
+  }
 }
 
 pub type U8 = UFixed<u8>;
@@ -160,7 +174,9 @@ macro_rules! impl_float {
   };
 }
 
-pub trait RealLike: Real + One + Zero + Copy + std::fmt::Debug + PartialEq<Self> + From<Self::Raw> + Into<Self::Raw> + 'static {
+pub trait RealLike:
+  Real + One + Zero + Copy + std::fmt::Debug + PartialEq<Self> + From<Self::Raw> + Into<Self::Raw> + 'static
+{
   type Raw;
   const ZERO: Self;
   const ONE: Self;
@@ -171,7 +187,17 @@ pub trait RealLike: Real + One + Zero + Copy + std::fmt::Debug + PartialEq<Self>
 impl_num!(u8 u16);
 impl_float!(f32 f64);
 
-pub trait MulOps: RealLike + std::ops::Mul<Output=Self> + std::ops::Div<Output=Self> + Powf + MulAdd + MulSub + PartialCmp + IsValidDivisor + HasBoolMask<Mask = bool> {
+pub trait MulOps:
+  RealLike
+  + std::ops::Mul<Output = Self>
+  + std::ops::Div<Output = Self>
+  + Powf
+  + MulAdd
+  + MulSub
+  + PartialCmp
+  + IsValidDivisor
+  + HasBoolMask<Mask = bool>
+{
   /// Multiply two color values, clamping the result to [0, 1]
   fn mul(self, rhs: Self) -> Self {
     Self::from_f64(self.to_f64() * rhs.to_f64())
@@ -230,53 +256,81 @@ impl MulOps for f32 {}
 impl MulOps for f64 {}
 
 pub trait ColorValue: RealLike + MulOps + Copy + 'static {
-    fn as_color_f64(self) -> f64 { self.to_f64() }
-    fn as_color_u8(self) -> U8 { U8::from_f64(self.to_f64()) }
-    fn from_color_f64(v: f64) -> Self { Self::from_f64(v) }
-    fn from_color_u8(v: U8) -> Self { Self::from_f64(v.to_f64()) }
-    fn as_color_<T: ColorValue>(self) -> T {
-        if std::any::TypeId::of::<Self>() == std::any::TypeId::of::<T>() {
-            // This is safe because we just checked that Self and T are the same type
-            unsafe { std::mem::transmute_copy(&self) }
-        } else {
-            T::from_color_f64(self.as_color_f64())
-        }
+  fn as_color_f64(self) -> f64 {
+    self.to_f64()
+  }
+  fn as_color_u8(self) -> U8 {
+    U8::from_f64(self.to_f64())
+  }
+  fn from_color_f64(v: f64) -> Self {
+    Self::from_f64(v)
+  }
+  fn from_color_u8(v: U8) -> Self {
+    Self::from_f64(v.to_f64())
+  }
+  fn as_color_<T: ColorValue>(self) -> T {
+    if std::any::TypeId::of::<Self>() == std::any::TypeId::of::<T>() {
+      // This is safe because we just checked that Self and T are the same type
+      unsafe { std::mem::transmute_copy(&self) }
+    } else {
+      T::from_color_f64(self.as_color_f64())
     }
+  }
 
-    fn luminance_f64(r: Self, g: Self, b: Self) -> f64 {
-        luminance(r.as_color_f64(), g.as_color_f64(), b.as_color_f64())
-    }
-    fn luminance_<T: ColorValue>(r: Self, g: Self, b: Self) -> T { Self::luminance_f64(r, g, b).as_color_() }
-    fn luminance(r: Self, g: Self, b: Self) -> Self { Self::luminance_(r, g, b) }
+  fn luminance_f64(r: Self, g: Self, b: Self) -> f64 {
+    luminance(r.as_color_f64(), g.as_color_f64(), b.as_color_f64())
+  }
+  fn luminance_<T: ColorValue>(r: Self, g: Self, b: Self) -> T {
+    Self::luminance_f64(r, g, b).as_color_()
+  }
+  fn luminance(r: Self, g: Self, b: Self) -> Self {
+    Self::luminance_(r, g, b)
+  }
 
-    fn to_srgb_f64(self) -> f64 { rgb_to_srgb(self.as_color_f64()) }
-    fn to_srgb_<T: ColorValue>(self) -> T { self.to_srgb_f64().as_color_() }
-    fn to_srgb(self) -> Self { self.to_srgb_() }
-    fn from_srgb_f64(self) -> f64 { srgb_to_rgb(self.as_color_f64()) }
-    fn from_srgb_<T: ColorValue>(self) -> T { self.from_srgb_f64().as_color_() }
-    fn from_srgb(self) -> Self { self.from_srgb_() }
+  fn to_srgb_f64(self) -> f64 {
+    rgb_to_srgb(self.as_color_f64())
+  }
+  fn to_srgb_<T: ColorValue>(self) -> T {
+    self.to_srgb_f64().as_color_()
+  }
+  fn to_srgb(self) -> Self {
+    self.to_srgb_()
+  }
+  fn from_srgb_f64(self) -> f64 {
+    srgb_to_rgb(self.as_color_f64())
+  }
+  fn from_srgb_<T: ColorValue>(self) -> T {
+    self.from_srgb_f64().as_color_()
+  }
+  fn from_srgb(self) -> Self {
+    self.from_srgb_()
+  }
 }
 impl ColorValue for U8 {
-  fn as_color_u8(self) -> U8 { self }
-  fn from_color_u8(v: U8) -> Self { v }
+  fn as_color_u8(self) -> U8 {
+    self
+  }
+  fn from_color_u8(v: U8) -> Self {
+    v
+  }
 }
-impl ColorValue for U16 { }
-impl ColorValue for f32 { }
-impl ColorValue for f64 { }
+impl ColorValue for U16 {}
+impl ColorValue for f32 {}
+impl ColorValue for f64 {}
 
 /// Convert from sRGB to RGB for a single component
 fn srgb_to_rgb(x: f64) -> f64 {
-    if x <= 0.04045 {
-        x / 12.92
-    } else {
-        ((x + 0.055) / 1.055).powf(2.4)
-    }
+  if x <= 0.04045 {
+    x / 12.92
+  } else {
+    ((x + 0.055) / 1.055).powf(2.4)
+  }
 }
 /// Convert from RGB to sRGB for a single component
 fn rgb_to_srgb(x: f64) -> f64 {
-    if x <= 0.003_130_8 {
-        x * 12.92
-    } else {
-        1.055 * x.powf(1.0/2.4) - 0.055
-    }
+  if x <= 0.003_130_8 {
+    x * 12.92
+  } else {
+    1.055 * x.powf(1.0 / 2.4) - 0.055
+  }
 }

@@ -122,139 +122,184 @@
 //! [`render_all_paths`]: render/fn.render_all_paths.html
 //! [`render_scanlines_aa_solid`]: render/fn.render_scanlines_aa_solid.html
 //! [`render_scanlines_bin_solid`]: render/fn.render_scanlines_bin_solid.html
+
+#![allow(clippy::too_many_arguments, dead_code)]
+
 use std::fmt::Debug;
 
 #[doc(hidden)]
 pub use freetype as ft;
 
-pub mod paths;
-pub mod stroke;
-pub mod transform;
-pub mod color;
-pub mod color_value;
-pub mod pixfmt;
+pub mod alphamask;
 pub mod base;
 pub mod clip;
-pub mod raster;
-pub mod ppm;
-pub mod alphamask;
-pub mod render;
-pub mod text;
+pub mod color;
+pub mod color_value;
+pub mod line_interp;
 pub mod outline;
 pub mod outline_aa;
-pub mod line_interp;
+pub mod paths;
+pub mod pixfmt;
+pub mod ppm;
+pub mod raster;
+pub mod render;
+pub mod stroke;
+pub mod text;
+pub mod transform;
 
-pub mod math;
-pub(crate) mod scan;
 pub(crate) mod buffer;
 pub(crate) mod cell;
-
+pub mod math;
+pub(crate) mod scan;
 
 pub mod gallery;
 
 #[doc(hidden)]
-pub use crate::paths::*;
-#[doc(hidden)]
-pub use crate::stroke::*;
-#[doc(hidden)]
-pub use crate::transform::*;
-#[doc(hidden)]
-pub use crate::color::*;
-#[doc(hidden)]
-pub use crate::color_value::*;
-#[doc(hidden)]
-pub use crate::pixfmt::*;
+pub use crate::alphamask::*;
 #[doc(hidden)]
 pub use crate::base::*;
 #[doc(hidden)]
 pub use crate::clip::*;
 #[doc(hidden)]
-pub use crate::raster::*;
+pub use crate::color::*;
 #[doc(hidden)]
-pub use crate::alphamask::*;
-#[doc(hidden)]
-pub use crate::render::*;
-#[doc(hidden)]
-pub use crate::text::*;
+pub use crate::color_value::*;
 #[doc(hidden)]
 pub use crate::line_interp::*;
 #[doc(hidden)]
 pub use crate::outline::*;
 #[doc(hidden)]
 pub use crate::outline_aa::*;
+#[doc(hidden)]
+pub use crate::paths::*;
+#[doc(hidden)]
+pub use crate::pixfmt::*;
+#[doc(hidden)]
+pub use crate::raster::*;
+#[doc(hidden)]
+pub use crate::render::*;
+#[doc(hidden)]
+pub use crate::stroke::*;
+#[doc(hidden)]
+pub use crate::text::*;
+#[doc(hidden)]
+pub use crate::transform::*;
 
-const POLY_SUBPIXEL_SHIFT : i64 = 8;
-const POLY_SUBPIXEL_SCALE : i64 = 1<<POLY_SUBPIXEL_SHIFT;
-const POLY_SUBPIXEL_MASK  : i64 = POLY_SUBPIXEL_SCALE - 1;
-const POLY_MR_SUBPIXEL_SHIFT : i64 = 4;
-const MAX_HALF_WIDTH : usize = 64;
-
+const POLY_SUBPIXEL_SHIFT: i64 = 8;
+const POLY_SUBPIXEL_SCALE: i64 = 1 << POLY_SUBPIXEL_SHIFT;
+const POLY_SUBPIXEL_MASK: i64 = POLY_SUBPIXEL_SCALE - 1;
+const POLY_MR_SUBPIXEL_SHIFT: i64 = 4;
+const MAX_HALF_WIDTH: usize = 64;
 
 /// Source of vertex points
 pub trait VertexSource {
-    /// Rewind the vertex source (unused)
-    fn rewind(&self) { }
-    /// Get values from the source
-    ///
-    /// This could be turned into an iterator
-    fn xconvert(&self) -> Vec<Vertex<f64>>;
+  /// Rewind the vertex source (unused)
+  fn rewind(&self) {}
+  /// Get values from the source
+  ///
+  /// This could be turned into an iterator
+  fn xconvert(&self) -> Vec<Vertex<f64>>;
 }
 
 /// Access Color properties and compoents
 pub trait Color: Debug + Copy {
-    /// Get red value
-    fn red_<T: ColorValue>(&self) -> T;
-    /// Get green value
-    fn green_<T: ColorValue>(&self) -> T;
-    /// Get blue value
-    fn blue_<T: ColorValue>(&self) -> T;
-    /// Get alpha value
-    fn alpha_<T: ColorValue>(&self) -> T;
-    /// Get red value [0,1] as f64
-    fn red64(&self) -> f64 { self.red_() }
-    /// Get green value [0,1] as f64
-    fn green64(&self) -> f64 { self.green_() }
-    /// Get blue value [0,1] as f64
-    fn blue64(&self) -> f64 { self.blue_() }
-    /// Get alpha value [0,1] as f64
-    fn alpha64(&self) -> f64 { self.alpha_() }
-    /// Get red value [0,255] as u8
-    fn red8(&self) -> u8 { self.red_::<U8>().0 }
-    /// Get green value [0,255] as u8
-    fn green8(&self) -> u8 { self.green_::<U8>().0 }
-    /// Get blue value [0,255] as u8
-    fn blue8(&self) -> u8 { self.blue_::<U8>().0 }
-    /// Get alpha value [0,255] as u8
-    fn alpha8(&self) -> u8 { self.alpha_::<U8>().0 }
+  /// Get red value
+  fn red_<T: ColorValue>(&self) -> T;
+  /// Get green value
+  fn green_<T: ColorValue>(&self) -> T;
+  /// Get blue value
+  fn blue_<T: ColorValue>(&self) -> T;
+  /// Get alpha value
+  fn alpha_<T: ColorValue>(&self) -> T;
+  /// Get red value [0,1] as f64
+  fn red64(&self) -> f64 {
+    self.red_()
+  }
+  /// Get green value [0,1] as f64
+  fn green64(&self) -> f64 {
+    self.green_()
+  }
+  /// Get blue value [0,1] as f64
+  fn blue64(&self) -> f64 {
+    self.blue_()
+  }
+  /// Get alpha value [0,1] as f64
+  fn alpha64(&self) -> f64 {
+    self.alpha_()
+  }
+  /// Get red value [0,255] as u8
+  fn red8(&self) -> u8 {
+    self.red_::<U8>().0
+  }
+  /// Get green value [0,255] as u8
+  fn green8(&self) -> u8 {
+    self.green_::<U8>().0
+  }
+  /// Get blue value [0,255] as u8
+  fn blue8(&self) -> u8 {
+    self.blue_::<U8>().0
+  }
+  /// Get alpha value [0,255] as u8
+  fn alpha8(&self) -> u8 {
+    self.alpha_::<U8>().0
+  }
 
-    fn rgb<T: ColorValue>(&self) -> Rgb<T> { Rgb::from_color(*self) }
-    fn rgb8(&self) -> Rgb<U8> { self.rgb() }
-    fn rgb64(&self) -> Rgb<f64> { self.rgb() }
-    fn rgba<T: ColorValue>(&self) -> Rgba<T> { Rgba::from_color(*self) }
-    fn rgba8(&self) -> Rgba<U8> { self.rgba() }
-    fn rgba64(&self) -> Rgba<f64> { self.rgba() }
-    fn gray<T: ColorValue>(&self) -> Gray<T> { Gray::from_color(*self) }
-    fn gray8(&self) -> Gray<U8> { self.gray() }
-    fn gray64(&self) -> Gray<f64> { self.gray() }
-    fn srgba<T: ColorValue>(&self) -> Srgba<T> { Srgba::from_color(*self) }
-    fn srgba8(&self) -> Srgba<U8> { self.srgba() }
-    fn srgba64(&self) -> Srgba<f64> { self.srgba() }
+  fn rgb<T: ColorValue>(&self) -> Rgb<T> {
+    Rgb::from_color(*self)
+  }
+  fn rgb8(&self) -> Rgb<U8> {
+    self.rgb()
+  }
+  fn rgb64(&self) -> Rgb<f64> {
+    self.rgb()
+  }
+  fn rgba<T: ColorValue>(&self) -> Rgba<T> {
+    Rgba::from_color(*self)
+  }
+  fn rgba8(&self) -> Rgba<U8> {
+    self.rgba()
+  }
+  fn rgba64(&self) -> Rgba<f64> {
+    self.rgba()
+  }
+  fn gray<T: ColorValue>(&self) -> Gray<T> {
+    Gray::from_color(*self)
+  }
+  fn gray8(&self) -> Gray<U8> {
+    self.gray()
+  }
+  fn gray64(&self) -> Gray<f64> {
+    self.gray()
+  }
+  fn srgba<T: ColorValue>(&self) -> Srgba<T> {
+    Srgba::from_color(*self)
+  }
+  fn srgba8(&self) -> Srgba<U8> {
+    self.srgba()
+  }
+  fn srgba64(&self) -> Srgba<f64> {
+    self.srgba()
+  }
 
-    /// Return if the color is completely transparent, alpha = 0.0
-    fn is_transparent(&self) -> bool { self.alpha64() == 0.0 }
-    /// Return if the color is completely opaque, alpha = 1.0
-    fn is_opaque(&self) -> bool { self.alpha64() >= 1.0 }
-    /// Return if the color has been premultiplied
-    fn is_premultiplied(&self) -> bool;
+  /// Return if the color is completely transparent, alpha = 0.0
+  fn is_transparent(&self) -> bool {
+    self.alpha64() == 0.0
+  }
+  /// Return if the color is completely opaque, alpha = 1.0
+  fn is_opaque(&self) -> bool {
+    self.alpha64() >= 1.0
+  }
+  /// Return if the color has been premultiplied
+  fn is_premultiplied(&self) -> bool;
 }
 /// Render scanlines to Image
 pub trait Render {
-    /// Render a single scanlines to the image
-    fn render(&mut self, data: &RenderData);
-    /// Set the Color of the Renderer
-    fn color<C: Color>(&mut self, color: C);
-    /// Prepare the Renderer
-    fn prepare(&self) { }
+  /// Render a single scanlines to the image
+  fn render(&mut self, data: &RenderData);
+  /// Set the Color of the Renderer
+  fn color<C: Color>(&mut self, color: C);
+  /// Prepare the Renderer
+  fn prepare(&self) {}
 }
 /*
 /// Rasterize lines, path, and other things to scanlines
@@ -276,232 +321,223 @@ pub trait Rasterize {
 
 /// Access Pixel source color
 pub trait Source {
-    fn get(&self, id: (usize, usize)) -> Rgba8;
+  fn get(&self, id: (usize, usize)) -> Rgba8;
 }
 
 /// Drawing and pixel related routines
 pub trait Pixel {
-    fn cover_mask() -> u64;
-    fn bpp() -> usize;
-    fn as_bytes(&self) -> &[u8];
-    fn to_file<P: AsRef<std::path::Path>>(&self, filename: P) -> Result<(),std::io::Error>;
-    fn width(&self) -> usize;
-    fn height(&self) -> usize;
-    fn set<C: Color>(&mut self, id: (usize, usize), c: C);
-    fn setn<C: Color>(&mut self, id: (usize, usize), n: usize, c: C);
-    fn blend_pix<C: Color>(&mut self, id: (usize, usize), c: C, cover: u64);
-    /// Fill the data with the specified `color`
-    fn fill<C: Color>(&mut self, color: C);
-    /// Copy or blend a pixel at `id` with `color`
-    ///
-    /// If `color` [`is_opaque`], the color is copied directly to the pixel,
-    ///   otherwise the color is blended with the pixel at `id`
-    ///
-    /// If `color` [`is_transparent`] nothing is done
-    ///
-    /// [`is_opaque`]: ../trait.Color.html#method.is_opaque
-    /// [`is_transparent`]: ../trait.Color.html#method.is_transparent
-    fn copy_or_blend_pix<C: Color>(&mut self, id: (usize,usize), color: C) {
-        if ! color.is_transparent() {
-            if color.is_opaque() {
-                self.set(id, color);
-            } else {
-                self.blend_pix(id, color, 255);
-            }
-        }
+  fn cover_mask() -> u64;
+  fn bpp() -> usize;
+  fn as_bytes(&self) -> &[u8];
+  fn to_file<P: AsRef<std::path::Path>>(&self, filename: P) -> Result<(), std::io::Error>;
+  fn width(&self) -> usize;
+  fn height(&self) -> usize;
+  fn set<C: Color>(&mut self, id: (usize, usize), c: C);
+  fn setn<C: Color>(&mut self, id: (usize, usize), n: usize, c: C);
+  fn blend_pix<C: Color>(&mut self, id: (usize, usize), c: C, cover: u64);
+  /// Fill the data with the specified `color`
+  fn fill<C: Color>(&mut self, color: C);
+  /// Copy or blend a pixel at `id` with `color`
+  ///
+  /// If `color` [`is_opaque`], the color is copied directly to the pixel,
+  ///   otherwise the color is blended with the pixel at `id`
+  ///
+  /// If `color` [`is_transparent`] nothing is done
+  ///
+  /// [`is_opaque`]: ../trait.Color.html#method.is_opaque
+  /// [`is_transparent`]: ../trait.Color.html#method.is_transparent
+  fn copy_or_blend_pix<C: Color>(&mut self, id: (usize, usize), color: C) {
+    if !color.is_transparent() {
+      if color.is_opaque() {
+        self.set(id, color);
+      } else {
+        self.blend_pix(id, color, 255);
+      }
     }
-    /// Copy or blend a pixel at `id` with `color` and a `cover`
-    ///
-    /// If `color` [`is_opaque`] *and* `cover` equals [`cover_mask`] then
-    ///   the color is copied to the pixel at `id`, otherwise the `color`
-    ///   is blended with the pixel at `id` considering the amount of `cover`
-    ///
-    /// If `color` [`is_transparent`] nothing is done
-    ///
-    ///     use agg::prelude::*;
-    ///
-    ///     let mut pix = Pixfmt::<Rgb8>::new(1,1);
-    ///     let black  = Rgba8::BLACK;
-    ///     let white  = Rgba8::WHITE;
-    ///     pix.copy_pixel(0,0,black);
-    ///     assert_eq!(pix.get((0,0)), black);
-    ///
-    ///     let (alpha, cover) = (255, 255); // Copy Pixel
-    ///     let color = Rgba8::from_raw(255,255,255,alpha);
-    ///     pix.copy_or_blend_pix_with_cover((0,0), color, cover);
-    ///     assert_eq!(pix.get((0,0)), white);
-    ///
-    ///     let (alpha, cover) = (255, 128); // Partial Coverage, Blend
-    ///     let color = Rgba8::from_raw(255,255,255,alpha);
-    ///     pix.copy_pixel(0,0,black);
-    ///     pix.copy_or_blend_pix_with_cover((0,0), color, cover);
-    ///     assert_eq!(pix.get((0,0)), Rgba8::from_raw(128,128,128,255));
-    ///
-    ///     let (alpha, cover) = (128, 255); // Partial Coverage, Blend
-    ///     let color = Rgba8::from_raw(255,255,255,alpha);
-    ///     pix.copy_pixel(0,0,black);
-    ///     pix.copy_or_blend_pix_with_cover((0,0), color, cover);
-    ///     assert_eq!(pix.get((0,0)), Rgba8::from_raw(128,128,128,255));
-    ///
-    /// [`is_opaque`]: ../trait.Color.html#method.is_opaque
-    /// [`is_transparent`]: ../trait.Color.html#method.is_transparent
-    /// [`cover_mask`]: ../trait.Pixel.html#method.cover_mask
-    ///
-    fn copy_or_blend_pix_with_cover<C: Color>(&mut self, id: (usize,usize), color: C, cover: u64) {
-        if ! color.is_transparent() {
-            if color.is_opaque() && cover == Self::cover_mask() {
-                self.set(id, color);
-            } else {
-                self.blend_pix(id, color, cover);
-            }
-        }
+  }
+  /// Copy or blend a pixel at `id` with `color` and a `cover`
+  ///
+  /// If `color` [`is_opaque`] *and* `cover` equals [`cover_mask`] then
+  ///   the color is copied to the pixel at `id`, otherwise the `color`
+  ///   is blended with the pixel at `id` considering the amount of `cover`
+  ///
+  /// If `color` [`is_transparent`] nothing is done
+  ///
+  ///     use agg::prelude::*;
+  ///
+  ///     let mut pix = Pixfmt::<Rgb8>::new(1,1);
+  ///     let black  = Rgba8::BLACK;
+  ///     let white  = Rgba8::WHITE;
+  ///     pix.copy_pixel(0,0,black);
+  ///     assert_eq!(pix.get((0,0)), black);
+  ///
+  ///     let (alpha, cover) = (255, 255); // Copy Pixel
+  ///     let color = Rgba8::from_raw(255,255,255,alpha);
+  ///     pix.copy_or_blend_pix_with_cover((0,0), color, cover);
+  ///     assert_eq!(pix.get((0,0)), white);
+  ///
+  ///     let (alpha, cover) = (255, 128); // Partial Coverage, Blend
+  ///     let color = Rgba8::from_raw(255,255,255,alpha);
+  ///     pix.copy_pixel(0,0,black);
+  ///     pix.copy_or_blend_pix_with_cover((0,0), color, cover);
+  ///     assert_eq!(pix.get((0,0)), Rgba8::from_raw(128,128,128,255));
+  ///
+  ///     let (alpha, cover) = (128, 255); // Partial Coverage, Blend
+  ///     let color = Rgba8::from_raw(255,255,255,alpha);
+  ///     pix.copy_pixel(0,0,black);
+  ///     pix.copy_or_blend_pix_with_cover((0,0), color, cover);
+  ///     assert_eq!(pix.get((0,0)), Rgba8::from_raw(128,128,128,255));
+  ///
+  /// [`is_opaque`]: ../trait.Color.html#method.is_opaque
+  /// [`is_transparent`]: ../trait.Color.html#method.is_transparent
+  /// [`cover_mask`]: ../trait.Pixel.html#method.cover_mask
+  fn copy_or_blend_pix_with_cover<C: Color>(&mut self, id: (usize, usize), color: C, cover: u64) {
+    if !color.is_transparent() {
+      if color.is_opaque() && cover == Self::cover_mask() {
+        self.set(id, color);
+      } else {
+        self.blend_pix(id, color, cover);
+      }
     }
-    /// Copy or Blend a single `color` from (`x`,`y`) to (`x+len-1`,`y`)
-    ///    with `cover`
-    ///
-    fn blend_hline<C: Color>(&mut self, x: i64, y: i64, len: i64, color: C, cover: u64) {
-        if color.is_transparent() {
-            return;
-        }
-        let (x,y,len) = (x as usize, y as usize, len as usize);
-        if color.is_opaque() && cover == Self::cover_mask() {
-            self.setn((x,y), len, color);
-        } else {
-            for i in 0 .. len {
-                self.blend_pix((x+i,y),color,cover);
-            }
-        }
+  }
+  /// Copy or Blend a single `color` from (`x`,`y`) to (`x+len-1`,`y`)
+  ///    with `cover`
+  fn blend_hline<C: Color>(&mut self, x: i64, y: i64, len: i64, color: C, cover: u64) {
+    if color.is_transparent() {
+      return;
     }
-    /// Blend a single `color` from (`x`,`y`) to (`x+len-1`,`y`) with collection
-    ///   of `covers`
-    fn blend_solid_hspan<C: Color>(&mut self, x: i64, y: i64, len: i64, color: C, covers: &[u64]) {
-        assert_eq!(len as usize, covers.len());
-        for (i, &cover) in covers.iter().enumerate() {
-            self.blend_hline(x+i as i64,y,1,color,cover);
-        }
+    let (x, y, len) = (x as usize, y as usize, len as usize);
+    if color.is_opaque() && cover == Self::cover_mask() {
+      self.setn((x, y), len, color);
+    } else {
+      for i in 0..len {
+        self.blend_pix((x + i, y), color, cover);
+      }
     }
-    /// Copy or Blend a single `color` from (`x`,`y`) to (`x`,`y+len-1`)
-    ///    with `cover`
-    ///
-    fn blend_vline<C: Color>(&mut self, x: i64, y: i64, len: i64, c: C, cover: u64) {
-        if c.is_transparent() {
-            return;
-        }
-        let (x,y,len) = (x as usize, y as usize, len as usize);
-        if c.is_opaque() && cover == Self::cover_mask() {
-            for i in 0 .. len {
-                self.set((x,y+i),c);
-            }
-        } else {
-            for i in 0 .. len {
-                self.blend_pix((x,y+i),c,cover);
-            }
-        }
+  }
+  /// Blend a single `color` from (`x`,`y`) to (`x+len-1`,`y`) with collection
+  ///   of `covers`
+  fn blend_solid_hspan<C: Color>(&mut self, x: i64, y: i64, len: i64, color: C, covers: &[u64]) {
+    assert_eq!(len as usize, covers.len());
+    for (i, &cover) in covers.iter().enumerate() {
+      self.blend_hline(x + i as i64, y, 1, color, cover);
     }
-    /// Blend a single `color` from (`x`,`y`) to (`x`,`y+len-1`) with collection
-    ///   of `covers`
-    fn blend_solid_vspan<C: Color>(&mut self, x: i64, y: i64, len: i64, c: C, covers: &[u64]){
-        assert_eq!(len as usize, covers.len());
-        for (i, &cover) in covers.iter().enumerate() {
-            self.blend_vline(x,y+i as i64,1,c,cover);
-        }
+  }
+  /// Copy or Blend a single `color` from (`x`,`y`) to (`x`,`y+len-1`)
+  ///    with `cover`
+  fn blend_vline<C: Color>(&mut self, x: i64, y: i64, len: i64, c: C, cover: u64) {
+    if c.is_transparent() {
+      return;
     }
-    /// Blend a collection of `colors` from (`x`,`y`) to (`x+len-1`,`y`) with
-    ///   either a collection of `covers` or a single `cover`
-    ///
-    /// A collection of `covers` takes precedance over a single `cover`
-    fn blend_color_hspan<C: Color>(&mut self, x: i64, y: i64, len: i64, colors: &[C], covers: &[u64], cover: u64) {
-
-        assert_eq!(len as usize, colors.len());
-        let (x,y) = (x as usize, y as usize);
-        if ! covers.is_empty() {
-            assert_eq!(colors.len(), covers.len());
-            for (i,(&color,&cover)) in colors.iter().zip(covers.iter()).enumerate() {
-                self.copy_or_blend_pix_with_cover((x+i,y), color, cover);
-            }
-        } else if cover == 255 {
-            for (i,&color) in colors.iter().enumerate() {
-                self.copy_or_blend_pix((x+i,y), color);
-            }
-        } else {
-            for (i,&color) in colors.iter().enumerate() {
-                self.copy_or_blend_pix_with_cover((x+i,y), color, cover);
-            }
-        }
+    let (x, y, len) = (x as usize, y as usize, len as usize);
+    if c.is_opaque() && cover == Self::cover_mask() {
+      for i in 0..len {
+        self.set((x, y + i), c);
+      }
+    } else {
+      for i in 0..len {
+        self.blend_pix((x, y + i), c, cover);
+      }
     }
-    /// Blend a collection of `colors` from (`x`,`y`) to (`x`,`y+len-1`) with
-    ///   either a collection of `covers` or a single `cover`
-    ///
-    /// A collection of `covers` takes precedance over a single `cover`
-    fn blend_color_vspan<C: Color>(&mut self, x: i64, y: i64, len: i64, colors: &[C], covers: &[u64], cover: u64) {
-        assert_eq!(len as usize, colors.len());
-        let (x,y) = (x as usize, y as usize);
-        if ! covers.is_empty() {
-            assert_eq!(colors.len(), covers.len());
-            for (i,(&color,&cover)) in colors.iter().zip(covers.iter()).enumerate() {
-                self.copy_or_blend_pix_with_cover((x,y+i), color, cover);
-            }
-        } else if cover == 255 {
-            for (i,&color) in colors.iter().enumerate() {
-                self.copy_or_blend_pix((x,y+i), color);
-            }
-        } else {
-            for (i,&color) in colors.iter().enumerate() {
-                self.copy_or_blend_pix_with_cover((x,y+i), color, cover);
-            }
-        }
+  }
+  /// Blend a single `color` from (`x`,`y`) to (`x`,`y+len-1`) with collection
+  ///   of `covers`
+  fn blend_solid_vspan<C: Color>(&mut self, x: i64, y: i64, len: i64, c: C, covers: &[u64]) {
+    assert_eq!(len as usize, covers.len());
+    for (i, &cover) in covers.iter().enumerate() {
+      self.blend_vline(x, y + i as i64, 1, c, cover);
     }
+  }
+  /// Blend a collection of `colors` from (`x`,`y`) to (`x+len-1`,`y`) with
+  ///   either a collection of `covers` or a single `cover`
+  ///
+  /// A collection of `covers` takes precedance over a single `cover`
+  fn blend_color_hspan<C: Color>(&mut self, x: i64, y: i64, len: i64, colors: &[C], covers: &[u64], cover: u64) {
+    assert_eq!(len as usize, colors.len());
+    let (x, y) = (x as usize, y as usize);
+    if !covers.is_empty() {
+      assert_eq!(colors.len(), covers.len());
+      for (i, (&color, &cover)) in colors.iter().zip(covers.iter()).enumerate() {
+        self.copy_or_blend_pix_with_cover((x + i, y), color, cover);
+      }
+    } else if cover == 255 {
+      for (i, &color) in colors.iter().enumerate() {
+        self.copy_or_blend_pix((x + i, y), color);
+      }
+    } else {
+      for (i, &color) in colors.iter().enumerate() {
+        self.copy_or_blend_pix_with_cover((x + i, y), color, cover);
+      }
+    }
+  }
+  /// Blend a collection of `colors` from (`x`,`y`) to (`x`,`y+len-1`) with
+  ///   either a collection of `covers` or a single `cover`
+  ///
+  /// A collection of `covers` takes precedance over a single `cover`
+  fn blend_color_vspan<C: Color>(&mut self, x: i64, y: i64, len: i64, colors: &[C], covers: &[u64], cover: u64) {
+    assert_eq!(len as usize, colors.len());
+    let (x, y) = (x as usize, y as usize);
+    if !covers.is_empty() {
+      assert_eq!(colors.len(), covers.len());
+      for (i, (&color, &cover)) in colors.iter().zip(covers.iter()).enumerate() {
+        self.copy_or_blend_pix_with_cover((x, y + i), color, cover);
+      }
+    } else if cover == 255 {
+      for (i, &color) in colors.iter().enumerate() {
+        self.copy_or_blend_pix((x, y + i), color);
+      }
+    } else {
+      for (i, &color) in colors.iter().enumerate() {
+        self.copy_or_blend_pix_with_cover((x, y + i), color, cover);
+      }
+    }
+  }
 }
 
-
-
 pub(crate) trait LineInterp {
-    fn init(&mut self);
-    fn step_hor(&mut self);
-    fn step_ver(&mut self);
+  fn init(&mut self);
+  fn step_hor(&mut self);
+  fn step_ver(&mut self);
 }
 
 pub(crate) trait RenderOutline {
-    fn cover(&self, d: i64) -> u64;
-    fn blend_solid_hspan(&mut self, x: i64, y: i64, len: i64, covers: &[u64]);
-    fn blend_solid_vspan(&mut self, x: i64, y: i64, len: i64, covers: &[u64]);
+  fn cover(&self, d: i64) -> u64;
+  fn blend_solid_hspan(&mut self, x: i64, y: i64, len: i64, covers: &[u64]);
+  fn blend_solid_vspan(&mut self, x: i64, y: i64, len: i64, covers: &[u64]);
 }
 /// Functions for Drawing Outlines
 //pub trait DrawOutline: Lines + AccurateJoins + SetColor {}
 pub trait DrawOutline {
-    /// Set the current Color
-    fn color<C: Color>(&mut self, color: C);
-    /// If Line Joins are Accurate
-    fn accurate_join_only(&self) -> bool;
-    fn line0(&mut self, lp: &LineParameters);
-    fn line1(&mut self, lp: &LineParameters, sx: i64, sy: i64);
-    fn line2(&mut self, lp: &LineParameters, ex: i64, ey: i64);
-    fn line3(&mut self, lp: &LineParameters, sx: i64, sy: i64, ex: i64, ey: i64);
-    fn semidot<F>(&mut self, cmp: F, xc1: i64, yc1: i64, xc2: i64, yc2: i64) where F: Fn(i64) -> bool;
-    fn pie(&mut self, xc: i64, y: i64, x1: i64, y1: i64, x2: i64, y2: i64);
+  /// Set the current Color
+  fn color<C: Color>(&mut self, color: C);
+  /// If Line Joins are Accurate
+  fn accurate_join_only(&self) -> bool;
+  fn line0(&mut self, lp: &LineParameters);
+  fn line1(&mut self, lp: &LineParameters, sx: i64, sy: i64);
+  fn line2(&mut self, lp: &LineParameters, ex: i64, ey: i64);
+  fn line3(&mut self, lp: &LineParameters, sx: i64, sy: i64, ex: i64, ey: i64);
+  fn semidot<F>(&mut self, cmp: F, xc1: i64, yc1: i64, xc2: i64, yc2: i64)
+  where
+    F: Fn(i64) -> bool;
+  fn pie(&mut self, xc: i64, y: i64, x1: i64, y1: i64, x2: i64, y2: i64);
 }
 
-
 pub(crate) trait DistanceInterpolator {
-    fn dist(&self) -> i64;
-    fn inc_x(&mut self, dy: i64);
-    fn inc_y(&mut self, dx: i64);
-    fn dec_x(&mut self, dy: i64);
-    fn dec_y(&mut self, dx: i64);
+  fn dist(&self) -> i64;
+  fn inc_x(&mut self, dy: i64);
+  fn inc_y(&mut self, dx: i64);
+  fn dec_x(&mut self, dy: i64);
+  fn dec_y(&mut self, dx: i64);
 }
 
 pub mod prelude {
-    pub use crate::{
-        Color as _, NamedColor as _, FromRaw2 as _, FromColor as _, FromRaw3 as _, FromRaw4 as _,
-        Render as _, Pixel as _, Source as _,
-    };
+  pub use crate::{
+    Color as _, FromColor as _, FromRaw2 as _, FromRaw3 as _, FromRaw4 as _, NamedColor as _, Pixel as _, Render as _,
+    Source as _,
+  };
 
-    pub use crate::{Pixfmt,RenderingBase,DrawOutline,PixfmtAlphaBlend};
-    pub use crate::{
-        Gray8,Gray16,Gray32,Gray64,
-        Rgb8,Rgb16,Rgb32,Rgb64,
-        Rgba8,Rgba16,Rgba32,Rgba64,
-    };
-    pub use crate::{RendererPrimatives, RasterizerOutline};
-    pub use crate::{RendererOutlineAA, RasterizerOutlineAA};
+  pub use crate::{DrawOutline, Pixfmt, PixfmtAlphaBlend, RenderingBase};
+  pub use crate::{Gray8, Gray16, Gray32, Gray64, Rgb8, Rgb16, Rgb32, Rgb64, Rgba8, Rgba16, Rgba32, Rgba64};
+  pub use crate::{RasterizerOutline, RendererPrimatives};
+  pub use crate::{RasterizerOutlineAA, RendererOutlineAA};
 }
