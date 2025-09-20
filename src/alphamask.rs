@@ -64,7 +64,6 @@ where
 /// Computations are conducted using fixed point math
 ///
 /// see [Alpha Compositing](https://en.wikipedia.org/wiki/Alpha_compositing)
-
 fn blend_pix<C1: Color, C2: Color>(p: &C1, c: &C2, cover: u64) -> Rgba8 {
   assert!(c.alpha64() >= 0.0);
   assert!(c.alpha64() <= 1.0);

@@ -122,6 +122,9 @@
 //! [`render_all_paths`]: render/fn.render_all_paths.html
 //! [`render_scanlines_aa_solid`]: render/fn.render_scanlines_aa_solid.html
 //! [`render_scanlines_bin_solid`]: render/fn.render_scanlines_bin_solid.html
+
+#![allow(clippy::too_many_arguments, dead_code)]
+
 use std::fmt::Debug;
 
 #[doc(hidden)]

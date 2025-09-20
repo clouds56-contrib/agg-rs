@@ -593,11 +593,10 @@ where
   }
 
   fn pie_hline(&mut self, xc: i64, yc: i64, xp1: i64, yp1: i64, xp2: i64, yp2: i64, xh1: i64, yh1: i64, xh2: i64) {
-    if let Some(clip_box) = self.clip_box {
-      if clip_box.clip_flags(xc, yc) != 0 {
+    if let Some(clip_box) = self.clip_box
+      && clip_box.clip_flags(xc, yc) != 0 {
         return;
       }
-    }
     let mut xh1 = xh1;
     let mut covers = [0u64; MAX_HALF_WIDTH * 2 + 4];
 
@@ -695,11 +694,10 @@ where
   where
     F: Fn(i64) -> bool,
   {
-    if let Some(clip_box) = self.clip_box {
-      if clip_box.clip_flags(xc1, yc1) != 0 {
+    if let Some(clip_box) = self.clip_box
+      && clip_box.clip_flags(xc1, yc1) != 0 {
         return;
       }
-    }
 
     let mut r = (self.subpixel_width() + POLY_SUBPIXEL_MASK) >> POLY_SUBPIXEL_SHIFT;
     if r < 1 {

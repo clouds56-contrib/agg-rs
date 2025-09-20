@@ -156,7 +156,7 @@ impl VertexSource for GsvText {
 }
 
 fn value(v: &[u8]) -> i16 {
-  unsafe { std::mem::transmute::<[u8; 2], i16>([v[0], v[1]]) }
+  i16::from_ne_bytes([v[0], v[1]])
 }
 
 pub struct GsvDefaultFont();
