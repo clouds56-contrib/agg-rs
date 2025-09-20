@@ -10,8 +10,7 @@ pub fn read_file<P: AsRef<Path>>(filename: P) -> Result<(Vec<u8>, usize, usize),
   Ok((buf, w as usize, h as usize))
 }
 pub fn write_file<P: AsRef<Path>>(buf: &[u8], width: usize, height: usize, filename: P) -> Result<(), std::io::Error> {
-  image::save_buffer(filename, buf, width as u32, height as u32, image::ColorType::Rgb8)
-    .map_err(std::io::Error::other)
+  image::save_buffer(filename, buf, width as u32, height as u32, image::ColorType::Rgb8).map_err(std::io::Error::other)
 }
 
 pub fn img_diff<P: AsRef<Path>>(f1: P, f2: P) -> Result<bool, image::ImageError> {
