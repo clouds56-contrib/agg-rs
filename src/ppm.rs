@@ -28,15 +28,14 @@ pub fn img_diff<P: AsRef<Path>>(f1: P, f2: P) -> Result<bool, image::ImageError>
   let mut pixel_diffs: BTreeSet<usize> = BTreeSet::new();
   for (i, (v1, v2)) in d1.iter().zip(d2.iter()).enumerate() {
     if v1 != v2 {
-      let pixel = (i / 3) as usize;
-      pixel_diffs.insert(pixel);
+      pixel_diffs.insert(i / 3);
       flag = false;
     }
   }
   if !flag {
     for &pixel in pixel_diffs.iter() {
-      let cx = (pixel % w1) as usize;
-      let cy = (pixel / w1) as usize;
+      let cx = pixel % w1;
+      let cy = pixel / w1;
       let off = pixel * 3;
       let a1 = (d1[off], d1[off + 1], d1[off + 2]);
       let a2 = (d2[off], d2[off + 1], d2[off + 2]);

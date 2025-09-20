@@ -535,8 +535,8 @@ pub(crate) trait DistanceInterpolator {
 
 pub mod prelude {
   pub use crate::{
-    Color as _, FromColor as _, FromRaw2 as _, FromRaw3 as _, FromRaw4 as _, NamedColor as _, Pixel as _, Render as _,
-    Source as _, IntoRaw2 as _, IntoRaw3 as _, IntoRaw4 as _, VertexSource as _,
+    Color as _, FromColor as _, FromRaw2 as _, FromRaw3 as _, FromRaw4 as _, IntoRaw2 as _, IntoRaw3 as _,
+    IntoRaw4 as _, NamedColor as _, Pixel as _, Render as _, Source as _, VertexSource as _,
   };
 
   pub use crate::{DrawOutline, Pixfmt, PixfmtAlphaBlend, RenderingBase};

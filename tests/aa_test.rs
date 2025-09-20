@@ -345,9 +345,9 @@ fn fill_color_array(array: &mut [agg::Rgb64], begin: agg::Rgb64, end: agg::Rgb64
   let end = end.srgba8();
   for (i, v) in array.iter_mut().enumerate() {
     let a = (i as f64 / n * 255.).round() as u8;
-    let red = lerp_u8(begin.red.0, end.red.0, a).into();
-    let green = lerp_u8(begin.green.0, end.green.0, a).into();
-    let blue = lerp_u8(begin.blue.0, end.blue.0, a).into();
+    let red = lerp_u8(begin.red.0, end.red.0, a);
+    let green = lerp_u8(begin.green.0, end.green.0, a);
+    let blue = lerp_u8(begin.blue.0, end.blue.0, a);
     *v = agg::Srgba8::from_raw(red, green, blue, 255).rgb();
     // println!("fill_color_array idx={} a={:.3} color={:.3?} [{:?}]", i, a, v.srgba64().into_slice().map(|i| i*255.), v.srgba8().into_raw());
   }
