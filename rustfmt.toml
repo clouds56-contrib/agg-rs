@@ -1,0 +1,5 @@
+# cargo +nightly fmt
+edition = "2024"
+tab_spaces = 2
+format_code_in_doc_comments = true
+max_width = 120

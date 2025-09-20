@@ -16,10 +16,10 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Install Rust (stable + rustfmt)
+      - name: Install Rust (nightly + rustfmt)
         uses: dtolnay/rust-toolchain@stable
         with:
-          toolchain: stable
+          toolchain: nightly
           components: rustfmt
       - name: Generate Cargo.lock (if missing)
         run: |
