@@ -154,7 +154,7 @@ impl SpanGradient {
 
         interp.begin(x as f64 + 0.5, y as f64 + 0.5, len);
 
-        for i in 0 .. len {
+        for s in span.iter_mut() {
             let (x,y) = interp.coordinates();
             let d = self.gradient.calculate(x >> downscale_shift,
                                             y >> downscale_shift,
@@ -166,7 +166,7 @@ impl SpanGradient {
             if d >= ncolors {
                 d = ncolors - 1;
             }
-            span[i] = self.color[d as usize];
+            *s = self.color[d as usize];
             interp.inc();
         }
         span
@@ -219,7 +219,7 @@ fn render_scanline_aa<T>(sl: &ScanlineU8,
         let colors = span_gen.generate(x, y, len as usize);
         //dbg!(&colors);
         ren.blend_color_hspan(x, y, len, &colors,
-                              if span.len < 0 { &[] } else { &covers },
+                              if span.len < 0 { &[] } else { covers },
                               covers[0]);
     }
 }
@@ -229,6 +229,12 @@ fn render_scanline_aa<T>(sl: &ScanlineU8,
 pub struct RenderData {
     sl: ScanlineU8
 }
+impl Default for RenderData {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl RenderData {
     pub fn new() -> Self {
         Self { sl: ScanlineU8::new() }
@@ -238,7 +244,7 @@ impl RenderData {
 impl<T> Render for RenderingScanlineAASolid<'_,T> where T: Pixel {
     /// Render a single Scanline Row
     fn render(&mut self, data: &RenderData) {
-        render_scanline_aa_solid(&data.sl, &mut self.base, self.color);
+        render_scanline_aa_solid(&data.sl, self.base, self.color);
     }
     /// Set the current color
     fn color<C: Color>(&mut self, color: C) {
@@ -249,7 +255,7 @@ impl<T> Render for RenderingScanlineAASolid<'_,T> where T: Pixel {
 impl<T> Render for RenderingScanlineBinSolid<'_,T> where T: Pixel {
     /// Render a single Scanline Row
     fn render(&mut self, data: &RenderData) {
-        render_scanline_bin_solid(&data.sl, &mut self.base, self.color);
+        render_scanline_bin_solid(&data.sl, self.base, self.color);
     }
     /// Set the current Color
     fn color<C: Color>(&mut self, color: C) {
@@ -259,7 +265,7 @@ impl<T> Render for RenderingScanlineBinSolid<'_,T> where T: Pixel {
 impl<T> Render for RenderingScanlineAA<'_,T> where T: Pixel {
     /// Render a single Scanline Row
     fn render(&mut self, data: &RenderData) {
-        render_scanline_aa(&data.sl, &mut self.base, &self.span);
+        render_scanline_aa(&data.sl, self.base, &self.span);
     }
     /// Set the current Color
     fn color<C: Color>(&mut self, _color: C) {
@@ -401,9 +407,7 @@ impl BresehamInterpolator {
         let len = if ver { dy } else { dx };
         let inc = if ver {
             if y2 > y1 { 1 } else { -1 }
-        } else {
-            if x2 > x1 { 1 } else { -1 }
-        };
+        } else if x2 > x1 { 1 } else { -1 };
         let (z1,z2) = if ver { (x1_hr,x2_hr) } else { (y1_hr,y2_hr) };
         // XXX  - value() should not be used
         let func = LineInterpolator::new(z1.value(), z2.value(), len);
@@ -413,12 +417,12 @@ impl BresehamInterpolator {
     }
     pub fn vstep(&mut self) {
         self.func.inc();
-        self.y1 += self.inc as i64;
+        self.y1 += self.inc;
         self.x2 = self.func.y >> POLY_SUBPIXEL_SHIFT;
     }
     pub fn hstep(&mut self) {
         self.func.inc();
-        self.x1 += self.inc as i64;
+        self.x1 += self.inc;
         self.y2 = self.func.y >> POLY_SUBPIXEL_SHIFT;
     }
 }
@@ -653,7 +657,7 @@ impl<T> DrawOutline for RendererOutlineImg<'_, T> where T: Pixel {
                     let lp2 = LineParameters::new(x1, y1, x2, y2,
                                                   len_i64_xy(x1, y1, x2, y2));
                     if flags & 1 != 0 {
-                        self.start += (len_i64_xy(lp.x1, lp.y1, x1, y1) as f64 / self.scale_x as f64).round() as i64;
+                        self.start += (len_i64_xy(lp.x1, lp.y1, x1, y1) as f64 / self.scale_x).round() as i64;
                         sx = x1 + (y2 - y1);
                         sy = y1 - (x2 - x1);
                     } else {
@@ -676,7 +680,7 @@ impl<T> DrawOutline for RendererOutlineImg<'_, T> where T: Pixel {
                     self.line3_no_clip(lp, sx, sy, ex, ey);
                 }
             }
-            self.start = start + (lp.len as f64 / self.scale_x as f64).round() as i64;
+            self.start = start + (lp.len as f64 / self.scale_x).round() as i64;
         } else {
             self.line3_no_clip(lp, sx, sy, ex, ey);
         }
@@ -994,9 +998,9 @@ impl LineInterpolatorImage {
         let mut li = LineInterpolator::new(0, dd, lp.len);
 
         let stop = width + POLY_SUBPIXEL_SCALE * 2;
-        for i in 0 .. MAX_HALF_WIDTH {
-            dist_pos[i] = li.y;
-            if dist_pos[i] >= stop {
+        for d in dist_pos.iter_mut().take(MAX_HALF_WIDTH) {
+            *d = li.y;
+            if *d >= stop {
                 break;
             }
             li.inc();

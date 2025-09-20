@@ -17,7 +17,7 @@ pub fn lerp_u8(p: u8, q: u8, a: u8) -> u8 {
 ///
 /// p + q - (p*a)
 pub fn prelerp_u8(p: u8, q: u8, a: u8) -> u8 {
-    ((p as i32) + (q as i32) - multiply_u8(p,a) as i32).min(255).max(0) as u8
+    ((p as i32) + (q as i32) - multiply_u8(p,a) as i32).clamp(0, 255) as u8
 }
 
 /// Multiply two u8 values using fixed point math

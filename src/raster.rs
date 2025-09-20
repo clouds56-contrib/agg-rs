@@ -32,28 +32,22 @@ impl RasConvInt {
 /// See (Non-Zero Filling Rule)[https://en.wikipedia.org/wiki/Nonzero-rule] and
 /// (Even-Odd Filling)[https://en.wikipedia.org/wiki/Even%E2%80%93odd_rule]
 #[derive(Debug,PartialEq,Copy,Clone)]
+#[derive(Default)]
 pub enum FillingRule {
+    #[default]
     NonZero,
     EvenOdd,
-}
-impl Default for FillingRule {
-    fn default() -> FillingRule {
-        FillingRule::NonZero
-    }
 }
 
 /// Path Status
 #[derive(Debug,PartialEq,Copy,Clone)]
+#[derive(Default)]
 pub enum PathStatus {
+    #[default]
     Initial,
     Closed,
     MoveTo,
     LineTo
-}
-impl Default for PathStatus {
-    fn default() -> PathStatus {
-        PathStatus::Initial
-    }
 }
 
 /// Rasterizer Anti-Alias using Scanline
@@ -75,6 +69,12 @@ pub struct RasterizerScanline {
     filling_rule: FillingRule,
     /// Gamma Corection Values
     gamma: Vec<u64>,
+}
+
+impl Default for RasterizerScanline {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl RasterizerScanline {

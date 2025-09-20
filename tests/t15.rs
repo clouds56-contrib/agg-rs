@@ -44,5 +44,5 @@ fn t15_path_stroke() {
 
     ren_base.to_file("tests/tmp/agg_test_15.png").unwrap();
 
-    assert_eq!(agg::ppm::img_diff("tests/tmp/agg_test_15.png", "images/agg_test_15.png").unwrap(), true);
+    assert!(agg::ppm::img_diff("tests/tmp/agg_test_15.png", "images/agg_test_15.png").unwrap());
 }

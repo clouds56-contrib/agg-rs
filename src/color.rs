@@ -227,17 +227,17 @@ impl<T: ColorValue> NamedColor for Rgb<T> {
 
 pub fn rgb8_from_wavelength_gamma(w: f64, gamma: f64) -> Rgb8 {
     let (r,g,b) =
-        if w >= 380.0 && w <= 440.0 {
+        if (380.0..=440.0).contains(&w) {
             (-1.0 * (w-440.0) / (440.0-380.0), 0.0, 1.0)
-        } else if w >= 440.0 && w <= 490.0 {
+        } else if (440.0..=490.0).contains(&w) {
             (0.0, (w-440.0)/(490.0-440.0), 1.0)
-        } else if w >= 490.0 && w <= 510.0 {
+        } else if (490.0..=510.0).contains(&w) {
             (0.0, 1.0, -1.0 * (w-510.0)/(510.0-490.0))
-        } else if w >= 510.0 && w <= 580.0 {
+        } else if (510.0..=580.0).contains(&w) {
             ((w-510.0)/(580.0-510.0), 1.0, 0.0)
-        } else if w >= 580.0 && w <= 645.0 {
+        } else if (580.0..=645.0).contains(&w) {
             (1.0, -1.0*(w-645.0)/(645.0-580.0), 0.0)
-        } else if w >= 645.0 && w <= 780.0 {
+        } else if (645.0..=780.0).contains(&w) {
             (1.0, 0.0, 0.0)
         } else {
             (0.,0.,0.)

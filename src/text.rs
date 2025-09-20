@@ -209,7 +209,7 @@ pub fn draw_text<T>(txt: &str, x: i64, y: i64, font: &ft::Face, ren_base: &mut R
         let top  = font.glyph().bitmap_top() as i64;
         let buf : Vec<_> = g.buffer().iter().map(|&x| x as u64).collect();
         let rows = g.rows() as i64;
-        let pitch = g.pitch().abs() as usize;
+        let pitch = g.pitch().unsigned_abs() as usize;
         let width = g.width() as i64;
         for i in 0 .. rows {
             ren_base.blend_solid_hspan(x + left, y-top+i, width,
@@ -352,7 +352,7 @@ fn draw_text_subpixel<T>(txt: &str, x: f64, y: f64,
         let buf : Vec<_> = bit.buffer().iter().map(|&x| x as u64).collect();
         let rows  = bit.rows() as i64;
         let width = bit.width() as i64;
-        let pitch = bit.pitch().abs() as usize;
+        let pitch = bit.pitch().unsigned_abs() as usize;
         for i in 0 .. rows {
             ren_base.blend_solid_hspan(x.floor() as i64 + left,
                                        y.floor() as i64 + i - top,

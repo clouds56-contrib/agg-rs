@@ -32,5 +32,5 @@ fn t02_pixel_formats() {
     }
 
     pix.to_file("tests/tmp/agg_test_02.png").unwrap();
-    assert_eq!(agg::ppm::img_diff("tests/tmp/agg_test_02.png", "images/agg_test_02.png").unwrap(), true);
+    assert!(agg::ppm::img_diff("tests/tmp/agg_test_02.png", "images/agg_test_02.png").unwrap());
 }

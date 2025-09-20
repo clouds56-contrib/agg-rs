@@ -123,6 +123,12 @@ fn mul_div(a: i64, b: i64, c: i64) -> i64 {
     let (a,b,c) = (a as f64, b as f64, c as f64);
     (a * b / c).round() as i64
 }
+impl Default for Clip {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Clip {
     /// Create new Clipping region
     pub fn new() -> Self {

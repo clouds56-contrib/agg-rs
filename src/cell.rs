@@ -19,7 +19,7 @@ pub(crate) struct Cell { // cell_aa
     pub y: i64,
     /// Cell coverage
     pub cover: i64,
-    /// Cell area 
+    /// Cell area
     pub area: i64,
 }
 
@@ -28,7 +28,7 @@ impl Cell {
     ///
     /// Cover and Area are both 0
     fn new() -> Self {
-        Cell { x: std::i64::MAX, y: std::i64::MAX, cover: 0, area: 0 }
+        Cell { x: i64::MAX, y: i64::MAX, cover: 0, area: 0 }
     }
     /// Create new cell at position (x,y)
     pub fn at(x: i64, y: i64) -> Self {
@@ -70,19 +70,19 @@ impl RasterizerCell {
     /// Create new Cell collection
     pub fn new() -> Self {
         Self { cells: Vec::with_capacity(256),
-               min_x: std::i64::MAX,
-               min_y: std::i64::MAX,
-               max_x: std::i64::MIN,
-               max_y: std::i64::MIN,
+               min_x: i64::MAX,
+               min_y: i64::MAX,
+               max_x: i64::MIN,
+               max_y: i64::MIN,
                sorted_y: vec![],
         }
     }
     /// Clear cells
     pub fn reset(&mut self) {
-        self.max_x = std::i64::MIN;
-        self.max_y = std::i64::MIN;
-        self.min_x = std::i64::MAX;
-        self.min_y = std::i64::MAX;
+        self.max_x = i64::MIN;
+        self.max_y = i64::MIN;
+        self.min_x = i64::MAX;
+        self.min_y = i64::MAX;
         self.sorted_y.clear(); // Not sure if this should be cleared
         self.cells.clear();    // Not sure if this should be cleared
     }
@@ -98,12 +98,12 @@ impl RasterizerCell {
         if ! self.sorted_y.is_empty() || self.max_y < 0 {
             return;
         }
-        // Distribute into 
+        // Distribute into
         self.sorted_y = vec![Vec::with_capacity(8); (self.max_y+1) as usize];
         for c in self.cells.iter() {
             if c.y >= 0 {
                 let y = c.y as usize;
-                self.sorted_y[y].push(c.clone());
+                self.sorted_y[y].push(*c);
             }
         }
         // Sort by the x value
@@ -169,7 +169,7 @@ impl RasterizerCell {
         }
     }
 
-    /// Create and update new cells 
+    /// Create and update new cells
     fn render_hline(&mut self, ey: i64, x1: i64, y1: i64, x2: i64, y2: i64) {
         let ex1 = x1 >> POLY_SUBPIXEL_SHIFT;
         let ex2 = x2 >> POLY_SUBPIXEL_SHIFT;

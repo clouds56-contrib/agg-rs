@@ -127,6 +127,6 @@ fn rasterizers2() {
     }
 
     ren_base.to_file("tests/tmp/rasterizers2.png").unwrap();
-    assert_eq!(agg::ppm::img_diff("tests/tmp/rasterizers2.png", "images/rasterizers2.png").unwrap(), true);;
+    assert!(agg::ppm::img_diff("tests/tmp/rasterizers2.png", "images/rasterizers2.png").unwrap());;
 
 }

@@ -30,6 +30,6 @@ fn t04_solar_spectrum_alpha() {
     }
     mix.rgb.to_file("tests/tmp/agg_test_04.png").unwrap();
 
-    assert_eq!(agg::ppm::img_diff("tests/tmp/agg_test_04.png", "images/agg_test_04.png").unwrap(), true);
+    assert!(agg::ppm::img_diff("tests/tmp/agg_test_04.png", "images/agg_test_04.png").unwrap());
 
 }

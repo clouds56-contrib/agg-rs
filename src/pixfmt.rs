@@ -251,7 +251,7 @@ impl Pixel for Pixfmt<Rgba8> {
         let c = color.rgba8().into_slice();
         let c2 = [ c[0],c[1],c[2],c[3],  c[0],c[1],c[2],c[3],  c[0],c[1],c[2],c[3],  c[0],c[1],c[2],c[3] ];
         let mut chunks = self.rbuf.data.chunks_exact_mut(bpp*n);
-        while let Some(chunk) = chunks.next() {
+        for chunk in chunks.by_ref() {
             chunk.copy_from_slice(&c2);
         }
         for chunk in chunks.into_remainder().chunks_mut(bpp) {
@@ -292,7 +292,7 @@ impl Pixel for Pixfmt<Rgb8> {
         let c = color.rgb8().into_slice();
         let c2 = [ c[0],c[1],c[2],  c[0],c[1],c[2], c[0],c[1],c[2], c[0],c[1],c[2] ];
         let mut chunks = self.rbuf.data.chunks_exact_mut(bpp*n);
-        while let Some(chunk) = chunks.next() {
+        for chunk in chunks.by_ref() {
             chunk.copy_from_slice(&c2);
         }
         for chunk in chunks.into_remainder().chunks_mut(bpp) {
@@ -368,7 +368,7 @@ impl Pixel for Pixfmt<RgbaPre8> {
         let c = RgbaPre8::from_color(color).into_slice();
         let c2 = [ c[0],c[1],c[2],c[3],  c[0],c[1],c[2],c[3],  c[0],c[1],c[2],c[3],  c[0],c[1],c[2],c[3] ];
         let mut chunks = self.rbuf.data.chunks_exact_mut(bpp*n);
-        while let Some(chunk) = chunks.next() {
+        for chunk in chunks.by_ref() {
             chunk.copy_from_slice(&c2);
         }
         for chunk in chunks.into_remainder().chunks_mut(bpp) {
@@ -450,18 +450,13 @@ impl Pixel for Pixfmt<Rgba32> {
     }
     fn set<C: Color>(&mut self, id: (usize, usize), c: C) {
         let c = Rgba32::from_color(c);
-        assert!(self.rbuf.data.len() > 0);
-        let red   : [u8;4] = unsafe { std::mem::transmute(c.red) };
-        let green : [u8;4] = unsafe { std::mem::transmute(c.green) };
-        let blue  : [u8;4] = unsafe { std::mem::transmute(c.blue) };
-        let alpha : [u8;4] = unsafe { std::mem::transmute(c.alpha) };
+        assert!(!self.rbuf.data.is_empty());
 
-        for i in 0 .. 4 {
-            self.rbuf[id][i]    = red[i];
-            self.rbuf[id][i+4]  = green[i];
-            self.rbuf[id][i+8]  = blue[i];
-            self.rbuf[id][i+12] = alpha[i];
-        }
+        self.rbuf[id][..4].copy_from_slice(&c.red.to_ne_bytes());
+        self.rbuf[id][4..8].copy_from_slice(&c.green.to_ne_bytes());
+        self.rbuf[id][8..12].copy_from_slice(&c.blue.to_ne_bytes());
+        self.rbuf[id][12..16].copy_from_slice(&c.alpha.to_ne_bytes());
+
         //self.rbuf[id][ 4.. 8] = unsafe { std::mem::transmute(c.g) };
         //self.rbuf[id][ 8..12] = unsafe { std::mem::transmute(c.b) };
         //self.rbuf[id][12..16] = unsafe { std::mem::transmute(c.a) };
@@ -514,7 +509,7 @@ impl Pixel for Pixfmt<Gray8> {
         let c = Gray8::from_color(color).into_slice();
         let c2 = [c[0],c[1], c[0],c[1], c[0],c[1], c[0],c[1]];
         let mut chunks = self.rbuf.data.chunks_exact_mut(bpp*n);
-        while let Some(chunk) = chunks.next() {
+        for chunk in chunks.by_ref() {
             chunk.copy_from_slice(&c2);
         }
         for chunk in chunks.into_remainder().chunks_mut(bpp) {

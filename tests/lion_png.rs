@@ -16,10 +16,10 @@ fn parse_lion(arrange_orientations: bool) -> (Vec<agg::Path>, Vec<agg::Rgba8>){
         if v.len() == 1 {
             let n = 0;
             let hex = v[0];
-            let r = u8::from_str_radix(&hex[n+0..n+2],16).unwrap();
+            let r = u8::from_str_radix(&hex[n..n+2],16).unwrap();
             let g = u8::from_str_radix(&hex[n+2..n+4],16).unwrap();
             let b = u8::from_str_radix(&hex[n+4..n+6],16).unwrap();
-            if path.vertices.len() > 0 {
+            if !path.vertices.is_empty() {
                 path.close_polygon();
                 paths.push(path);
                 colors.push(color);
@@ -50,7 +50,7 @@ fn parse_lion(arrange_orientations: bool) -> (Vec<agg::Path>, Vec<agg::Rgba8>){
             }
         }
     }
-    if path.vertices.len() > 0 {
+    if !path.vertices.is_empty() {
         colors.push(color);
         path.close_polygon();
         paths.push(path);
@@ -65,7 +65,7 @@ fn parse_lion(arrange_orientations: bool) -> (Vec<agg::Path>, Vec<agg::Rgba8>){
 // Helper that recenters paths to the middle of a w x h pixel image and
 // returns a Vec of ConvTransform wrappers ready for rendering.
 fn transform_paths(paths: Vec<agg::Path>, w: f64, h: f64) -> Vec<agg::ConvTransform> {
-    if paths.len() == 0 {
+    if paths.is_empty() {
         return Vec::new();
     }
     let p = paths[0].vertices[0];
@@ -86,7 +86,7 @@ fn transform_paths(paths: Vec<agg::Path>, w: f64, h: f64) -> Vec<agg::ConvTransf
     mtx.translate(w/2.0, h/2.0);
     //mtx.translate(0.0, 0.0);
     let t : Vec<_> = paths.into_iter()
-        .map(|p| agg::ConvTransform::new(p, mtx.clone()))
+        .map(|p| agg::ConvTransform::new(p, mtx))
         .collect();
     println!("polygons: {}", t.len());
     t
@@ -137,7 +137,7 @@ fn lion_cw() {
 
     ren.to_file("tests/tmp/lion_cw.png").unwrap();
 
-    assert_eq!(agg::ppm::img_diff("tests/tmp/lion_cw.png", "images/lion_cw.png").unwrap(), true);
+    assert!(agg::ppm::img_diff("tests/tmp/lion_cw.png", "images/lion_cw.png").unwrap());
 
 }
 // compare -verbose -metric AE lion.ppm ./tests/lion.ppm blarg.ppm
@@ -161,7 +161,7 @@ fn lion_cw_aa() {
 
     ren.to_file("tests/tmp/lion_cw_aa.png").unwrap();
 
-    assert_eq!(agg::ppm::img_diff("tests/tmp/lion_cw_aa.png", "images/lion_cw_aa.png").unwrap(), true);
+    assert!(agg::ppm::img_diff("tests/tmp/lion_cw_aa.png", "images/lion_cw_aa.png").unwrap());
 
 }
 // compare -verbose -metric AE lion.ppm ./tests/lion.ppm blarg.ppm
@@ -188,7 +188,7 @@ fn lion_cw_aa_srgba() {
 
     ren.to_file("tests/tmp/lion_cw_aa_srgba.png").unwrap();
 
-    assert_eq!(agg::ppm::img_diff("tests/tmp/lion_cw_aa_srgba.png", "images/lion_cw_aa_srgba.png").unwrap(), true);
+    assert!(agg::ppm::img_diff("tests/tmp/lion_cw_aa_srgba.png", "images/lion_cw_aa_srgba.png").unwrap());
 
 }
 // compare -verbose -metric AE lion.ppm ./tests/lion.ppm blarg.ppm
@@ -212,7 +212,7 @@ fn lion_outline_width1() {
     let t = transform_paths(paths, w as f64, h as f64);
 
     let mut stroke : Vec<_> = t.into_iter()
-    .map(|p| agg::Stroke::new( p ))
+    .map(agg::Stroke::new)
     .collect();
 stroke.iter_mut().for_each(|p| p.width(1.0));
 agg::render_all_paths(&mut ras, &mut ren, &stroke, &colors);
@@ -241,13 +241,13 @@ fn lion_outline() {
     let t = transform_paths(paths, w as f64, h as f64);
 
     let mut stroke : Vec<_> = t.into_iter()
-    .map(|p| agg::Stroke::new( p ))
+    .map(agg::Stroke::new)
     .collect();
     stroke.iter_mut().for_each(|p| p.width(7.0));
     agg::render_all_paths(&mut ras, &mut ren, &stroke, &colors);
 
     ren.to_file("tests/tmp/lion_outline.png").unwrap();
-    assert_eq!(agg::ppm::img_diff("tests/tmp/lion_outline.png", "images/lion_outline.png").unwrap(), true);
+    assert!(agg::ppm::img_diff("tests/tmp/lion_outline.png", "images/lion_outline.png").unwrap());
 
 }
 // compare -verbose -metric AE lion.ppm ./tests/lion.ppm diff.ppm

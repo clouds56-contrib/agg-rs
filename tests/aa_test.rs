@@ -314,7 +314,7 @@ fn t26_aa_test() {
     output.push("aa_test.png");
     images.push("aa_test.png");
     ren_base.to_file(&output).unwrap();
-    assert_eq!(agg::ppm::img_diff(output, images).unwrap(), true);
+    assert!(agg::ppm::img_diff(output, images).unwrap());
 }
 
 fn calc_linear_gradient_transform(x1: f64, y1: f64, x2: f64, y2: f64) -> agg::Transform {

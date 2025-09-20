@@ -26,5 +26,5 @@ fn t11_full() {
 
     ren.to_file("tests/tmp/agg_test_11.png").unwrap();
 
-    assert_eq!(agg::ppm::img_diff("tests/tmp/agg_test_11.png", "images/agg_test_11.png").unwrap(), true);
+    assert!(agg::ppm::img_diff("tests/tmp/agg_test_11.png", "images/agg_test_11.png").unwrap());
 }

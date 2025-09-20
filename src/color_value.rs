@@ -1,5 +1,3 @@
-use std::u8;
-
 use crate::{luminance, math::{lerp_u8, multiply_u8, prelerp_u8}};
 
 use palette::{bool_mask::HasBoolMask, num::{IsValidDivisor, MulAdd, MulSub, One, PartialCmp, Powf, Real, Zero}};

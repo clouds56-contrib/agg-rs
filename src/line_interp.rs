@@ -80,8 +80,8 @@ impl LineInterpolatorAA {
         // Get Distances along the line
         let mut dist = vec![0i64; MAX_HALF_WIDTH + 1];
         let stop = width + POLY_SUBPIXEL_SCALE * 2;
-        for i in 0 .. MAX_HALF_WIDTH {
-            dist[i] = li.y;
+        for d in dist.iter_mut().take(MAX_HALF_WIDTH) {
+            *d = li.y;
             if li.y >= stop {
                 break;
             }
@@ -1330,9 +1330,8 @@ mod tests {
         assert_eq!(v, 64);
         let v = aa.step_hor_base(&mut di);
         assert_eq!(v, 192);
-        
+
     }
 
-    
-}
 
+}

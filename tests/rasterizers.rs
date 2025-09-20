@@ -103,5 +103,5 @@ fn rasterizers_gamma() {
         agg::render_scanlines(&mut ras, &mut ren_bin);
     }
     ren_base.to_file("tests/tmp/rasterizers_gamma.png").unwrap();
-    assert_eq!(agg::ppm::img_diff("tests/tmp/rasterizers_gamma.png", "images/rasterizers_gamma.png").unwrap(), true);
+    assert!(agg::ppm::img_diff("tests/tmp/rasterizers_gamma.png", "images/rasterizers_gamma.png").unwrap());
 }

@@ -31,5 +31,5 @@ fn t03_solar_specturm() {
         pix.blend_color_hspan(0, i as i64, w as i64, &span, &[], 255);
     }
     pix.to_file("tests/tmp/agg_test_03.png").unwrap();
-    assert_eq!(agg::ppm::img_diff("tests/tmp/agg_test_03.png", "images/agg_test_03.png").unwrap(), true);
+    assert!(agg::ppm::img_diff("tests/tmp/agg_test_03.png", "images/agg_test_03.png").unwrap());
 }

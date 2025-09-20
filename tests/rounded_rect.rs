@@ -40,5 +40,5 @@ fn rounded_rect() {
     agg::render_scanlines(&mut ras, &mut ren);
 
     ren.to_file("tests/tmp/rounded_rect.png").unwrap();
-    assert_eq!(agg::ppm::img_diff("tests/tmp/rounded_rect.png", "images/rounded_rect.png").unwrap(), true);
+    assert!(agg::ppm::img_diff("tests/tmp/rounded_rect.png", "images/rounded_rect.png").unwrap());
 }

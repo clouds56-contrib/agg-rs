@@ -657,11 +657,11 @@ impl<T> DrawOutline for RendererOutlineAA<'_, T> where T: Pixel {
                     }
                     self.line3_no_clip(&lp2, sx, sy, ex, ey);
                 } else {
-                    self.line3_no_clip(&lp, sx, sy, ex, ey);
+                    self.line3_no_clip(lp, sx, sy, ex, ey);
                 }
             }
         } else {
-            self.line3_no_clip(&lp, sx, sy, ex, ey);
+            self.line3_no_clip(lp, sx, sy, ex, ey);
         }
     }
     fn semidot<F>(&mut self, cmp: F, xc1: i64, yc1: i64, xc2: i64, yc2: i64)
@@ -747,12 +747,12 @@ impl<T> DrawOutline for RendererOutlineAA<'_, T> where T: Pixel {
                     self.line0_no_clip(&lp2);
                 } else {
                     // Line is not Clipped
-                    self.line0_no_clip(&lp)
+                    self.line0_no_clip(lp)
                 }
             }
         } else {
             // No clip box defined
-            self.line0_no_clip(&lp);
+            self.line0_no_clip(lp);
         }
     }
     fn line1(&mut self, lp: &LineParameters, sx: i64, sy: i64) {
@@ -773,11 +773,11 @@ impl<T> DrawOutline for RendererOutlineAA<'_, T> where T: Pixel {
                     }
                     self.line1_no_clip(&lp2, sx, sy);
                 } else {
-                    self.line1_no_clip(&lp, sx, sy);
+                    self.line1_no_clip(lp, sx, sy);
                 }
             }
         } else {
-            self.line1_no_clip(&lp, sx, sy);
+            self.line1_no_clip(lp, sx, sy);
         }
     }
     fn line2(&mut self, lp: &LineParameters, ex: i64, ey: i64) {
@@ -798,11 +798,11 @@ impl<T> DrawOutline for RendererOutlineAA<'_, T> where T: Pixel {
                     }
                     self.line2_no_clip(&lp2, ex, ey);
                 } else {
-                    self.line2_no_clip(&lp, ex, ey);
+                    self.line2_no_clip(lp, ex, ey);
                 }
             }
         } else {
-            self.line2_no_clip(&lp, ex, ey);
+            self.line2_no_clip(lp, ex, ey);
         }
     }
     fn color<C: Color>(&mut self, color: C) {
