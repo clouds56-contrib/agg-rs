@@ -496,8 +496,9 @@ pub mod prelude {
         Render as _, Pixel as _, Source as _,
     };
 
-    pub use crate::{Pixfmt,RenderingBase,DrawOutline};
+    pub use crate::{Pixfmt,RenderingBase,DrawOutline,PixfmtAlphaBlend};
     pub use crate::{
+        Gray8,Gray16,Gray32,Gray64,
         Rgb8,Rgb16,Rgb32,Rgb64,
         Rgba8,Rgba16,Rgba32,Rgba64,
     };

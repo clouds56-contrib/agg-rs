@@ -1,8 +1,6 @@
 
 type PixRgb8 = agg::Pixfmt<agg::Rgb8>;
 use agg::prelude::*;
-use agg::Gray8;
-use agg::PixfmtAlphaBlend;
 
 
 fn draw(alpha: u8, filename: &str) {
