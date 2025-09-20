@@ -1,13 +1,13 @@
 use std::env;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 // https://www.reddit.com/r/rust/comments/ahsz9q/psa_if_the_examples_for_your_crate_rely_on_media/
 
-pub fn is_base_dir(cwd: &PathBuf) -> Option<(PathBuf, PathBuf)> {
+pub fn is_base_dir(cwd: &Path) -> Option<(PathBuf, PathBuf)> {
   if !cwd.join("Cargo.toml").is_file() {
     return None;
   }
-  let mut images = cwd.clone();
-  let mut test_tmp = cwd.clone();
+  let mut images = cwd.to_path_buf();
+  let mut test_tmp = cwd.to_path_buf();
   images.push("images");
   test_tmp.push("tests");
   test_tmp.push("tmp");
@@ -27,7 +27,7 @@ pub fn find_assets() -> Option<(PathBuf, PathBuf)> {
   // Search backwards from current executable path
   let mut exec = env::current_exe().ok()?;
   while let Some(dir) = exec.parent() {
-    if let Some(v) = is_base_dir(&dir.to_path_buf()) {
+    if let Some(v) = is_base_dir(dir) {
       return Some(v);
     }
     exec = dir.to_path_buf();

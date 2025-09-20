@@ -3,7 +3,7 @@ mod assets;
 use agg::prelude::*;
 
 fn path_from_slice(pts: &[f64]) -> agg::Path {
-  assert!(pts.len() % 2 == 0);
+  assert!(pts.len().is_multiple_of(2));
   assert!(pts.len() >= 4);
   let mut path = agg::Path::new();
   path.move_to(pts[0] + 0.5, pts[1] + 0.5);
@@ -13,6 +13,7 @@ fn path_from_slice(pts: &[f64]) -> agg::Path {
   path
 }
 
+#[allow(clippy::too_many_arguments)]
 fn dash_line<T: agg::Pixel>(
   ren: &mut agg::RenderingScanlineAASolid<T>,
   ras: &mut agg::RasterizerScanline,

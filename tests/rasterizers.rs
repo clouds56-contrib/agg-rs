@@ -82,7 +82,7 @@ fn rasterizers_gamma() {
     ren_aa.color(rgb64(0.7, 0.5, 0.1, alpha));
     ras.add_path(&path);
     // Power Function
-    ras.gamma(|v| (v.powf(gamma * 2.0)));
+    ras.gamma(|v| v.powf(gamma * 2.0));
     agg::render_scanlines(&mut ras, &mut ren_aa);
   }
 

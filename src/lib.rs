@@ -202,7 +202,7 @@ pub trait VertexSource {
 }
 
 /// Access Color properties and compoents
-pub trait Color: Debug + Copy {
+pub trait Color: Debug + Copy + 'static {
   /// Get red value
   fn red_<T: ColorValue>(&self) -> T;
   /// Get green value
