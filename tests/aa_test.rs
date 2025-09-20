@@ -1,7 +1,7 @@
 
 mod assets;
 
-use agg::{NamedColor, Render};
+use agg::prelude::*;
 
 fn path_from_slice(pts: &[f64]) -> agg::Path {
     assert!(pts.len() % 2 == 0);
@@ -52,7 +52,7 @@ fn t26_aa_test() {
     let pix = agg::Pixfmt::<agg::Rgb8>::new(width, height);
     let mut ren_base = agg::RenderingBase::new(pix);
 
-    ren_base.clear(agg::Rgba8::new(0,0,0,255));
+    ren_base.clear(agg::Rgba8::BLACK);
 
     // Radial Line Test
     let cx = width  as f64 / 2.0;
@@ -62,7 +62,7 @@ fn t26_aa_test() {
     let mut ras = agg::RasterizerScanline::new();
     {
         let mut ren = agg::RenderingScanlineAASolid::with_base(&mut ren_base);
-        ren.color(agg::Rgba8::new(255, 255, 255, 51));
+        ren.color(agg::Rgba8::from_raw(255, 255, 255, 51));
         for i in (1..=180).rev() {
             let n = 2.0 * (i as f64) * std::f64::consts::PI / 180.0;
             dash_line(
@@ -79,7 +79,7 @@ fn t26_aa_test() {
         let mut ren = agg::RenderingScanlineAASolid::with_base(&mut ren_base);
         // Integral Point Sizes 1..=20
         ras.reset();
-        ren.color( agg::Rgb8::white() );
+        ren.color( agg::Rgb8::WHITE );
         let ell = agg::Ellipse::new(
             20.0 + k * (k + 1.0) + 0.5,
             20.5,
@@ -113,8 +113,8 @@ fn t26_aa_test() {
 
         // Integral Line Widths 1..=20
         let gradient_colors = color_gradient(
-            agg::Rgb8::white(),
-            agg::Rgb8::new(((255.   )*(i % 2) as f64).round() as u8,
+            agg::Rgb8::WHITE,
+            agg::Rgb8::from_raw(((255.   )*(i % 2) as f64).round() as u8,
                            ((255./2.)*(i % 3) as f64).round() as u8,
                            ((255./4.)*(i % 5) as f64).round() as u8
             ), 256);
@@ -137,8 +137,8 @@ fn t26_aa_test() {
         agg::render_scanlines(&mut ras, &mut ren_grad);
 
         // Fractional Line Lengths H (Red/Blue)
-        let gradient_colors = color_gradient(agg::Rgb8::new(255,0,0),
-                                             agg::Rgb8::new(0,0,255), 256);
+        let gradient_colors = color_gradient(agg::Rgb8::from_raw(255,0,0),
+                                             agg::Rgb8::from_raw(0,0,255), 256);
         let x1 = 17.5 + (k * 4.0);
         let y1 = 107.;
         let x2 = 17.5 + (k * 4.0) + k/6.66666667;
@@ -177,8 +177,8 @@ fn t26_aa_test() {
         agg::render_scanlines(&mut ras, &mut ren_grad);
 
         // Fractional Line Positioning (Red)
-        let colors = color_gradient(agg::Rgb8::new(255,0,0),
-                                    agg::Rgb8::new(255,255,255), 256);
+        let colors = color_gradient(agg::Rgb8::from_raw(255,0,0),
+                                    agg::Rgb8::from_raw(255,255,255), 256);
         let x1 = 21.5;
         let y1 = 120.0 + (k-1.0) * 3.1;
         let x2 = 52.5;
@@ -198,8 +198,8 @@ fn t26_aa_test() {
         agg::render_scanlines(&mut ras, &mut ren_grad);
 
         // Fractional Line Widths 2..0 (Green)
-        let colors = color_gradient(agg::Rgb8::new(0,255,0),
-                                    agg::Rgb8::new(255,255,255),256);
+        let colors = color_gradient(agg::Rgb8::from_raw(0,255,0),
+                                    agg::Rgb8::from_raw(255,255,255),256);
         let x1 = 52.5;
         let y1 = 118.0 + (k*3.0);
         let x2 = 83.5;
@@ -219,8 +219,8 @@ fn t26_aa_test() {
         agg::render_scanlines(&mut ras, &mut ren_grad);
 
         // Stippled Fractional Width 2..0 (Blue)
-        let colors = color_gradient(agg::Rgb8::new(0,0,255),
-                                    agg::Rgb8::new(255,255,255), 256);
+        let colors = color_gradient(agg::Rgb8::from_raw(0,0,255),
+                                    agg::Rgb8::from_raw(255,255,255), 256);
         let x1 = 83.5;
         let y1 = 119.0 + (k*3.0);
         let x2 = 114.5;
@@ -242,7 +242,7 @@ fn t26_aa_test() {
         agg::render_scanlines(&mut ras, &mut ren_grad);
 
         let mut ren = agg::RenderingScanlineAASolid::with_base(&mut ren_base);
-        ren.color(agg::Rgb8::new(255,255,255));
+        ren.color(agg::Rgb8::WHITE);
         if i <= 10 {
             // Integral line width, horz aligned (mipmap test)
             let path = path_from_slice(&[
@@ -280,13 +280,13 @@ fn t26_aa_test() {
     }
 
     let mut ren = agg::RenderingScanlineAASolid::with_base(&mut ren_base);
-    ren.color( agg::Rgb8::white() );
+    ren.color( agg::Rgb8::WHITE );
     for i in 1 ..= 13 {
         let k = i as f64;
         ras.reset();
         let gradient_colors = color_gradient(
-            agg::Rgb8::white(),
-            agg::Rgb8::new(((255.   )*(i % 2) as f64).round() as u8,
+            agg::Rgb8::WHITE,
+            agg::Rgb8::from_raw(((255.   )*(i % 2) as f64).round() as u8,
                            ((255./2.)*(i % 3) as f64).round() as u8,
                            ((255./4.)*(i % 5) as f64).round() as u8
             ),
@@ -340,7 +340,7 @@ fn calc_linear_gradient_transform(x1: f64, y1: f64, x2: f64, y2: f64) -> agg::Tr
 }
 
 fn color_gradient(begin: agg::Rgb8, end: agg::Rgb8, len: usize) -> Vec<agg::Rgb8>{
-    let mut gradient_colors = vec![agg::Rgb8::white(); len ];
+    let mut gradient_colors = vec![agg::Rgb8::WHITE; len ];
     fill_color_array(&mut gradient_colors, begin, end);
     gradient_colors
 }
@@ -349,8 +349,8 @@ fn fill_color_array(array: &mut [agg::Rgb8], begin: agg::Rgb8, end: agg::Rgb8) {
     let n = (array.len()-1) as f64;
     for (i,v) in array.iter_mut().enumerate() {
         let a = ((i as f64 / n) * 255.0).round() as u8;
-        v.r = agg::math::lerp_u8(begin.r, end.r, a);
-        v.g = agg::math::lerp_u8(begin.g, end.g, a);
-        v.b = agg::math::lerp_u8(begin.b, end.b, a);
+        v.red = agg::math::lerp_u8(begin.red8(), end.red8(), a).into();
+        v.green = agg::math::lerp_u8(begin.green8(), end.green8(), a).into();
+        v.blue = agg::math::lerp_u8(begin.blue8(), end.blue8(), a).into();
     }
 }

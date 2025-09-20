@@ -1,13 +1,12 @@
 //! Rendering Outline, not Anti-Aliased
 //!
-//!     use agg::{Pixfmt,Rgb8,Rgba8};
-//!     use agg::{RendererPrimatives,RasterizerOutline};
+//!     use agg::prelude::*;
 //!     let pix = Pixfmt::<Rgb8>::new(100,100);
 //!     let mut ren_base = agg::RenderingBase::new(pix);
-//!     ren_base.clear( Rgba8::new(255, 255, 255, 255) );
+//!     ren_base.clear( Rgba8::WHITE );
 //!
 //!     let mut ren = RendererPrimatives::with_base(&mut ren_base);
-//!     ren.line_color(agg::Rgba8::new(0,0,0,255));
+//!     ren.line_color(agg::Rgba8::from_raw(0,0,0,255));
 //!
 //!     let mut path = agg::Path::new();
 //!     path.move_to(10.0, 10.0);
@@ -23,6 +22,7 @@
 //! ![Output](https://raw.githubusercontent.com/savage13/agg/master/images/primative.png)
 
 use crate::paths::PathCommand;
+use crate::NamedColor;
 use crate::Pixel;
 use crate::VertexSource;
 use crate::POLY_SUBPIXEL_SHIFT;
@@ -125,8 +125,8 @@ pub struct RendererPrimatives<'a,T> where T: 'a {
 impl<'a,T> RendererPrimatives<'a,T> where T: Pixel {
     /// Create new Primative Rendering with a [`RenderingBase`](../base/struct.RenderingBase.html)
     pub fn with_base(base: &'a mut RenderingBase<T>) -> Self {
-        let fill_color = Rgba8::new(0,0,0,255);
-        let line_color = Rgba8::new(0,0,0,255);
+        let fill_color = Rgba8::BLACK;
+        let line_color = Rgba8::BLACK;
         Self { base, fill_color, line_color,
                x: Subpixel::from(0),
                y: Subpixel::from(0)
@@ -134,11 +134,11 @@ impl<'a,T> RendererPrimatives<'a,T> where T: Pixel {
     }
     /// Set line color
     pub fn line_color<C: Color>(&mut self, line_color: C) {
-        self.line_color = Rgba8::from_color(line_color);
+        self.line_color = line_color.rgba();
     }
     /// Set fill color
     pub fn fill_color<C: Color>(&mut self, fill_color: C) {
-        self.fill_color = Rgba8::from_color(fill_color);
+        self.fill_color = fill_color.rgba();
     }
     pub(crate) fn coord(&self, c: f64) -> Subpixel {
         Subpixel::from( (c * POLY_SUBPIXEL_SCALE as f64).round() as i64 )

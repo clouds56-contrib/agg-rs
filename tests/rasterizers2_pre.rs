@@ -1,7 +1,7 @@
 extern crate agg;
 
 use agg::Pixel;
-use agg::Render;
+use agg::prelude::*;
 use agg::DrawOutline;
 use agg::VertexSource;
 
@@ -91,7 +91,7 @@ fn chain() -> agg::Pixfmt<agg::Rgba32> {
         let g = ((v >>  8) & 0x00ff_u32) as u8;
         let b = ((v      ) & 0x00ff_u32) as u8;
         let a =  (v >> 24) as u8;
-        let c = agg::Rgba32::from_color(agg::Srgba8::new(r,g,b,a));
+        let c = agg::Rgba32::from_color(agg::Srgba8::from_raw(r,g,b,a));
         colors.push( c.premultiply() );
     }
     let mut k = 0;
@@ -111,7 +111,7 @@ fn rasterizers2_pre() {
     let pixf = agg::Pixfmt::<agg::RgbaPre8>::new(w, h);
     let mut ren_base = agg::RenderingBase::new(pixf);
 
-    ren_base.clear( agg::Rgba8::new(255, 255, 242, 255) );
+    ren_base.clear( agg::Rgba8::from_raw(255, 255, 242, 255) );
 
     let start_angle = 0.0;
     let line_width = 3.0;
@@ -130,7 +130,7 @@ fn rasterizers2_pre() {
         let mut stroke = agg::Stroke::new(spiral);
         stroke.width(line_width);
         //stroke.cap(round_cap);
-        ren_aa.color( agg::Rgba8::new(102, 77, 26, 255));
+        ren_aa.color( agg::Rgba8::from_raw(102, 77, 26, 255));
         ras_aa.add_path(&stroke);
         agg::render_scanlines(&mut ras_aa, &mut ren_aa);
 
@@ -142,7 +142,7 @@ fn rasterizers2_pre() {
         let spiral = Spiral::new(x, y, r1, r2, step, start_angle);
 
         let mut ren_prim = agg::RendererPrimatives::with_base(&mut ren_base);
-        ren_prim.line_color(agg::Rgba8::new(102, 77, 26, 255));
+        ren_prim.line_color(agg::Rgba8::from_raw(102, 77, 26, 255));
         let mut ras_al = agg::RasterizerOutline::with_primative(&mut ren_prim);
         let trans = Roundoff::new(spiral);
         ras_al.add_path(&trans);
@@ -155,7 +155,7 @@ fn rasterizers2_pre() {
         let spiral = Spiral::new(x, y, r1, r2, step, start_angle);
 
         let mut ren_prim = agg::RendererPrimatives::with_base(&mut ren_base);
-        ren_prim.line_color(agg::Rgba8::new(102, 77, 26, 255));
+        ren_prim.line_color(agg::Rgba8::from_raw(102, 77, 26, 255));
         let mut ras_al = agg::RasterizerOutline::with_primative(&mut ren_prim);
         ras_al.add_path(&spiral);
     }
@@ -166,7 +166,7 @@ fn rasterizers2_pre() {
         let spiral = Spiral::new(x, y, r1, r2, step, start_angle);
 
         let mut ren_oaa = agg::RendererOutlineAA::with_base(&mut ren_base);
-        ren_oaa.color(agg::Rgba8::new(102,77,26,255));
+        ren_oaa.color(agg::Rgba8::from_raw(102,77,26,255));
         ren_oaa.width(3.0);
         let mut ras_oaa = agg::RasterizerOutlineAA::with_renderer(&mut ren_oaa);
         ras_oaa.round_cap(true);
@@ -186,7 +186,7 @@ fn rasterizers2_pre() {
         pattern.create( &ch );
         let mut ren_img = agg::RendererOutlineImg::with_base_and_pattern(&mut ren_base, pattern);
         let mut ras_img = agg::RasterizerOutlineAA::with_renderer(&mut ren_img);
-        //ren_oaa.color(&agg::Rgba8::new(102,77,26,255));
+        //ren_oaa.color(&agg::Rgba8::from_raw(102,77,26,255));
         ras_img.round_cap(true);
         ras_img.add_path(&spiral);
     }
@@ -233,7 +233,7 @@ fn text<T>(ras: &mut agg::RasterizerScanline,
     let mut stroke = agg::Stroke::new(t);
     stroke.width(0.7);
     ras.add_path(&stroke);
-    ren.color(agg::Rgba8::new(0,0,0,255));
+    ren.color(agg::Rgba8::BLACK);
     agg::render_scanlines(ras, ren);
 
 }

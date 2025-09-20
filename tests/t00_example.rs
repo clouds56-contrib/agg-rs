@@ -6,7 +6,7 @@ fn t00_example() {
     // Create a blank image 10x10 pixels
     let pix = agg::Pixfmt::<agg::Rgb8>::new(100,100);
     let mut ren_base = agg::RenderingBase::new(pix);
-    ren_base.clear(agg::Rgba8::white());
+    ren_base.clear(agg::Rgba8::WHITE);
 
     // Draw a polygon from (10,10) - (50,90) - (90,10)
     let mut ras = agg::RasterizerScanline::new();
@@ -16,7 +16,7 @@ fn t00_example() {
 
     // Render the line to the image
     let mut ren = agg::RenderingScanlineAASolid::with_base(&mut ren_base);
-    ren.color(agg::Rgba8::black());
+    ren.color(agg::Rgba8::BLACK);
     agg::render_scanlines(&mut ras, &mut ren);
 
     // Save the image to a file

@@ -1,7 +1,7 @@
 
 extern crate agg;
 
-use agg::Render;
+use agg::prelude::*;
 
 #[test]
 fn t15_path_stroke() {
@@ -11,11 +11,11 @@ fn t15_path_stroke() {
 
     let mut ren_base = agg::RenderingBase::new(pixf);
 
-    ren_base.clear( agg::Rgba8::new(255, 255, 255, 255) );
+    ren_base.clear( agg::Rgba8::WHITE );
 
     let mut ren = agg::RenderingScanlineAASolid::with_base(&mut ren_base);
 
-    ren.color( agg::Rgba8::new(255,0,0,255) );
+    ren.color( agg::Rgba8::RED );
 
     let mut ras = agg::RasterizerScanline::new();
 
@@ -40,10 +40,9 @@ fn t15_path_stroke() {
     pg.width(2.0);
     ras.add_path(&mut pg);
 
-    agg::render_scanlines_aa_solid(&mut ras, &mut ren_base, agg::Rgba8::new(0,0,0,255));
+    agg::render_scanlines_aa_solid(&mut ras, &mut ren_base, agg::Rgba8::BLACK);
 
     ren_base.to_file("tests/tmp/agg_test_15.png").unwrap();
 
     assert_eq!(agg::ppm::img_diff("tests/tmp/agg_test_15.png", "images/agg_test_15.png").unwrap(), true);
 }
-

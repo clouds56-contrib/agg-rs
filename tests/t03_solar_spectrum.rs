@@ -5,7 +5,7 @@ use agg::{NamedColor, Pixel};
 fn draw_black_frame(pix: &mut agg::Pixfmt<agg::Rgb8>) {
     let w = pix.width();
     let h = pix.height();
-    let black = agg::Rgb8::black();
+    let black = agg::Rgb8::BLACK;
     pix.copy_hline(0,0,  w,black);
     pix.copy_hline(0,h-1,w,black);
 
@@ -21,10 +21,10 @@ fn t03_solar_specturm() {
 
     let w = pix.width();
     let h = pix.height();
-    let mut span = vec![agg::Rgb8::white(); w];
+    let mut span = vec![agg::Rgb8::WHITE; w];
 
     for i in 0 .. w {
-        span[i] = agg::Rgb8::from_wavelength_gamma(380.0 + 400.0 * i as f64 / w as f64, 0.8);
+        span[i] = agg::rgb8_from_wavelength_gamma(380.0 + 400.0 * i as f64 / w as f64, 0.8);
     }
 
     for i in 0 .. h {

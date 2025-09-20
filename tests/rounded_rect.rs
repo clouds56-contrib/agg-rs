@@ -1,6 +1,6 @@
 
 extern crate agg;
-use agg::Render;
+use agg::prelude::*;
 
 #[test]
 fn rounded_rect() {
@@ -13,16 +13,16 @@ fn rounded_rect() {
 
     let mut ren_base = agg::RenderingBase::new(pixf);
 
-    ren_base.clear( agg::Rgba8::new(255, 255, 255, 255) );
+    ren_base.clear( agg::Rgba8::WHITE );
 
     let mut ren = agg::RenderingScanlineAASolid::with_base(&mut ren_base);
 
-    ren.color( agg::Rgba8::new(255,0,0,255) );
+    ren.color( agg::Rgba8::RED );
 
     let mut ras = agg::RasterizerScanline::new();
 
 
-    ren.color( agg::Rgba8::new(54,54,54,255) );
+    ren.color( agg::Rgba8::from_raw(54,54,54,255) );
     for i in 0 .. 2 {
         let e = agg::Ellipse::new(m_x[i], m_y[i], 3., 3., 16);
         ras.add_path(&e);
@@ -36,10 +36,9 @@ fn rounded_rect() {
     let mut stroke = agg::Stroke::new( r );
     stroke.width( 7.0 );
     ras.add_path(&stroke);
-    ren.color(agg::Rgba8::new(0,0,0,255));
+    ren.color(agg::Rgba8::BLACK);
     agg::render_scanlines(&mut ras, &mut ren);
 
     ren.to_file("tests/tmp/rounded_rect.png").unwrap();
     assert_eq!(agg::ppm::img_diff("tests/tmp/rounded_rect.png", "images/rounded_rect.png").unwrap(), true);
 }
-

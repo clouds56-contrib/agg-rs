@@ -1,13 +1,13 @@
 
 use agg::{Pixfmt,Rgb8,Rgba8};
-use agg::Render;
+use agg::prelude::*;
 
 #[test]
 fn t22_inner_join() {
 
     let pix = Pixfmt::<Rgb8>::new(400,100);
     let mut ren_base = agg::RenderingBase::new(pix);
-    ren_base.clear( Rgba8::new(255, 255, 255, 255) );
+    ren_base.clear( Rgba8::WHITE );
 
     let joins = [ agg::InnerJoin::Miter,
                   agg::InnerJoin::Round,
@@ -57,7 +57,7 @@ fn text<T>(ras: &mut agg::RasterizerScanline,
     let mut stroke = agg::Stroke::new(t);
     stroke.width(1.0);
     ras.add_path(&stroke);
-    ren.color(agg::Rgba8::new(0,0,0,255));
+    ren.color(agg::Rgba8::BLACK);
     agg::render_scanlines(ras, ren);
 
 }

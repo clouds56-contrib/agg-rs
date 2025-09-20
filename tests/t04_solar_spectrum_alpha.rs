@@ -1,7 +1,7 @@
 
 extern crate agg;
 
-use agg::{NamedColor, Pixel};
+use agg::prelude::*;
 
 #[test]
 fn t04_solar_spectrum_alpha() {
@@ -15,12 +15,12 @@ fn t04_solar_spectrum_alpha() {
 
     for i in 0 .. h {
         let v = (255 * i/h) as u8;
-        alpha.copy_hline(0, i, w, agg::Gray8::new(v));
+        alpha.copy_hline(0, i, w, agg::Gray8::from_raw(v, 255));
     }
 
-    let mut span = vec![agg::Rgb8::white(); w];
+    let mut span = vec![agg::Rgb8::WHITE; w];
     for i in 0 .. w {
-        span[i] = agg::Rgb8::from_wavelength_gamma(380.0 + 400.0 * i as f64 / w as f64, 0.8);
+        span[i] = agg::rgb8_from_wavelength_gamma(380.0 + 400.0 * i as f64 / w as f64, 0.8);
     }
 
     let mut mix = agg::AlphaMaskAdaptor::new(pix, alpha);

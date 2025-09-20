@@ -31,7 +31,7 @@
 //!       // Create a blank image 10x10 pixels
 //!       let pix = agg::Pixfmt::<agg::Rgb8>::new(100,100);
 //!       let mut ren_base = agg::RenderingBase::new(pix);
-//!       ren_base.clear(agg::Rgba8::white());
+//!       ren_base.clear(agg::Rgba8::WHITE);
 //!
 //!       // Draw a polygon from (10,10) - (50,90) - (90,10)
 //!       let mut ras = agg::RasterizerScanline::new();
@@ -41,7 +41,7 @@
 //!
 //!       // Render the line to the image
 //!       let mut ren = agg::RenderingScanlineAASolid::with_base(&mut ren_base);
-//!       ren.color(agg::Rgba8::black());
+//!       ren.color(agg::Rgba8::BLACK);
 //!       agg::render_scanlines(&mut ras, &mut ren);
 //!
 //!       // Save the image to a file
@@ -50,14 +50,13 @@
 //!
 //! # Outline AntiAlias Renderer
 //!
-//!        use agg::{Pixfmt,Rgb8,Rgba8,RenderingBase,DrawOutline};
-//!        use agg::{RendererOutlineAA,RasterizerOutlineAA};
+//!        use agg::prelude::*;
 //!        let pix = Pixfmt::<Rgb8>::new(100,100);
 //!        let mut ren_base = agg::RenderingBase::new(pix);
-//!        ren_base.clear( Rgba8::new(255, 255, 255, 255) );
+//!        ren_base.clear( Rgba8::WHITE );
 //!
 //!        let mut ren = RendererOutlineAA::with_base(&mut ren_base);
-//!        ren.color(agg::Rgba8::new(102,77,26,255));
+//!        ren.color(agg::Rgba8::from_raw(102,77,26,255));
 //!        ren.width(3.0);
 //!
 //!        let mut path = agg::Path::new();
@@ -74,15 +73,14 @@
 //! Render for primative shapes: lines, rectangles, and ellipses; filled or
 //!    outlined.
 //!
-//!        use agg::{Pixfmt,Rgb8,Rgba8,RenderingBase,DrawOutline};
-//!        use agg::{RendererPrimatives,RasterizerOutline};
+//!        use agg::prelude::*;
 //!
 //!        let pix = Pixfmt::<Rgb8>::new(100,100);
 //!        let mut ren_base = agg::RenderingBase::new(pix);
-//!        ren_base.clear( Rgba8::new(255, 255, 255, 255) );
+//!        ren_base.clear( Rgba8::WHITE );
 //!
 //!        let mut ren = RendererPrimatives::with_base(&mut ren_base);
-//!        ren.line_color(agg::Rgba8::new(0,0,0,255));
+//!        ren.line_color(agg::Rgba8::from_raw(0,0,0,255));
 //!
 //!        let mut path = agg::Path::new();
 //!        path.move_to(10.0, 10.0);
@@ -133,6 +131,7 @@ pub mod paths;
 pub mod stroke;
 pub mod transform;
 pub mod color;
+pub mod color_value;
 pub mod pixfmt;
 pub mod base;
 pub mod clip;
@@ -161,6 +160,8 @@ pub use crate::stroke::*;
 pub use crate::transform::*;
 #[doc(hidden)]
 pub use crate::color::*;
+#[doc(hidden)]
+pub use crate::color_value::*;
 #[doc(hidden)]
 pub use crate::pixfmt::*;
 #[doc(hidden)]
@@ -202,34 +203,42 @@ pub trait VertexSource {
 /// Access Color properties and compoents
 pub trait Color: Debug + Copy {
     /// Get red value
-    fn red<T: ColorValueType>(&self) -> T;
+    fn red_<T: ColorValue>(&self) -> T;
     /// Get green value
-    fn green<T: ColorValueType>(&self) -> T;
+    fn green_<T: ColorValue>(&self) -> T;
     /// Get blue value
-    fn blue<T: ColorValueType>(&self) -> T;
+    fn blue_<T: ColorValue>(&self) -> T;
     /// Get alpha value
-    fn alpha<T: ColorValueType>(&self) -> T;
+    fn alpha_<T: ColorValue>(&self) -> T;
     /// Get red value [0,1] as f64
-    fn red64(&self) -> f64 { self.red() }
+    fn red64(&self) -> f64 { self.red_() }
     /// Get green value [0,1] as f64
-    fn green64(&self) -> f64 { self.green() }
+    fn green64(&self) -> f64 { self.green_() }
     /// Get blue value [0,1] as f64
-    fn blue64(&self) -> f64 { self.blue() }
+    fn blue64(&self) -> f64 { self.blue_() }
     /// Get alpha value [0,1] as f64
-    fn alpha64(&self) -> f64 { self.alpha() }
+    fn alpha64(&self) -> f64 { self.alpha_() }
     /// Get red value [0,255] as u8
-    fn red8(&self) -> u8 { self.red() }
+    fn red8(&self) -> u8 { self.red_::<U8>().0 }
     /// Get green value [0,255] as u8
-    fn green8(&self) -> u8 { self.green() }
+    fn green8(&self) -> u8 { self.green_::<U8>().0 }
     /// Get blue value [0,255] as u8
-    fn blue8(&self) -> u8 { self.blue() }
+    fn blue8(&self) -> u8 { self.blue_::<U8>().0 }
     /// Get alpha value [0,255] as u8
-    fn alpha8(&self) -> u8 { self.alpha() }
+    fn alpha8(&self) -> u8 { self.alpha_::<U8>().0 }
 
-    fn rgb<T: ColorValueType>(&self) -> Rgb<T> { Rgb::from_color(*self) }
-    fn rgba<T: ColorValueType>(&self) -> Rgba<T> { Rgba::from_color(*self) }
-    fn gray<T: ColorValueType>(&self) -> Gray<T> { Gray::from_color(*self) }
-    fn srgba<T: ColorValueType>(&self) -> Srgba<T> { Srgba::from_color(*self) }
+    fn rgb<T: ColorValue>(&self) -> Rgb<T> { Rgb::from_color(*self) }
+    fn rgb8(&self) -> Rgb<U8> { self.rgb() }
+    fn rgb64(&self) -> Rgb<f64> { self.rgb() }
+    fn rgba<T: ColorValue>(&self) -> Rgba<T> { Rgba::from_color(*self) }
+    fn rgba8(&self) -> Rgba<U8> { self.rgba() }
+    fn rgba64(&self) -> Rgba<f64> { self.rgba() }
+    fn gray<T: ColorValue>(&self) -> Gray<T> { Gray::from_color(*self) }
+    fn gray8(&self) -> Gray<U8> { self.gray() }
+    fn gray64(&self) -> Gray<f64> { self.gray() }
+    fn srgba<T: ColorValue>(&self) -> Srgba<T> { Srgba::from_color(*self) }
+    fn srgba8(&self) -> Srgba<U8> { self.srgba() }
+    fn srgba64(&self) -> Srgba<f64> { self.srgba() }
 
     /// Return if the color is completely transparent, alpha = 0.0
     fn is_transparent(&self) -> bool { self.alpha64() == 0.0 }
@@ -304,35 +313,35 @@ pub trait Pixel {
     /// Copy or blend a pixel at `id` with `color` and a `cover`
     ///
     /// If `color` [`is_opaque`] *and* `cover` equals [`cover_mask`] then
-    ///   the color is copied to the pixel at `id', otherwise the `color`
-    ///   is blended with the pixel at `id' considering the amount of `cover`
+    ///   the color is copied to the pixel at `id`, otherwise the `color`
+    ///   is blended with the pixel at `id` considering the amount of `cover`
     ///
     /// If `color` [`is_transparent`] nothing is done
     ///
-    ///     use agg::{NamedColor,Source,Pixfmt,Rgb8,Rgba8,Pixel};
+    ///     use agg::prelude::*;
     ///
     ///     let mut pix = Pixfmt::<Rgb8>::new(1,1);
-    ///     let black  = Rgba8::black();
-    ///     let white  = Rgba8::white();
+    ///     let black  = Rgba8::BLACK;
+    ///     let white  = Rgba8::WHITE;
     ///     pix.copy_pixel(0,0,black);
     ///     assert_eq!(pix.get((0,0)), black);
     ///
     ///     let (alpha, cover) = (255, 255); // Copy Pixel
-    ///     let color = Rgba8::new(255,255,255,alpha);
+    ///     let color = Rgba8::from_raw(255,255,255,alpha);
     ///     pix.copy_or_blend_pix_with_cover((0,0), color, cover);
     ///     assert_eq!(pix.get((0,0)), white);
     ///
     ///     let (alpha, cover) = (255, 128); // Partial Coverage, Blend
-    ///     let color = Rgba8::new(255,255,255,alpha);
+    ///     let color = Rgba8::from_raw(255,255,255,alpha);
     ///     pix.copy_pixel(0,0,black);
     ///     pix.copy_or_blend_pix_with_cover((0,0), color, cover);
-    ///     assert_eq!(pix.get((0,0)), Rgba8::new(128,128,128,255));
+    ///     assert_eq!(pix.get((0,0)), Rgba8::from_raw(128,128,128,255));
     ///
     ///     let (alpha, cover) = (128, 255); // Partial Coverage, Blend
-    ///     let color = Rgba8::new(255,255,255,alpha);
+    ///     let color = Rgba8::from_raw(255,255,255,alpha);
     ///     pix.copy_pixel(0,0,black);
     ///     pix.copy_or_blend_pix_with_cover((0,0), color, cover);
-    ///     assert_eq!(pix.get((0,0)), Rgba8::new(128,128,128,255));
+    ///     assert_eq!(pix.get((0,0)), Rgba8::from_raw(128,128,128,255));
     ///
     /// [`is_opaque`]: ../trait.Color.html#method.is_opaque
     /// [`is_transparent`]: ../trait.Color.html#method.is_transparent
@@ -479,4 +488,20 @@ pub(crate) trait DistanceInterpolator {
     fn inc_y(&mut self, dx: i64);
     fn dec_x(&mut self, dy: i64);
     fn dec_y(&mut self, dx: i64);
+}
+
+pub mod prelude {
+    pub use crate::{
+        Color as _, NamedColor as _, FromRaw2 as _, FromColor as _, FromRaw3 as _, FromRaw4 as _,
+        Render as _, Pixel as _, Source as _,
+    };
+
+    pub use crate::{Pixfmt,RenderingBase,DrawOutline,PixfmtAlphaBlend};
+    pub use crate::{
+        Gray8,Gray16,Gray32,Gray64,
+        Rgb8,Rgb16,Rgb32,Rgb64,
+        Rgba8,Rgba16,Rgba32,Rgba64,
+    };
+    pub use crate::{RendererPrimatives, RasterizerOutline};
+    pub use crate::{RendererOutlineAA, RasterizerOutlineAA};
 }

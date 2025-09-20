@@ -12,3 +12,4 @@ description = "High-quality 2D graphics engine based on Anti-grain Geometry"
 [dependencies]
 freetype-rs = { version = "0.38.0", features = ["bundled"] }
 image = { version = "0.25.8", default-features = false, features = ["png", "gif", "jpeg", "bmp", "tga"] }
+palette = "0.7.6"
