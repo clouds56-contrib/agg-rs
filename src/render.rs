@@ -925,9 +925,11 @@ impl LineImagePattern {
   pub fn pattern_width(&self) -> i64 {
     self.width_hr
   }
+  #[allow(clippy::misnamed_getters)]
   pub fn line_width(&self) -> i64 {
     self.half_height_hr
   }
+  #[allow(clippy::misnamed_getters)]
   pub fn width(&self) -> u64 {
     self.height
   }
@@ -964,9 +966,11 @@ impl LineImagePatternPow2 {
   pub fn pattern_width(&self) -> i64 {
     self.base.width_hr
   }
+  #[allow(clippy::misnamed_getters)]
   pub fn line_width(&self) -> i64 {
     self.base.half_height_hr
   }
+  #[allow(clippy::misnamed_getters)]
   pub fn width(&self) -> u64 {
     self.base.height
   }

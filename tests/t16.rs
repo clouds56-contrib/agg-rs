@@ -36,7 +36,7 @@ fn t16_path_stroke_no_clip() {
   let mut pg = agg::Stroke::new(ps);
 
   pg.width(2.0);
-  ras.add_path(&mut pg);
+  ras.add_path(&pg);
 
   agg::render_scanlines_aa_solid(&mut ras, &mut ren_base, agg::Rgba8::BLACK);
 

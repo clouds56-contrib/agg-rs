@@ -22,8 +22,8 @@ fn t03_solar_specturm() {
   let h = pix.height();
   let mut span = vec![agg::Rgb8::WHITE; w];
 
-  for i in 0..w {
-    span[i] = agg::rgb8_from_wavelength_gamma(380.0 + 400.0 * i as f64 / w as f64, 0.8);
+  for (i, pixel) in span.iter_mut().enumerate() {
+    *pixel = agg::rgb8_from_wavelength_gamma(380.0 + 400.0 * i as f64 / w as f64, 0.8);
   }
 
   for i in 0..h {

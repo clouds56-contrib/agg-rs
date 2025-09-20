@@ -250,9 +250,9 @@ fn rasterizers2_pre() {
   // Revove alpha channel from data
   let data = ren_base.as_bytes();
   let mut out = vec![];
-  for i in 0..data.len() {
+  for (i, pixel) in data.iter().enumerate() {
     if i % 4 < 3 {
-      out.push(data[i]);
+      out.push(*pixel);
     }
   }
   ren_base

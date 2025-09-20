@@ -1395,6 +1395,7 @@ mod tests {
   use super::DistanceInterpolator1;
   use crate::POLY_SUBPIXEL_MASK;
   #[test]
+  #[allow(clippy::erasing_op)]
   fn test_di1() {
     let mut d = DistanceInterpolator1::new(10, 10, 30, 10, 10 & !POLY_SUBPIXEL_MASK, 10 & !POLY_SUBPIXEL_MASK);
     assert_eq!(d.dx(), 20 << 8);
