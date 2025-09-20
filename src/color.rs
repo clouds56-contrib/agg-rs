@@ -277,7 +277,10 @@ pub type RgbaPre64 = RgbaPre<f64>;
 impl<T: ColorValue> FromRaw4 for RgbaPre<T> {
     type Raw = T::Raw;
     fn from_raw(red: T::Raw, green: T::Raw, blue: T::Raw, alpha: T::Raw) -> Self {
-        Self::new(Rgb::new(red.into(), green.into(), blue.into()), alpha.into())
+        Self {
+            color: Rgb::new(red.into(), green.into(), blue.into()),
+            alpha: alpha.into()
+        }
     }
 }
 impl<T: ColorValue> IntoRaw4 for RgbaPre<T> {
@@ -460,5 +463,21 @@ mod tests {
         let t = s.rgba8();
         assert_eq!(t.into_raw(), (8,78,244,128));
         assert_eq!((t.red8(), t.green8(), t.blue8(), t.alpha8()), (8,78,244,128));
+    }
+
+    #[test]
+    fn rgba_pre_test() {
+        let c = RgbaPre8::white();
+        assert_eq!(c.into_raw(), (255,255,255,255));
+        assert_eq!((c.red8(), c.green8(), c.blue8(), c.alpha8()), (255,255,255,255));
+        let c = RgbaPre8::black();
+        assert_eq!(c.into_raw(), (0,0,0,255));
+        assert_eq!((c.red8(), c.green8(), c.blue8(), c.alpha8()), (0,0,0,255));
+        let c = RgbaPre8::from_raw(255, 90, 84, 72);
+        assert_eq!(c.into_raw(), (255,90,84,72));
+        assert_eq!((c.red8(), c.green8(), c.blue8(), c.alpha8()), (255,90,84,72));
+        let c = Rgba8::from_raw(255, 90, 84, 72).premultiply();
+        assert_eq!(c, RgbaPre8::from_raw(72, 25, 24, 72));
+        assert_eq!((c.red8(), c.green8(), c.blue8(), c.alpha8()), (72,25,24,72));
     }
 }

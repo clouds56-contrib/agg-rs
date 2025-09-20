@@ -315,8 +315,8 @@ pub trait Pixel {
     /// Copy or blend a pixel at `id` with `color` and a `cover`
     ///
     /// If `color` [`is_opaque`] *and* `cover` equals [`cover_mask`] then
-    ///   the color is copied to the pixel at `id', otherwise the `color`
-    ///   is blended with the pixel at `id' considering the amount of `cover`
+    ///   the color is copied to the pixel at `id`, otherwise the `color`
+    ///   is blended with the pixel at `id` considering the amount of `cover`
     ///
     /// If `color` [`is_transparent`] nothing is done
     ///

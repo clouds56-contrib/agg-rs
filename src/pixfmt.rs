@@ -359,8 +359,7 @@ impl Pixel for Pixfmt<RgbaPre8> {
     fn blend_pix<C: Color>(&mut self, id: (usize, usize), c: C, cover: u64) {
         let p = self.get(id);
         let p0 = RgbaPre8::from_raw(p.red8(), p.green8(), p.blue8(), p.alpha8());
-        let c0 = RgbaPre8::from_raw(c.red8(), c.green8(), c.blue8(), c.alpha8());
-        let p  = self.mix_pix(p0, c0, c.alpha8(), cover);
+        let p  = self.mix_pix(p0, c.rgba(), c.alpha8(), cover);
         self.set(id, p);
     }
     fn fill<C: Color>(&mut self, color: C) {
@@ -414,7 +413,7 @@ impl Pixfmt<RgbaPre8> {
     /// # Output
     ///   - prelerp(p, c * cover, alpha * cover)
     ///
-    fn mix_pix(&mut self, p: RgbaPre8, c: RgbaPre8, alpha: u8, cover: u64) -> RgbaPre8 {
+    fn mix_pix(&mut self, p: RgbaPre8, c: Rgba8, alpha: u8, cover: u64) -> RgbaPre8 {
         let alpha = multiply_u8(alpha, cover as u8);
         let red   = multiply_u8(c.red8(), cover as u8);
         let green = multiply_u8(c.green8(), cover as u8);
