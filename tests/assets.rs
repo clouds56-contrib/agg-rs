@@ -18,7 +18,14 @@ pub fn is_base_dir(cwd: &Path) -> Option<(PathBuf, PathBuf)> {
   }
 }
 
+pub fn start_logger(default: &str) -> Result<(), flexi_logger::FlexiLoggerError> {
+  flexi_logger::Logger::try_with_env_or_str(default)?.start()?;
+  Ok(())
+}
+
 pub fn find_assets() -> Option<(PathBuf, PathBuf)> {
+  start_logger("debug").ok();
+
   // First check currnet directory
   let cwd = env::current_dir().ok()?;
   if let Some(v) = is_base_dir(&cwd) {

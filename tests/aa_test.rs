@@ -1,6 +1,8 @@
 mod assets;
 
-use agg::prelude::*;
+use agg::{math::lerp_u8, prelude::*};
+
+use crate::assets::start_logger;
 
 fn path_from_slice(pts: &[f64]) -> agg::Path {
   assert!(pts.len().is_multiple_of(2));
@@ -46,6 +48,7 @@ fn dash_line<T: agg::Pixel>(
 
 #[test]
 fn t26_aa_test() {
+  start_logger("trace").ok();
   let (mut images, mut output) = assets::find_assets().unwrap();
 
   let (width, height) = (480, 350);
@@ -62,7 +65,7 @@ fn t26_aa_test() {
   let mut ras = agg::RasterizerScanline::new();
   {
     let mut ren = agg::RenderingScanlineAASolid::with_base(&mut ren_base);
-    ren.color(agg::Rgba8::from_raw(255, 255, 255, 51));
+    ren.color(agg::Rgba64::from_raw(1.0, 1.0, 1.0, 0.2));
     for i in (1..=180).rev() {
       let n = 2.0 * (i as f64) * std::f64::consts::PI / 180.0;
       dash_line(
@@ -109,14 +112,13 @@ fn t26_aa_test() {
 
     // Integral Line Widths 1..=20
     let gradient_colors = color_gradient(
-      agg::Rgb8::WHITE,
-      agg::Rgb8::from_raw(
-        ((255.) * (i % 2) as f64).round() as u8,
-        ((255. / 2.) * (i % 3) as f64).round() as u8,
-        ((255. / 4.) * (i % 5) as f64).round() as u8,
-      ),
+      agg::Rgb64::WHITE,
+      agg::Rgb64::from_raw((i % 2) as f64, 0.5 * (i % 3) as f64, 0.25 * (i % 5) as f64),
       256,
-    );
+    )
+    .into_iter()
+    .map(|c| c.rgb8())
+    .collect::<Vec<_>>();
     let x1 = 20.0 + k * (k + 1.0);
     let y1 = 40.5;
     let x2 = 20.0 + k * (k + 1.0) + ((k - 1.0) * 4.0);
@@ -133,7 +135,10 @@ fn t26_aa_test() {
     agg::render_scanlines(&mut ras, &mut ren_grad);
 
     // Fractional Line Lengths H (Red/Blue)
-    let gradient_colors = color_gradient(agg::Rgb8::from_raw(255, 0, 0), agg::Rgb8::from_raw(0, 0, 255), 256);
+    let gradient_colors = color_gradient(agg::Rgb64::RED, agg::Rgb64::BLUE, 256)
+      .into_iter()
+      .map(|c| c.rgb8())
+      .collect::<Vec<_>>();
     let x1 = 17.5 + (k * 4.0);
     let y1 = 107.;
     let x2 = 17.5 + (k * 4.0) + k / 6.66666667;
@@ -166,7 +171,10 @@ fn t26_aa_test() {
     agg::render_scanlines(&mut ras, &mut ren_grad);
 
     // Fractional Line Positioning (Red)
-    let colors = color_gradient(agg::Rgb8::from_raw(255, 0, 0), agg::Rgb8::from_raw(255, 255, 255), 256);
+    let colors = color_gradient(agg::Rgb64::RED, agg::Rgb64::WHITE, 256)
+      .into_iter()
+      .map(|c| c.rgb8())
+      .collect::<Vec<_>>();
     let x1 = 21.5;
     let y1 = 120.0 + (k - 1.0) * 3.1;
     let x2 = 52.5;
@@ -183,7 +191,10 @@ fn t26_aa_test() {
     agg::render_scanlines(&mut ras, &mut ren_grad);
 
     // Fractional Line Widths 2..0 (Green)
-    let colors = color_gradient(agg::Rgb8::from_raw(0, 255, 0), agg::Rgb8::from_raw(255, 255, 255), 256);
+    let colors = color_gradient(agg::Rgb64::GREEN, agg::Rgb64::WHITE, 256)
+      .into_iter()
+      .map(|c| c.rgb8())
+      .collect::<Vec<_>>();
     let x1 = 52.5;
     let y1 = 118.0 + (k * 3.0);
     let x2 = 83.5;
@@ -200,7 +211,10 @@ fn t26_aa_test() {
     agg::render_scanlines(&mut ras, &mut ren_grad);
 
     // Stippled Fractional Width 2..0 (Blue)
-    let colors = color_gradient(agg::Rgb8::from_raw(0, 0, 255), agg::Rgb8::from_raw(255, 255, 255), 256);
+    let colors = color_gradient(agg::Rgb64::BLUE, agg::Rgb64::WHITE, 256)
+      .into_iter()
+      .map(|c| c.rgb8())
+      .collect::<Vec<_>>();
     let x1 = 83.5;
     let y1 = 119.0 + (k * 3.0);
     let x2 = 114.5;
@@ -263,27 +277,31 @@ fn t26_aa_test() {
   ren.color(agg::Rgb8::WHITE);
   for i in 1..=13 {
     let k = i as f64;
-    ras.reset();
+
     let gradient_colors = color_gradient(
-      agg::Rgb8::WHITE,
-      agg::Rgb8::from_raw(
-        ((255.) * (i % 2) as f64).round() as u8,
-        ((255. / 2.) * (i % 3) as f64).round() as u8,
-        ((255. / 4.) * (i % 5) as f64).round() as u8,
-      ),
+      agg::Rgb64::WHITE,
+      agg::Rgb64::from_raw((i % 2) as f64, 0.5 * (i % 3) as f64, 0.25 * (i % 5) as f64),
       256,
-    );
+    )
+    .into_iter()
+    .map(|c| c.rgb8())
+    .collect::<Vec<_>>();
+    let y0 = height as f64 - 20. - k * (k + 2.0);
     let x1 = width as f64 - 150.;
     let y1 = height as f64 - 20. - k * (k + 1.5);
     let x2 = width as f64 - 20.;
     let y2 = height as f64 - 20. - k * (k + 1.0);
+    // println!("triangle {i} from ({x1},{y1}) to ({x2},{y0}-{y2})");
 
     let gradient_mtx = calc_linear_gradient_transform(x1, y1, x2, y2);
+    // println!("Gradient Mtx: {:?}", gradient_mtx);
     let span = agg::SpanGradient::new(gradient_mtx, agg::GradientX {}, &gradient_colors, 0.0, 100.0);
     let mut ren_grad = agg::RenderingScanlineAA::new(&mut ren_base, span);
-    ras.move_to(width as f64 - 150., height as f64 - 20. - k * (k + 1.5));
-    ras.line_to(width as f64 - 20., height as f64 - 20. - k * (k + 1.0));
-    ras.line_to(width as f64 - 20., height as f64 - 20. - k * (k + 2.0));
+
+    ras.reset();
+    ras.move_to(x1, y1);
+    ras.line_to(x2, y2);
+    ras.line_to(x2, y0);
     agg::render_scanlines(&mut ras, &mut ren_grad);
   }
 
@@ -315,18 +333,22 @@ fn calc_linear_gradient_transform(x1: f64, y1: f64, x2: f64, y2: f64) -> agg::Tr
   mtx
 }
 
-fn color_gradient(begin: agg::Rgb8, end: agg::Rgb8, len: usize) -> Vec<agg::Rgb8> {
-  let mut gradient_colors = vec![agg::Rgb8::WHITE; len];
+fn color_gradient(begin: agg::Rgb64, end: agg::Rgb64, len: usize) -> Vec<agg::Rgb64> {
+  let mut gradient_colors = vec![agg::Rgb64::WHITE; len];
   fill_color_array(&mut gradient_colors, begin, end);
   gradient_colors
 }
 
-fn fill_color_array(array: &mut [agg::Rgb8], begin: agg::Rgb8, end: agg::Rgb8) {
+fn fill_color_array(array: &mut [agg::Rgb64], begin: agg::Rgb64, end: agg::Rgb64) {
   let n = (array.len() - 1) as f64;
+  let begin = begin.srgba8();
+  let end = end.srgba8();
   for (i, v) in array.iter_mut().enumerate() {
-    let a = ((i as f64 / n) * 255.0).round() as u8;
-    v.red = agg::math::lerp_u8(begin.red8(), end.red8(), a).into();
-    v.green = agg::math::lerp_u8(begin.green8(), end.green8(), a).into();
-    v.blue = agg::math::lerp_u8(begin.blue8(), end.blue8(), a).into();
+    let a = (i as f64 / n * 255.).round() as u8;
+    let red = lerp_u8(begin.red.0, end.red.0, a).into();
+    let green = lerp_u8(begin.green.0, end.green.0, a).into();
+    let blue = lerp_u8(begin.blue.0, end.blue.0, a).into();
+    *v = agg::Srgba8::from_raw(red, green, blue, 255).rgb();
+    // println!("fill_color_array idx={} a={:.3} color={:.3?} [{:?}]", i, a, v.srgba64().into_slice().map(|i| i*255.), v.srgba8().into_raw());
   }
 }
