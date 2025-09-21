@@ -2,7 +2,6 @@
 
 //use crate::math::blend_pix;
 use crate::color::Gray8;
-use crate::color::Rgb8;
 use crate::pixfmt::Pixfmt;
 
 use crate::Color;
@@ -43,7 +42,7 @@ where
   //   alpha = alpha
   //   new   = c
   //   old   = p[j]
-  pub fn blend_color_hspan(&mut self, x: usize, y: usize, n: usize, colors: &[Rgb8], _cover: usize) {
+  pub fn blend_color_hspan<C: Color>(&mut self, x: usize, y: usize, n: usize, colors: &[C], _cover: usize) {
     //for i in 0 .. n {
     //assert!(1==2);
     assert_eq!(n, colors.len());

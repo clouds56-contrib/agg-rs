@@ -223,10 +223,11 @@ macro_rules! impl_pixel {
 }
 
 impl Pixel for Pixfmt<Rgba8> {
+  type Color = Rgba8;
   impl_pixel!();
-  fn setn<C: Color>(&mut self, id: (usize, usize), n: usize, c: C) {
+  fn _set(&mut self, id: (usize, usize), n: usize, c: Self::Color) {
     let bpp = Self::bpp();
-    let c = c.rgba8().into_slice();
+    let c = c.into_slice();
     let p = &mut self.rbuf[id][..n * bpp];
     for chunk in p.chunks_mut(bpp) {
       chunk.copy_from_slice(&c);
@@ -237,14 +238,6 @@ impl Pixel for Pixfmt<Rgba8> {
   }
   fn cover_mask() -> u64 {
     255
-  }
-  fn set<C: Color>(&mut self, id: (usize, usize), c: C) {
-    let c = c.rgba8();
-    assert!(!self.rbuf.data.is_empty());
-    self.rbuf[id][0] = c.red8();
-    self.rbuf[id][1] = c.green8();
-    self.rbuf[id][2] = c.blue8();
-    self.rbuf[id][3] = c.alpha8();
   }
   /// Compute **over** operator with coverage
   ///
@@ -261,40 +254,18 @@ impl Pixel for Pixfmt<Rgba8> {
     let pix = self.mix_pix(pix0, c.rgba(), alpha);
     self.set(id, pix);
   }
-  fn fill<C: Color>(&mut self, color: C) {
-    let n = 4;
-    let bpp = Self::bpp();
-    let c = color.rgba8().into_slice();
-    let c2 = [
-      c[0], c[1], c[2], c[3], c[0], c[1], c[2], c[3], c[0], c[1], c[2], c[3], c[0], c[1], c[2], c[3],
-    ];
-    let mut chunks = self.rbuf.data.chunks_exact_mut(bpp * n);
-    for chunk in chunks.by_ref() {
-      chunk.copy_from_slice(&c2);
-    }
-    for chunk in chunks.into_remainder().chunks_mut(bpp) {
-      chunk.copy_from_slice(&c);
-    }
-  }
 }
 
 impl Pixel for Pixfmt<Rgb8> {
+  type Color = Rgb8;
   impl_pixel!();
-  fn setn<C: Color>(&mut self, id: (usize, usize), n: usize, c: C) {
+  fn _set(&mut self, id: (usize, usize), n: usize, c: Self::Color) {
     let bpp = Self::bpp();
-    let c = c.rgb8().into_slice();
+    let c = c.into_slice();
     let p = &mut self.rbuf[id][..bpp * n];
     for chunk in p.chunks_mut(bpp) {
       chunk.copy_from_slice(&c);
     }
-  }
-  fn set<C: Color>(&mut self, id: (usize, usize), c: C) {
-    let c = c.rgb8().into_slice();
-    let p = &mut self.rbuf[id][..3];
-    p.copy_from_slice(&c);
-    //p[0] = c.red8();
-    //p[1] = c.green8();
-    //p[2] = c.blue8();
   }
   fn bpp() -> usize {
     3
@@ -306,19 +277,6 @@ impl Pixel for Pixfmt<Rgb8> {
     let pix0 = self.raw(id);
     let pix = self.mix_pix(pix0, c.rgb(), c.alpha8(), cover);
     self.set(id, pix);
-  }
-  fn fill<C: Color>(&mut self, color: C) {
-    let n = 4;
-    let bpp = Self::bpp();
-    let c = color.rgb8().into_slice();
-    let c2 = [c[0], c[1], c[2], c[0], c[1], c[2], c[0], c[1], c[2], c[0], c[1], c[2]];
-    let mut chunks = self.rbuf.data.chunks_exact_mut(bpp * n);
-    for chunk in chunks.by_ref() {
-      chunk.copy_from_slice(&c2);
-    }
-    for chunk in chunks.into_remainder().chunks_mut(bpp) {
-      chunk.copy_from_slice(&c);
-    }
   }
 }
 impl Pixfmt<Gray8> {
@@ -358,21 +316,23 @@ impl Pixfmt<Rgba8> {
   }
 }
 impl Pixel for Pixfmt<RgbaPre8> {
+  type Color = RgbaPre8;
   impl_pixel!();
-  fn setn<C: Color>(&mut self, id: (usize, usize), n: usize, c: C) {
+  fn _set(&mut self, id: (usize, usize), n: usize, c: Self::Color) {
     let bpp = Self::bpp();
-    let c = RgbaPre8::from_color(c).into_slice();
+    let c = c.into_slice();
     let p = &mut self.rbuf[id][..n * bpp];
     for chunk in p.chunks_mut(bpp) {
       chunk.copy_from_slice(&c);
     }
   }
   fn set<C: Color>(&mut self, id: (usize, usize), c: C) {
-    //let c = Rgba8pre::from(c);
-    self.rbuf[id][0] = c.red8();
-    self.rbuf[id][1] = c.green8();
-    self.rbuf[id][2] = c.blue8();
-    self.rbuf[id][3] = c.alpha8();
+    let c = RgbaPre8::from_raw(c.red8(), c.green8(), c.blue8(), c.alpha8());
+    self._set(id, 1, c);
+  }
+  fn setn<C: Color>(&mut self, id: (usize, usize), n: usize, c: C) {
+    let c = RgbaPre8::from_raw(c.red8(), c.green8(), c.blue8(), c.alpha8());
+    self._set(id, n, c);
   }
   fn bpp() -> usize {
     4
@@ -385,21 +345,6 @@ impl Pixel for Pixfmt<RgbaPre8> {
     let p0 = RgbaPre8::from_raw(p.red8(), p.green8(), p.blue8(), p.alpha8());
     let p = self.mix_pix(p0, c.rgba(), c.alpha8(), cover);
     self.set(id, p);
-  }
-  fn fill<C: Color>(&mut self, color: C) {
-    let n = 4;
-    let bpp = Self::bpp();
-    let c = RgbaPre8::from_color(color).into_slice();
-    let c2 = [
-      c[0], c[1], c[2], c[3], c[0], c[1], c[2], c[3], c[0], c[1], c[2], c[3], c[0], c[1], c[2], c[3],
-    ];
-    let mut chunks = self.rbuf.data.chunks_exact_mut(bpp * n);
-    for chunk in chunks.by_ref() {
-      chunk.copy_from_slice(&c2);
-    }
-    for chunk in chunks.into_remainder().chunks_mut(bpp) {
-      chunk.copy_from_slice(&c);
-    }
   }
 }
 
@@ -465,8 +410,9 @@ impl Pixfmt<RgbaPre8> {
 }
 
 impl Pixel for Pixfmt<Rgba32> {
+  type Color = Rgba32;
   impl_pixel!();
-  fn setn<C: Color>(&mut self, id: (usize, usize), n: usize, c: C) {
+  fn _set(&mut self, id: (usize, usize), n: usize, c: Self::Color) {
     for i in 0..n {
       self.set((id.0 + i, id.1), c);
     }
@@ -499,28 +445,18 @@ impl Pixel for Pixfmt<Rgba32> {
     self.set(id, &pix);
      */
   }
-  fn fill<C: Color>(&mut self, color: C) {
-    let (w, h) = (self.width(), self.height());
-    for i in 0..h {
-      self.copy_hline(0, i, w, color);
-    }
-  }
 }
 
 impl Pixel for Pixfmt<Gray8> {
+  type Color = Gray8;
   impl_pixel!();
-  fn setn<C: Color>(&mut self, id: (usize, usize), n: usize, color: C) {
+  fn _set(&mut self, id: (usize, usize), n: usize, color: Self::Color) {
     let bpp = Self::bpp();
-    let c = Gray8::from_color(color).into_slice();
+    let c = color.into_slice();
     let p = &mut self.rbuf[id][..n * bpp];
     for chunk in p.chunks_mut(bpp) {
       chunk.copy_from_slice(&c);
     }
-  }
-  fn set<C: Color>(&mut self, id: (usize, usize), c: C) {
-    let c = Gray8::from_color(c);
-    self.rbuf[id][0] = c.luma.0;
-    self.rbuf[id][1] = c.alpha.0;
   }
   fn cover_mask() -> u64 {
     255
@@ -532,19 +468,6 @@ impl Pixel for Pixfmt<Gray8> {
     let alpha = multiply_u8(c.alpha8(), cover as u8);
     let p0 = self.mix_pix(id, Gray8::from_color(c), alpha);
     self.set(id, p0);
-  }
-  fn fill<C: Color>(&mut self, color: C) {
-    let n = 4;
-    let bpp = Self::bpp();
-    let c = Gray8::from_color(color).into_slice();
-    let c2 = [c[0], c[1], c[0], c[1], c[0], c[1], c[0], c[1]];
-    let mut chunks = self.rbuf.data.chunks_exact_mut(bpp * n);
-    for chunk in chunks.by_ref() {
-      chunk.copy_from_slice(&c2);
-    }
-    for chunk in chunks.into_remainder().chunks_mut(bpp) {
-      chunk.copy_from_slice(&c);
-    }
   }
 }
 
@@ -589,6 +512,7 @@ impl PixfmtAlphaBlend<'_, Pixfmt<Rgb8>, Gray8> {
 }
 
 impl Pixel for PixfmtAlphaBlend<'_, Pixfmt<Rgb8>, Gray8> {
+  type Color = Gray8;
   fn width(&self) -> usize {
     self.ren.pixf.width()
   }
@@ -601,23 +525,11 @@ impl Pixel for PixfmtAlphaBlend<'_, Pixfmt<Rgb8>, Gray8> {
   fn to_file<P: AsRef<std::path::Path>>(&self, filename: P) -> Result<(), std::io::Error> {
     crate::ppm::write_file(self.as_bytes(), self.width(), self.height(), filename)
   }
-  fn fill<C: Color>(&mut self, color: C) {
-    let (w, h) = (self.width(), self.height());
-    for i in 0..w {
-      for j in 0..h {
-        self.set((i, j), color);
-      }
-    }
-  }
-  fn setn<C: Color>(&mut self, id: (usize, usize), n: usize, c: C) {
+  fn _set(&mut self, id: (usize, usize), n: usize, c: Self::Color) {
     let c = c.rgb8();
     for i in 0..n {
       self.ren.pixf.rbuf[(id.0 + i, id.1)][self.offset] = self.component(c).luma.0;
     }
-  }
-  fn set<C: Color>(&mut self, id: (usize, usize), c: C) {
-    let c = c.rgb();
-    self.ren.pixf.rbuf[id][self.offset] = self.component(c).luma.0;
   }
   fn cover_mask() -> u64 {
     Pixfmt::<Rgb8>::cover_mask()
@@ -893,5 +805,26 @@ mod tests {
     assert_eq!(pix.get((0, 0)), Rgba8::from_raw(255, 255, 255, 128)); // Alpha channel is ignored
     pix.copy_or_blend_pix_with_cover((0, 0), Rgba8::from_raw(0, 0, 0, beta), cover);
     assert_eq!(pix.get((0, 0)), Rgba8::from_raw(191, 191, 191, 160));
+  }
+
+  #[test]
+  fn test_fill() {
+    let (w, h) = (3, 5);
+    let mut pix = Pixfmt::<RgbaPre8>::new(w, h);
+    let black = Rgba8::BLACK;
+    let white = Rgba8::WHITE;
+
+    pix.clear();
+    pix.fill(black);
+    for y in 0..h {
+      for x in 0..w {
+        assert_eq!(pix.get((x, y)), black, "pix({},{}): {:?}", x, y, pix.get((x, y)));
+      }
+    }
+
+    pix.copy_hline(0, 0, w, white);
+    for x in 0..w {
+      assert_eq!(pix.get((x, 0)), white, "pix({},0): {:?}", x, pix.get((x, 0)));
+    }
   }
 }

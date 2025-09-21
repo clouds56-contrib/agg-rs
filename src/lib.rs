@@ -26,70 +26,73 @@
 //!    [`render_all_paths`], [`render_scanlines_aa_solid`] and
 //!    [`render_scanlines_bin_solid`]
 //!
-//!       use agg::{NamedColor, Render};
+//! ```
+//! use agg::{NamedColor, Render};
 //!
-//!       // Create a blank image 10x10 pixels
-//!       let pix = agg::Pixfmt::<agg::Rgb8>::new(100,100);
-//!       let mut ren_base = agg::RenderingBase::new(pix);
-//!       ren_base.clear(agg::Rgba8::WHITE);
+//! // Create a blank image 10x10 pixels
+//! let pix = agg::Pixfmt::<agg::Rgb8>::new(100, 100);
+//! let mut ren_base = agg::RenderingBase::new(pix);
+//! ren_base.clear(agg::Rgb8::WHITE);
 //!
-//!       // Draw a polygon from (10,10) - (50,90) - (90,10)
-//!       let mut ras = agg::RasterizerScanline::new();
-//!       ras.move_to(10.0, 10.0);
-//!       ras.line_to(50.0, 90.0);
-//!       ras.line_to(90.0, 10.0);
+//! // Draw a polygon from (10,10) - (50,90) - (90,10)
+//! let mut ras = agg::RasterizerScanline::new();
+//! ras.move_to(10.0, 10.0);
+//! ras.line_to(50.0, 90.0);
+//! ras.line_to(90.0, 10.0);
 //!
-//!       // Render the line to the image
-//!       let mut ren = agg::RenderingScanlineAASolid::with_base(&mut ren_base);
-//!       ren.color(agg::Rgba8::BLACK);
-//!       agg::render_scanlines(&mut ras, &mut ren);
+//! // Render the line to the image
+//! let mut ren = agg::RenderingScanlineAASolid::new_black(&mut ren_base);
+//! agg::render_scanlines(&mut ras, &mut ren);
 //!
-//!       // Save the image to a file
-//!       ren_base.to_file("little_black_triangle.png").unwrap();
+//! // Save the image to a file
+//! ren_base.to_file("little_black_triangle.png").unwrap();
+//! ```
 //!
 //!
 //! # Outline AntiAlias Renderer
 //!
-//!        use agg::prelude::*;
-//!        let pix = Pixfmt::<Rgb8>::new(100,100);
-//!        let mut ren_base = agg::RenderingBase::new(pix);
-//!        ren_base.clear( Rgba8::WHITE );
+//! ```
+//! use agg::prelude::*;
+//! let pix = Pixfmt::<Rgb8>::new(100, 100);
+//! let mut ren_base = agg::RenderingBase::new(pix);
+//! ren_base.clear(Rgb8::WHITE);
 //!
-//!        let mut ren = RendererOutlineAA::with_base(&mut ren_base);
-//!        ren.color(agg::Rgba8::from_raw(102,77,26,255));
-//!        ren.width(3.0);
+//! let mut ren =
+//!   RendererOutlineAA::new(&mut ren_base, Rgba8::from_raw(102, 77, 26, 255)).with_width(3.0);
 //!
-//!        let mut path = agg::Path::new();
-//!        path.move_to(10.0, 10.0);
-//!        path.line_to(50.0, 90.0);
-//!        path.line_to(90.0, 10.0);
+//! let mut path = agg::Path::new();
+//! path.move_to(10.0, 10.0);
+//! path.line_to(50.0, 90.0);
+//! path.line_to(90.0, 10.0);
 //!
-//!        let mut ras = RasterizerOutlineAA::with_renderer(&mut ren);
-//!        ras.add_path(&path);
-//!        ren_base.to_file("outline_aa.png").unwrap();
+//! let mut ras = RasterizerOutlineAA::with_renderer(&mut ren);
+//! ras.add_path(&path);
+//! ren_base.to_file("outline_aa.png").unwrap();
+//! ```
 //!
 //! # Primative Renderer
 //!
 //! Render for primative shapes: lines, rectangles, and ellipses; filled or
 //!    outlined.
 //!
-//!        use agg::prelude::*;
+//! ```
+//! use agg::prelude::*;
 //!
-//!        let pix = Pixfmt::<Rgb8>::new(100,100);
-//!        let mut ren_base = agg::RenderingBase::new(pix);
-//!        ren_base.clear( Rgba8::WHITE );
+//! let pix = Pixfmt::<Rgb8>::new(100, 100);
+//! let mut ren_base = agg::RenderingBase::new(pix);
+//! ren_base.clear(Rgb8::WHITE);
 //!
-//!        let mut ren = RendererPrimatives::with_base(&mut ren_base);
-//!        ren.line_color(agg::Rgba8::from_raw(0,0,0,255));
+//! let mut ren = RendererPrimatives::new_black(&mut ren_base).with_line_color(agg::Rgba8::BLUE);
 //!
-//!        let mut path = agg::Path::new();
-//!        path.move_to(10.0, 10.0);
-//!        path.line_to(50.0, 90.0);
-//!        path.line_to(90.0, 10.0);
+//! let mut path = agg::Path::new();
+//! path.move_to(10.0, 10.0);
+//! path.line_to(50.0, 90.0);
+//! path.line_to(90.0, 10.0);
 //!
-//!        let mut ras = RasterizerOutline::with_primative(&mut ren);
-//!        ras.add_path(&path);
-//!        ren_base.to_file("primative.png").unwrap();
+//! let mut ras = RasterizerOutline::with_primative(&mut ren);
+//! ras.add_path(&path);
+//! ren_base.to_file("primative.png").unwrap();
+//! ```
 //!
 //!
 //! # Raw Pixel Manipulation
@@ -329,17 +332,28 @@ pub trait Source {
 
 /// Drawing and pixel related routines
 pub trait Pixel {
+  type Color: Color + FromColor;
   fn cover_mask() -> u64;
   fn bpp() -> usize;
   fn as_bytes(&self) -> &[u8];
   fn to_file<P: AsRef<std::path::Path>>(&self, filename: P) -> Result<(), std::io::Error>;
   fn width(&self) -> usize;
   fn height(&self) -> usize;
-  fn set<C: Color>(&mut self, id: (usize, usize), c: C);
-  fn setn<C: Color>(&mut self, id: (usize, usize), n: usize, c: C);
-  fn blend_pix<C: Color>(&mut self, id: (usize, usize), c: C, cover: u64);
+  fn _set(&mut self, id: (usize, usize), n: usize, c: Self::Color);
+  fn set<C: Color>(&mut self, id: (usize, usize), c: C) {
+    self._set(id, 1, Self::Color::from_color(c));
+  }
+  fn setn<C: Color>(&mut self, id: (usize, usize), n: usize, c: C) {
+    self._set(id, n, Self::Color::from_color(c));
+  }
   /// Fill the data with the specified `color`
-  fn fill<C: Color>(&mut self, color: C);
+  fn fill<C: Color>(&mut self, color: C) {
+    let (w, h) = (self.width(), self.height());
+    for i in 0..h {
+      self.setn((0, i), w, color);
+    }
+  }
+  fn blend_pix<C: Color>(&mut self, id: (usize, usize), c: C, cover: u64);
   /// Copy or blend a pixel at `id` with `color`
   ///
   /// If `color` [`is_opaque`], the color is copied directly to the pixel,
@@ -428,27 +442,27 @@ pub trait Pixel {
   }
   /// Copy or Blend a single `color` from (`x`,`y`) to (`x`,`y+len-1`)
   ///    with `cover`
-  fn blend_vline<C: Color>(&mut self, x: i64, y: i64, len: i64, c: C, cover: u64) {
-    if c.is_transparent() {
+  fn blend_vline<C: Color>(&mut self, x: i64, y: i64, len: i64, color: C, cover: u64) {
+    if color.is_transparent() {
       return;
     }
     let (x, y, len) = (x as usize, y as usize, len as usize);
-    if c.is_opaque() && cover == Self::cover_mask() {
+    if color.is_opaque() && cover == Self::cover_mask() {
       for i in 0..len {
-        self.set((x, y + i), c);
+        self.set((x, y + i), color);
       }
     } else {
       for i in 0..len {
-        self.blend_pix((x, y + i), c, cover);
+        self.blend_pix((x, y + i), color, cover);
       }
     }
   }
   /// Blend a single `color` from (`x`,`y`) to (`x`,`y+len-1`) with collection
   ///   of `covers`
-  fn blend_solid_vspan<C: Color>(&mut self, x: i64, y: i64, len: i64, c: C, covers: &[u64]) {
+  fn blend_solid_vspan<C: Color>(&mut self, x: i64, y: i64, len: i64, color: C, covers: &[u64]) {
     assert_eq!(len as usize, covers.len());
     for (i, &cover) in covers.iter().enumerate() {
-      self.blend_vline(x, y + i as i64, 1, c, cover);
+      self.blend_vline(x, y + i as i64, 1, color, cover);
     }
   }
   /// Blend a collection of `colors` from (`x`,`y`) to (`x+len-1`,`y`) with
@@ -535,12 +549,15 @@ pub(crate) trait DistanceInterpolator {
 
 pub mod prelude {
   pub use crate::{
-    Color as _, FromColor as _, FromRaw2 as _, FromRaw3 as _, FromRaw4 as _, IntoRaw2 as _, IntoRaw3 as _,
-    IntoRaw4 as _, NamedColor as _, Pixel as _, Render as _, Source as _, VertexSource as _,
+    Color, FromColor, FromRaw2 as _, FromRaw3 as _, FromRaw4 as _, IntoRaw2 as _, IntoRaw3 as _, IntoRaw4 as _,
+    NamedColor as _, Pixel, Render as _, Source as _, VertexSource as _,
   };
 
   pub use crate::{DrawOutline, Pixfmt, PixfmtAlphaBlend, RenderingBase};
-  pub use crate::{Gray8, Gray16, Gray32, Gray64, Rgb8, Rgb16, Rgb32, Rgb64, Rgba8, Rgba16, Rgba32, Rgba64};
+  pub use crate::{
+    Gray8, Gray16, Gray32, Gray64, Rgb8, Rgb16, Rgb32, Rgb64, Rgba8, Rgba16, Rgba32, Rgba64, Srgba8, Srgba16, Srgba32,
+    Srgba64,
+  };
   pub use crate::{RasterizerOutline, RendererPrimatives};
   pub use crate::{RasterizerOutlineAA, RendererOutlineAA};
 }

@@ -1,5 +1,6 @@
 //! Renderer
 
+use crate::FromColor;
 use crate::FromRaw4;
 use crate::MAX_HALF_WIDTH;
 use crate::NamedColor;
@@ -11,7 +12,6 @@ use crate::base::RenderingBase;
 use crate::color::Rgba8;
 use crate::scan::ScanlineU8;
 
-use crate::Rgb8;
 use crate::Transform;
 use crate::clip::Rectangle;
 use crate::clip::{BOTTOM, INSIDE, LEFT, RIGHT, TOP};
@@ -34,42 +34,40 @@ pub(crate) const LINE_MAX_LENGTH: i64 = 1 << (POLY_SUBPIXEL_SHIFT + 10);
 
 /// Aliased Renderer
 #[derive(Debug)]
-pub struct RenderingScanlineBinSolid<'a, T>
-where
-  T: 'a,
-{
-  pub base: &'a mut RenderingBase<T>,
-  pub color: Rgba8,
+pub struct RenderingScanlineBinSolid<'a, Pixel: 'a, Color = Rgba8> {
+  pub base: &'a mut RenderingBase<Pixel>,
+  pub color: Color,
 }
 /// Anti-Aliased Renderer
 #[derive(Debug)]
-pub struct RenderingScanlineAASolid<'a, T>
-where
-  T: 'a,
-{
-  base: &'a mut RenderingBase<T>,
-  color: Rgba8,
+pub struct RenderingScanlineAASolid<'a, Pixel: 'a, Color = Rgba8> {
+  base: &'a mut RenderingBase<Pixel>,
+  color: Color,
 }
 
 #[derive(Debug)]
-pub struct RenderingScanlineAA<'a, T> {
-  base: &'a mut RenderingBase<T>,
-  span: SpanGradient,
+pub struct RenderingScanlineAA<'a, Pixel, Gradient> {
+  base: &'a mut RenderingBase<Pixel>,
+  span: Gradient,
+}
+
+pub trait GradientCalculation {
+  fn calculate(&self, x: i64, y: i64, d2: i64) -> i64;
 }
 
 #[derive(Debug)]
-pub struct SpanGradient {
-  d1: i64,
-  d2: i64,
-  gradient: GradientX,
-  color: Vec<Rgb8>,
-  trans: Transform,
-}
-#[derive(Debug)]
-pub struct GradientX {}
-impl GradientX {
-  pub fn calculate(&self, x: i64, _: i64, _: i64) -> i64 {
+pub struct GradientX;
+impl GradientCalculation for GradientX {
+  fn calculate(&self, x: i64, _: i64, _: i64) -> i64 {
     x
+  }
+}
+
+#[derive(Debug)]
+pub struct GradientY;
+impl GradientCalculation for GradientY {
+  fn calculate(&self, _: i64, y: i64, _: i64) -> i64 {
+    y
   }
 }
 
@@ -127,7 +125,50 @@ impl Interpolator {
   }
 }
 
-impl SpanGradient {
+pub trait Gradient {
+  type Color;
+  fn generate(&self, x: i64, y: i64, len: usize) -> Vec<Self::Color>;
+}
+
+/// SpanGradient
+///
+/// A small helper that generates a horizontal span of colors for a gradient.
+///
+/// Encapsulates gradient parameters and a color stop array and produces a
+/// vector of colors for a horizontal span (used by scanline renderers).
+///
+/// Usage:
+/// 1. Construct with [`SpanGradient::new(trans, gradient, &colors, d1, d2)`](Self::new).
+/// 3. Call [`generate(x, y, len)`](Self::generate) to obtain a `Vec<C>` with `len` color entries
+///    corresponding to the gradient along the horizontal span starting at
+///    `(x, y)`.
+///
+/// Notes:
+/// - `generate` requires [`G: GradientCalculation`](GradientCalculation) and uses an internal
+///   [`Interpolator`] to apply `trans` and subpixel precision. The implementation
+///   guards against a zero-length color range (`d2 - d1`) by treating it as at
+///   least 1, so callers do not need to perform that check.
+/// - [`Self::color`] should contain at least one entry; otherwise indexing will panic.
+///   The subpixel shift used by this struct is `4` (see [`Self::subpixel_shift`]).
+#[derive(Debug)]
+pub struct SpanGradient<G, C> {
+  /// sub-pixel index of gradient start
+  ///
+  /// These determine the range used when mapping the computed gradient value to the color stops.
+  d1: i64,
+  /// sub-pixel index of gradient end
+  ///
+  /// These determine the range used when mapping the computed gradient value to the color stops.
+  d2: i64,
+  /// generic gradient calculator implementing [`GradientCalculation`].
+  gradient: G,
+  /// color stop array
+  color: Vec<C>,
+  /// transform applied to coordinates before gradient evaluation
+  trans: Transform,
+}
+
+impl<G, C: Clone> SpanGradient<G, C> {
   #[inline]
   pub fn subpixel_shift(&self) -> i64 {
     4
@@ -136,7 +177,7 @@ impl SpanGradient {
   pub fn subpixel_scale(&self) -> i64 {
     1 << self.subpixel_shift()
   }
-  pub fn new(trans: Transform, gradient: GradientX, color: &[Rgb8], d1: f64, d2: f64) -> Self {
+  pub fn new(trans: Transform, gradient: G, color: &[C], d1: f64, d2: f64) -> Self {
     let mut s = Self {
       d1: 0,
       d2: 1,
@@ -155,7 +196,11 @@ impl SpanGradient {
     self.d2 = (d2 * self.subpixel_scale() as f64).round() as i64;
   }
   pub fn prepare(&mut self) {}
-  pub fn generate(&self, x: i64, y: i64, len: usize) -> Vec<Rgb8> {
+}
+
+impl<G: GradientCalculation, C: Clone> Gradient for SpanGradient<G, C> {
+  type Color = C;
+  fn generate(&self, x: i64, y: i64, len: usize) -> Vec<Self::Color> {
     let mut interp = Interpolator::new(self.trans);
 
     let downscale_shift = interp.subpixel_shift() - self.subpixel_shift();
@@ -165,34 +210,31 @@ impl SpanGradient {
       dd = 1;
     }
     let ncolors = self.color.len() as i64;
-    let mut span = vec![Rgb8::WHITE; len];
 
     interp.begin(x as f64 + 0.5, y as f64 + 0.5, len);
 
-    for s in span.iter_mut() {
-      let (x, y) = interp.coordinates();
-      let d = self
-        .gradient
-        .calculate(x >> downscale_shift, y >> downscale_shift, self.d2);
-      let mut d = ((d - self.d1) * ncolors) / dd;
-      if d < 0 {
-        d = 0;
-      }
-      if d >= ncolors {
-        d = ncolors - 1;
-      }
-      *s = self.color[d as usize];
-      interp.inc();
-    }
-    span
+    (0..len)
+      .map(|_| {
+        let (x, y) = interp.coordinates();
+        let d = self
+          .gradient
+          .calculate(x >> downscale_shift, y >> downscale_shift, self.d2);
+        let mut d = ((d - self.d1) * ncolors) / dd;
+        if d < 0 {
+          d = 0;
+        }
+        if d >= ncolors {
+          d = ncolors - 1;
+        }
+        interp.inc();
+        self.color[d as usize].clone()
+      })
+      .collect()
   }
 }
 
 /// Render a single Scanline (y-row) without Anti-Aliasing (Binary?)
-fn render_scanline_bin_solid<T, C: Color>(sl: &ScanlineU8, ren: &mut RenderingBase<T>, color: C)
-where
-  T: Pixel,
-{
+fn render_scanline_bin_solid<T: Pixel, C: Color>(sl: &ScanlineU8, ren: &mut RenderingBase<T>, color: C) {
   let cover_full = 255;
   for span in &sl.spans {
     ren.blend_hline(span.x, sl.y, span.x - 1 + span.len.abs(), color, cover_full);
@@ -200,10 +242,7 @@ where
 }
 
 /// Render a single Scanline (y-row) with Anti Aliasing
-fn render_scanline_aa_solid<T, C: Color>(sl: &ScanlineU8, ren: &mut RenderingBase<T>, color: C)
-where
-  T: Pixel,
-{
+fn render_scanline_aa_solid<T: Pixel, C: Color>(sl: &ScanlineU8, ren: &mut RenderingBase<T>, color: C) {
   let y = sl.y;
   for span in &sl.spans {
     let x = span.x;
@@ -216,9 +255,11 @@ where
 }
 
 /// Render a single Scanline (y-row) with Anti-Aliasing
-fn render_scanline_aa<T>(sl: &ScanlineU8, ren: &mut RenderingBase<T>, span_gen: &SpanGradient)
+fn render_scanline_aa<T, G>(sl: &ScanlineU8, ren: &mut RenderingBase<T>, span_gen: &G)
 where
   T: Pixel,
+  G: Gradient,
+  G::Color: Color,
 {
   let y = sl.y;
   for span in &sl.spans {
@@ -253,8 +294,9 @@ impl RenderData {
   }
 }
 
-impl<T> Render for RenderingScanlineAASolid<'_, T>
+impl<T, C> Render for RenderingScanlineAASolid<'_, T, C>
 where
+  C: Color + FromColor,
   T: Pixel,
 {
   /// Render a single Scanline Row
@@ -262,12 +304,13 @@ where
     render_scanline_aa_solid(&data.sl, self.base, self.color);
   }
   /// Set the current color
-  fn color<C: Color>(&mut self, color: C) {
-    self.color = color.rgba8();
+  fn color<C2: Color>(&mut self, color: C2) {
+    self.color = C::from_color(color);
   }
 }
-impl<T> Render for RenderingScanlineBinSolid<'_, T>
+impl<T, C> Render for RenderingScanlineBinSolid<'_, T, C>
 where
+  C: Color + FromColor,
   T: Pixel,
 {
   /// Render a single Scanline Row
@@ -275,31 +318,33 @@ where
     render_scanline_bin_solid(&data.sl, self.base, self.color);
   }
   /// Set the current Color
-  fn color<C: Color>(&mut self, color: C) {
-    self.color = color.rgba8();
+  fn color<C2: Color>(&mut self, color: C2) {
+    self.color = C::from_color(color);
   }
 }
-impl<T> Render for RenderingScanlineAA<'_, T>
+impl<T, G> Render for RenderingScanlineAA<'_, T, G>
 where
   T: Pixel,
+  G: Gradient,
+  G::Color: Color,
 {
   /// Render a single Scanline Row
   fn render(&mut self, data: &RenderData) {
     render_scanline_aa(&data.sl, self.base, &self.span);
   }
   /// Set the current Color
-  fn color<C: Color>(&mut self, _color: C) {
+  fn color<C2: Color>(&mut self, _color: C2) {
     unimplemented!("oops");
   }
 }
 
-impl<'a, T> RenderingScanlineBinSolid<'a, T>
+impl<'a, T, C> RenderingScanlineBinSolid<'a, T, C>
 where
   T: Pixel,
+  C: Color,
 {
   /// Create a new Renderer from a Rendering Base
-  pub fn with_base(base: &'a mut RenderingBase<T>) -> Self {
-    let color = Rgba8::BLACK;
+  pub fn new(base: &'a mut RenderingBase<T>, color: C) -> Self {
     Self { base, color }
   }
   pub fn as_bytes(&self) -> &[u8] {
@@ -309,21 +354,28 @@ where
     self.base.to_file(filename)
   }
 }
-impl<'a, T> RenderingScanlineAA<'a, T>
+impl<'a, T: Pixel> RenderingScanlineBinSolid<'a, T, Rgba8> {
+  pub fn new_black(base: &'a mut RenderingBase<T>) -> Self {
+    Self::new(base, Rgba8::BLACK)
+  }
+}
+impl<'a, T, G> RenderingScanlineAA<'a, T, G>
 where
   T: Pixel,
+  G: Gradient,
 {
-  pub fn new(base: &'a mut RenderingBase<T>, span: SpanGradient) -> Self {
+  pub fn new(base: &'a mut RenderingBase<T>, span: G) -> Self {
     Self { base, span }
   }
 }
-impl<'a, T> RenderingScanlineAASolid<'a, T>
+
+impl<'a, T, C> RenderingScanlineAASolid<'a, T, C>
 where
   T: Pixel,
+  C: Color,
 {
   /// Create a new Renderer from a Rendering Base
-  pub fn with_base(base: &'a mut RenderingBase<T>) -> Self {
-    let color = Rgba8::BLACK;
+  pub fn new(base: &'a mut RenderingBase<T>, color: C) -> Self {
     Self { base, color }
   }
   pub fn as_bytes(&self) -> &[u8] {
@@ -333,17 +385,21 @@ where
     self.base.to_file(filename)
   }
 }
-
+impl<'a, T: Pixel> RenderingScanlineAASolid<'a, T, Rgba8> {
+  pub fn new_black(base: &'a mut RenderingBase<T>) -> Self {
+    Self::new(base, Rgba8::BLACK)
+  }
+}
 /* pub trait Scale<T> {
     fn upscale(v: f64)   -> T;
     fn downscale(v: i64) -> T;
 }*/
 
 /// Render rasterized data to an image using a single color, Binary
-pub fn render_scanlines_bin_solid<C, T>(ras: &mut RasterizerScanline, ren: &mut RenderingBase<T>, color: C)
+pub fn render_scanlines_bin_solid<T, C>(ras: &mut RasterizerScanline, ren: &mut RenderingBase<T>, color: C)
 where
-  C: Color,
   T: Pixel,
+  C: Color,
 {
   let mut sl = ScanlineU8::new();
   if ras.rewind_scanlines() {
@@ -355,10 +411,10 @@ where
 }
 
 /// Render rasterized data to an image using a single color, Anti-aliased
-pub fn render_scanlines_aa_solid<C, T>(ras: &mut RasterizerScanline, ren: &mut RenderingBase<T>, color: C)
+pub fn render_scanlines_aa_solid<T, C>(ras: &mut RasterizerScanline, ren: &mut RenderingBase<T>, color: C)
 where
-  C: Color,
   T: Pixel,
+  C: Color,
 {
   let mut sl = ScanlineU8::new();
   if ras.rewind_scanlines() {

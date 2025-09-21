@@ -1,27 +1,29 @@
 //! Rendering Outline, not Anti-Aliased
 //!
-//!     use agg::prelude::*;
-//!     let pix = Pixfmt::<Rgb8>::new(100,100);
-//!     let mut ren_base = agg::RenderingBase::new(pix);
-//!     ren_base.clear( Rgba8::WHITE );
+//! ```
+//! use agg::prelude::*;
+//! let pix = Pixfmt::<Rgb8>::new(100, 100);
+//! let mut ren_base = agg::RenderingBase::new(pix);
+//! ren_base.clear(Rgb8::WHITE);
 //!
-//!     let mut ren = RendererPrimatives::with_base(&mut ren_base);
-//!     ren.line_color(agg::Rgba8::from_raw(0,0,0,255));
+//! let mut ren = RendererPrimatives::new_black(&mut ren_base).with_line_color(agg::Rgba8::BLUE);
 //!
-//!     let mut path = agg::Path::new();
-//!     path.move_to(10.0, 10.0);
-//!     path.line_to(50.0, 90.0);
-//!     path.line_to(90.0, 10.0);
+//! let mut path = agg::Path::new();
+//! path.move_to(10.0, 10.0);
+//! path.line_to(50.0, 90.0);
+//! path.line_to(90.0, 10.0);
 //!
-//!     let mut ras = RasterizerOutline::with_primative(&mut ren);
-//!     ras.add_path(&path);
-//!     ren_base.to_file("primative.png").unwrap();
+//! let mut ras = RasterizerOutline::with_primative(&mut ren);
+//! ras.add_path(&path);
+//! ren_base.to_file("primative.png").unwrap();
+//! ```
 //!
 //! The above code produces:
 //!
 //! ![Output](https://raw.githubusercontent.com/savage13/agg/master/images/primative.png)
 
 use crate::Color;
+use crate::FromColor;
 use crate::NamedColor;
 use crate::POLY_SUBPIXEL_SCALE;
 use crate::POLY_SUBPIXEL_SHIFT;
@@ -123,40 +125,53 @@ where
 
 /// Primative Renderer
 #[derive(Debug)]
-pub struct RendererPrimatives<'a, T>
+pub struct RendererPrimatives<'a, T, C = Rgba8>
 where
   T: 'a,
 {
   base: &'a mut RenderingBase<T>,
-  fill_color: Rgba8,
-  line_color: Rgba8,
+  fill_color: C,
+  line_color: C,
   x: Subpixel,
   y: Subpixel,
 }
 
-impl<'a, T> RendererPrimatives<'a, T>
+impl<'a, T> RendererPrimatives<'a, T, Rgba8>
 where
   T: Pixel,
 {
-  /// Create new Primative Rendering with a [`RenderingBase`](../base/struct.RenderingBase.html)
-  pub fn with_base(base: &'a mut RenderingBase<T>) -> Self {
-    let fill_color = Rgba8::BLACK;
-    let line_color = Rgba8::BLACK;
+  /// Create a new RendererPrimatives with black line and white fill
+  pub fn new_black(base: &'a mut RenderingBase<T>) -> Self {
+    Self::new(base, Rgba8::BLACK)
+  }
+}
+
+impl<'a, T, C> RendererPrimatives<'a, T, C>
+where
+  T: Pixel,
+  C: Color + FromColor,
+{
+  pub fn new(base: &'a mut RenderingBase<T>, color: C) -> Self {
     Self {
       base,
-      fill_color,
-      line_color,
+      fill_color: color,
+      line_color: color,
       x: Subpixel::from(0),
       y: Subpixel::from(0),
     }
   }
+
   /// Set line color
-  pub fn line_color<C: Color>(&mut self, line_color: C) {
-    self.line_color = line_color.rgba();
+  #[must_use]
+  pub fn with_line_color<C2: Color>(mut self, line_color: C2) -> Self {
+    self.line_color = C::from_color(line_color);
+    self
   }
   /// Set fill color
-  pub fn fill_color<C: Color>(&mut self, fill_color: C) {
-    self.fill_color = fill_color.rgba();
+  #[must_use]
+  pub fn with_fill_color<C2: Color>(mut self, fill_color: C2) -> Self {
+    self.fill_color = C::from_color(fill_color);
+    self
   }
   pub(crate) fn coord(&self, c: f64) -> Subpixel {
     Subpixel::from((c * POLY_SUBPIXEL_SCALE as f64).round() as i64)

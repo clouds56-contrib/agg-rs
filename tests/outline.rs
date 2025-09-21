@@ -4,10 +4,9 @@ use agg::prelude::*;
 fn t24_outline_basic_render() {
   let pix = Pixfmt::<Rgb8>::new(100, 100);
   let mut ren_base = agg::RenderingBase::new(pix);
-  ren_base.clear(Rgba8::WHITE);
+  ren_base.clear(Rgb8::WHITE);
 
-  let mut ren = RendererPrimatives::with_base(&mut ren_base);
-  ren.line_color(agg::Rgba8::BLACK);
+  let mut ren = RendererPrimatives::new_black(&mut ren_base);
 
   let mut path = agg::Path::new();
   path.move_to(10.0, 10.0);
@@ -25,10 +24,8 @@ fn t24_outline_basic_render() {
 fn t20_outline_render() {
   let pix = Pixfmt::<Rgb8>::new(100, 100);
   let mut ren_base = agg::RenderingBase::new(pix);
-  ren_base.clear(Rgba8::WHITE);
-  let mut ren = RendererOutlineAA::with_base(&mut ren_base);
-  ren.color(agg::Rgba8::BLACK);
-  ren.width(20.0);
+  ren_base.clear(Rgb8::WHITE);
+  let mut ren = RendererOutlineAA::new_black(&mut ren_base).with_width(20.0);
 
   let mut path = agg::Path::new();
   path.move_to(10.0, 10.0);
