@@ -79,13 +79,13 @@ where
   /// ```
   /// use agg::prelude::*;
   ///
-  /// let mut pix = Pixfmt::<Rgba8>::create(1,2);
+  /// let mut pix = Pixfmt::<Rgba8>::create(1, 2);
   /// let black = Rgba8::BLACK;
-  /// pix.copy_pixel(0,1, black);
-  /// assert_eq!(pix.get((0,0)), Rgba8::from_raw(0,0,0,0));
-  /// assert_eq!(pix.get((0,1)), black);
+  /// pix.copy_pixel(0, 1, black);
+  /// assert_eq!(pix.get((0, 0)), Rgba8::from_raw(0, 0, 0, 0));
+  /// assert_eq!(pix.get((0, 1)), black);
   ///
-  /// pix.copy_pixel(10,10, black); // Ignored, outside of range
+  /// pix.copy_pixel(10, 10, black); // Ignored, outside of range
   /// ```
   ///
   /// [Color]: ../trait.Color.html
@@ -100,16 +100,16 @@ where
   /// Locations outside of the region are ignored
   ///
   /// ```
-  /// use agg::{NamedColor,Source,Pixfmt,Rgb8,Rgba8};
+  /// use agg::{NamedColor, Pixfmt, Rgb8, Rgba8, Source};
   ///
-  /// let mut pix = Pixfmt::<Rgb8>::create(10,1);
+  /// let mut pix = Pixfmt::<Rgb8>::create(10, 1);
   /// let black = Rgba8::BLACK;
-  /// pix.copy_hline(0,0,10, black);
-  /// assert_eq!(pix.get((0,0)), black);
-  /// assert_eq!(pix.get((1,0)), black);
-  /// assert_eq!(pix.get((9,0)), black);
+  /// pix.copy_hline(0, 0, 10, black);
+  /// assert_eq!(pix.get((0, 0)), black);
+  /// assert_eq!(pix.get((1, 0)), black);
+  /// assert_eq!(pix.get((9, 0)), black);
   ///
-  /// pix.copy_hline(1,1,10, black); // Ignored, outside of range
+  /// pix.copy_hline(1, 1, 10, black); // Ignored, outside of range
   /// ```
   ///
   /// [Color]: ../trait.Color.html
@@ -133,16 +133,16 @@ where
   /// ```
   /// use agg::prelude::*;
   ///
-  /// let mut pix = Pixfmt::<Rgba32>::create(1,10);
-  /// let black  = Rgba32::new(0.,0.,0.,1.);
-  /// pix.copy_vline(0,0,10, black);
+  /// let mut pix = Pixfmt::<Rgba32>::create(1, 10);
+  /// let black = Rgba32::new(0., 0., 0., 1.);
+  /// pix.copy_vline(0, 0, 10, black);
   ///
   /// let black8 = black.rgba(); // pix.get() returns Rgba8
-  /// assert_eq!(pix.get((0,0)), black8);
-  /// assert_eq!(pix.get((0,1)), black8);
-  /// assert_eq!(pix.get((0,9)), black8);
+  /// assert_eq!(pix.get((0, 0)), black8);
+  /// assert_eq!(pix.get((0, 1)), black8);
+  /// assert_eq!(pix.get((0, 9)), black8);
   ///
-  /// pix.copy_vline(1,1,10, black); // Ignored, outside of range
+  /// pix.copy_vline(1, 1, 10, black); // Ignored, outside of range
   /// ```
   ///
   /// [Color]: ../trait.Color.html

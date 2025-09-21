@@ -27,6 +27,10 @@ impl RenderingBuffer {
       data: vec![0u8; width * height * bpp],
     }
   }
+  /// Is the underlying data empty
+  pub fn is_empty(&self) -> bool {
+    self.data.is_empty()
+  }
   /// Size of underlying Rendering Buffer
   pub fn len(&self) -> usize {
     self.data.len()

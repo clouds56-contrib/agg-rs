@@ -19,11 +19,5 @@ fn t00_example() {
 
   // Save the image to a file
   ren_base.to_file("tests/tmp/t00_example.png").unwrap();
-  assert!(
-    agg::ppm::img_diff(
-      "tests/tmp/t00_example.png",
-      "images/t00_example.png"
-    )
-    .unwrap()
-  );
+  assert!(agg::ppm::img_diff("tests/tmp/t00_example.png", "images/t00_example.png").unwrap());
 }
