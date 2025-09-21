@@ -3,11 +3,11 @@ extern crate agg;
 use agg::prelude::*;
 
 #[test]
-fn t05_solar_spectrum_alpha() {
-  let mut pix = agg::Pixfmt::<agg::Rgb8>::new(320, 200);
+fn t04_solar_spectrum_alpha() {
+  let mut pix = agg::Pixfmt::<agg::Rgb8>::create(320, 200);
   pix.clear();
-  pix.fill(agg::Rgb8::BLACK);
-  let mut alpha = agg::Pixfmt::<agg::Gray8>::new(320, 200);
+
+  let mut alpha = agg::Pixfmt::<agg::Gray8>::create(320, 200);
 
   let w = pix.width();
   let h = pix.height();
@@ -27,7 +27,7 @@ fn t05_solar_spectrum_alpha() {
   for i in 0..h {
     mix.blend_color_hspan(0, i, w, &span, 0);
   }
-  mix.rgb.to_file("tests/tmp/agg_test_05.png").unwrap();
+  mix.rgb.to_file("tests/tmp/agg_test_04.png").unwrap();
 
-  assert!(agg::ppm::img_diff("tests/tmp/agg_test_05.png", "images/agg_test_05.png").unwrap());
+  assert!(agg::ppm::img_diff("tests/tmp/agg_test_04.png", "images/agg_test_04.png").unwrap());
 }

@@ -3,7 +3,7 @@ use agg::prelude::*;
 #[test]
 fn repro_transparent_white_over_black() {
   // Create tiny image 3x1, black background
-  let pix = agg::Pixfmt::<Rgb8>::new(3, 1);
+  let pix = agg::Pixfmt::<Rgb8>::create(3, 1);
   let mut ren_base = agg::RenderingBase::new(pix);
   ren_base.clear(Rgb8::BLACK);
 

@@ -1,12 +1,17 @@
 use agg::prelude::*;
 
 #[test]
-fn t21_line_join() {
-  let pix = Pixfmt::<Rgb8>::new(300, 100);
+fn t22_inner_join() {
+  let pix = Pixfmt::<Rgb8>::create(400, 100);
   let mut ren_base = agg::RenderingBase::new(pix);
   ren_base.clear(Rgb8::WHITE);
 
-  let joins = [agg::LineJoin::Miter, agg::LineJoin::Round, agg::LineJoin::Bevel];
+  let joins = [
+    agg::InnerJoin::Miter,
+    agg::InnerJoin::Round,
+    agg::InnerJoin::Bevel,
+    agg::InnerJoin::Jag,
+  ];
   for (i, join) in joins.iter().enumerate() {
     let dx = 100.0 * i as f64;
     let mut path = agg::Path::new();
@@ -16,7 +21,7 @@ fn t21_line_join() {
 
     let mut stroke = agg::Stroke::new(path);
     stroke.width(25.0);
-    stroke.line_join(*join);
+    stroke.inner_join(*join);
 
     let mut ras = agg::RasterizerScanline::new();
     ras.add_path(&stroke);
@@ -29,9 +34,10 @@ fn t21_line_join() {
   text(&mut ras, &mut ren, 29.0, 90.0, "Miter");
   text(&mut ras, &mut ren, 125.0, 90.0, "Round");
   text(&mut ras, &mut ren, 225.0, 90.0, "Bevel");
+  text(&mut ras, &mut ren, 332.0, 90.0, "Jag");
 
-  ren_base.to_file("tests/tmp/line_join.png").unwrap();
-  assert!(agg::ppm::img_diff("tests/tmp/line_join.png", "images/line_join.png").unwrap());
+  ren_base.to_file("tests/tmp/inner_join.png").unwrap();
+  assert!(agg::ppm::img_diff("tests/tmp/inner_join.png", "images/inner_join.png").unwrap());
 }
 
 fn text<T, C>(

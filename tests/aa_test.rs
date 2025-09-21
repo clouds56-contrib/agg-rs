@@ -52,7 +52,7 @@ fn t26_aa_test() {
   let (mut images, mut output) = assets::find_assets().unwrap();
 
   let (width, height) = (480, 350);
-  let pix = agg::Pixfmt::<agg::Rgb8>::new(width, height);
+  let pix = agg::Pixfmt::<agg::Rgb8>::create(width, height);
   let mut ren_base = agg::RenderingBase::new(pix);
 
   ren_base.clear(Rgb8::BLACK);

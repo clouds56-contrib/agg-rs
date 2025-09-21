@@ -1,12 +1,11 @@
 extern crate agg;
-
 use agg::prelude::*;
 
 #[test]
-fn t15_path_stroke() {
+fn t16_path_stroke_no_clip() {
   let (w, h) = (100, 100);
 
-  let pixf = agg::Pixfmt::<agg::Rgb8>::new(w, h);
+  let pixf = agg::Pixfmt::<agg::Rgb8>::create(w, h);
 
   let mut ren_base = agg::RenderingBase::new(pixf);
 
@@ -16,7 +15,7 @@ fn t15_path_stroke() {
 
   let mut ras = agg::RasterizerScanline::new();
 
-  ras.clip_box(40.0, 0.0, w as f64 - 40.0, h as f64);
+  //ras.clip_box(40.0, 0.0, w as f64-40.0, h as f64);
 
   ras.reset();
   ras.move_to(10.0, 10.0);
@@ -39,7 +38,7 @@ fn t15_path_stroke() {
 
   agg::render_scanlines_aa_solid(&mut ras, &mut ren_base, agg::Rgb8::BLACK);
 
-  ren_base.to_file("tests/tmp/agg_test_15.png").unwrap();
+  ren_base.to_file("tests/tmp/agg_test_16.png").unwrap();
 
-  assert!(agg::ppm::img_diff("tests/tmp/agg_test_15.png", "images/agg_test_15.png").unwrap());
+  assert!(agg::ppm::img_diff("tests/tmp/agg_test_16.png", "images/agg_test_16.png").unwrap());
 }

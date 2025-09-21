@@ -4,7 +4,7 @@
 ///
 /// Data is stored as row-major order (C-format)
 #[derive(Debug, Default)]
-pub(crate) struct RenderingBuffer {
+pub struct RenderingBuffer {
   /// Pixel / Component level data of Image
   pub data: Vec<u8>,
   /// Image Width in pixels
@@ -26,6 +26,10 @@ impl RenderingBuffer {
       bpp,
       data: vec![0u8; width * height * bpp],
     }
+  }
+  /// Is the underlying data empty
+  pub fn is_empty(&self) -> bool {
+    self.data.is_empty()
   }
   /// Size of underlying Rendering Buffer
   pub fn len(&self) -> usize {

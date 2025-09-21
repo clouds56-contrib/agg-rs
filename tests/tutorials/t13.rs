@@ -3,16 +3,18 @@ extern crate agg;
 use agg::prelude::*;
 
 #[test]
-fn t12_clip_box() {
+fn t13_aliased() {
+  flexi_logger::Logger::try_with_env_or_str("debug").unwrap().start().ok();
+
   let (w, h) = (100, 100);
 
-  let pixf = agg::Pixfmt::<agg::Rgb8>::new(w, h);
+  let pixf = agg::Pixfmt::<agg::Rgb8>::create(w, h);
 
   let mut ren_base = agg::RenderingBase::new(pixf);
 
   ren_base.clear(agg::Rgb8::WHITE);
 
-  let mut ren = agg::RenderingScanlineAASolid::new(&mut ren_base, Rgb8::RED);
+  let mut ren = agg::RenderingScanlineBinSolid::new(&mut ren_base, Rgba8::RED);
 
   let mut ras = agg::RasterizerScanline::new();
 
@@ -24,7 +26,7 @@ fn t12_clip_box() {
 
   agg::render_scanlines(&mut ras, &mut ren);
 
-  ren.to_file("tests/tmp/agg_test_12.png").unwrap();
+  ren.to_file("tests/tmp/agg_test_13.png").unwrap();
 
-  assert!(agg::ppm::img_diff("tests/tmp/agg_test_12.png", "images/agg_test_12.png").unwrap());
+  assert!(agg::ppm::img_diff("tests/tmp/agg_test_13.png", "images/agg_test_13.png").unwrap());
 }

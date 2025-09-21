@@ -3,7 +3,7 @@ fn t00_example() {
   use agg::NamedColor;
 
   // Create a blank image 10x10 pixels
-  let pix = agg::Pixfmt::<agg::Rgb8>::new(100, 100);
+  let pix = agg::Pixfmt::<agg::Rgb8>::create(100, 100);
   let mut ren_base = agg::RenderingBase::new(pix);
   ren_base.clear(agg::Rgb8::WHITE);
 
@@ -18,12 +18,6 @@ fn t00_example() {
   agg::render_scanlines(&mut ras, &mut ren);
 
   // Save the image to a file
-  ren_base.to_file("tests/tmp/little_black_triangle.png").unwrap();
-  assert!(
-    agg::ppm::img_diff(
-      "tests/tmp/little_black_triangle.png",
-      "images/little_black_triangle.png"
-    )
-    .unwrap()
-  );
+  ren_base.to_file("tests/tmp/t00_example.png").unwrap();
+  assert!(agg::ppm::img_diff("tests/tmp/t00_example.png", "images/t00_example.png").unwrap());
 }

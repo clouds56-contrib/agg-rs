@@ -8,7 +8,7 @@
 //! use agg::{RasterizerOutlineAA, RendererOutlineAA};
 //!
 //! // Create Image and Rendering Base
-//! let pix = Pixfmt::<Rgb8>::new(100, 100);
+//! let pix = Pixfmt::<Rgb8>::create(100, 100);
 //! let mut ren_base = agg::RenderingBase::new(pix);
 //! ren_base.clear(Rgb8::WHITE);
 //!

@@ -95,7 +95,7 @@ mod tests {
     let (w, h) = (400, 400);
 
     let (paths, colors) = parse_lion(false);
-    let pixf = agg::Pixfmt::<agg::Rgb8>::new(w, h);
+    let pixf = agg::Pixfmt::<agg::Rgb8>::create(w, h);
     let mut ren_base = agg::RenderingBase::new(pixf);
     ren_base.clear(agg::Rgb8::WHITE);
     let mut ren = agg::RenderingScanlineBinSolid::new(&mut ren_base, Rgb8::RED);
@@ -118,7 +118,7 @@ mod tests {
     let (w, h) = (400, 400);
 
     let (paths, colors) = parse_lion(true);
-    let pixf = agg::Pixfmt::<agg::Rgb8>::new(w, h);
+    let pixf = agg::Pixfmt::<agg::Rgb8>::create(w, h);
     let mut ren_base = agg::RenderingBase::new(pixf);
     ren_base.clear(agg::Rgb8::WHITE);
     let mut ren = agg::RenderingScanlineBinSolid::new(&mut ren_base, Rgb8::RED);
@@ -140,7 +140,7 @@ mod tests {
     let (w, h) = (400, 400);
 
     let (paths, colors) = parse_lion(true);
-    let pixf = agg::Pixfmt::<agg::Rgb8>::new(w, h);
+    let pixf = agg::Pixfmt::<agg::Rgb8>::create(w, h);
     let mut ren_base = agg::RenderingBase::new(pixf);
     ren_base.clear(agg::Rgb8::WHITE);
     let mut ren = agg::RenderingScanlineAASolid::new(&mut ren_base, Rgb8::RED);
@@ -162,7 +162,7 @@ mod tests {
     let (w, h) = (400, 400);
 
     let (paths, colors) = parse_lion(true);
-    let pixf = agg::Pixfmt::<agg::Rgb8>::new(w, h);
+    let pixf = agg::Pixfmt::<agg::Rgb8>::create(w, h);
     let mut ren_base = agg::RenderingBase::new(pixf);
     //ren_base.clear( agg::Srgba8::new([255, 255, 255, 255]) );
     ren_base.clear(agg::Rgb8::WHITE);
@@ -186,7 +186,7 @@ mod tests {
     let (w, h) = (400, 400);
 
     let (paths, colors) = parse_lion(true);
-    let pixf = agg::Pixfmt::<agg::Rgb8>::new(w, h);
+    let pixf = agg::Pixfmt::<agg::Rgb8>::create(w, h);
     let mut ren_base = agg::RenderingBase::new(pixf);
     //ren_base.clear( agg::Srgba8::new([255, 255, 255, 255]) );
     ren_base.clear(agg::Rgb8::WHITE);
@@ -210,7 +210,7 @@ mod tests {
     let (w, h) = (400, 400);
 
     let (paths, colors) = parse_lion(true);
-    let pixf = agg::Pixfmt::<agg::Rgb8>::new(w, h);
+    let pixf = agg::Pixfmt::<agg::Rgb8>::create(w, h);
     let mut ren_base = agg::RenderingBase::new(pixf);
     //ren_base.clear( agg::Srgba8::new([255, 255, 255, 255]) );
     ren_base.clear(Rgb8::WHITE);

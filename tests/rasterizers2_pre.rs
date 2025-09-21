@@ -91,7 +91,7 @@ impl Spiral {
 fn chain() -> agg::Pixfmt<agg::Rgba32> {
   let width = 16;
   let height = 7;
-  let mut pix = agg::Pixfmt::<agg::Rgba32>::new(width, height);
+  let mut pix = agg::Pixfmt::<agg::Rgba32>::create(width, height);
   let raw: [u32; 16 * 7] = [
     0x00ffffff, 0x00ffffff, 0x00ffffff, 0x00ffffff, 0xb4c29999, 0xff9a5757, 0xff9a5757, 0xff9a5757, 0xff9a5757,
     0xff9a5757, 0xff9a5757, 0xb4c29999, 0x00ffffff, 0x00ffffff, 0x00ffffff, 0x00ffffff, 0x00ffffff, 0x00ffffff,
@@ -131,7 +131,7 @@ fn chain() -> agg::Pixfmt<agg::Rgba32> {
 fn rasterizers2_pre() {
   let (w, h) = (500, 450);
 
-  let pixf = agg::Pixfmt::<agg::RgbaPre8>::new(w, h);
+  let pixf = agg::Pixfmt::<agg::RgbaPre8>::create(w, h);
   let mut ren_base = agg::RenderingBase::new(pixf);
 
   ren_base.clear(agg::RgbaPre8::from_raw(255, 255, 242, 255));

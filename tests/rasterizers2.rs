@@ -91,7 +91,7 @@ impl Spiral {
 fn rasterizers2() {
   let (w, h) = (500, 450);
 
-  let pixf = agg::Pixfmt::<agg::Rgb8>::new(w, h);
+  let pixf = agg::Pixfmt::<agg::Rgb8>::create(w, h);
   let mut ren_base = agg::RenderingBase::new(pixf);
 
   ren_base.clear(agg::Rgb8::from_raw(255, 255, 242));
