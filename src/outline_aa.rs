@@ -3,17 +3,18 @@
 //! # Example
 //!
 //! ```
-//! use agg::{Pixfmt,Rgb8,Rgba8,DrawOutline};
-//! use agg::{RendererOutlineAA,RasterizerOutlineAA};
 //! use agg::prelude::*;
+//! use agg::{DrawOutline, Pixfmt, Rgb8, Rgba8};
+//! use agg::{RasterizerOutlineAA, RendererOutlineAA};
 //!
 //! // Create Image and Rendering Base
-//! let pix = Pixfmt::<Rgb8>::new(100,100);
+//! let pix = Pixfmt::<Rgb8>::new(100, 100);
 //! let mut ren_base = agg::RenderingBase::new(pix);
 //! ren_base.clear(Rgb8::WHITE);
 //!
 //! // Create Outline Rendering, set color and width
-//! let mut ren = RendererOutlineAA::new(&mut ren_base, Rgba8::from_raw(0,0,0,255)).with_width(20.0);
+//! let mut ren =
+//!   RendererOutlineAA::new(&mut ren_base, Rgba8::from_raw(0, 0, 0, 255)).with_width(20.0);
 //!
 //! // Create a Path
 //! let mut path = agg::Path::new();

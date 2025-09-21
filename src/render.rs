@@ -213,21 +213,23 @@ impl<G: GradientCalculation, C: Clone> Gradient for SpanGradient<G, C> {
 
     interp.begin(x as f64 + 0.5, y as f64 + 0.5, len);
 
-    (0..len).map(|_| {
-      let (x, y) = interp.coordinates();
-      let d = self
-        .gradient
-        .calculate(x >> downscale_shift, y >> downscale_shift, self.d2);
-      let mut d = ((d - self.d1) * ncolors) / dd;
-      if d < 0 {
-        d = 0;
-      }
-      if d >= ncolors {
-        d = ncolors - 1;
-      }
-      interp.inc();
-      self.color[d as usize].clone()
-    }).collect()
+    (0..len)
+      .map(|_| {
+        let (x, y) = interp.coordinates();
+        let d = self
+          .gradient
+          .calculate(x >> downscale_shift, y >> downscale_shift, self.d2);
+        let mut d = ((d - self.d1) * ncolors) / dd;
+        if d < 0 {
+          d = 0;
+        }
+        if d >= ncolors {
+          d = ncolors - 1;
+        }
+        interp.inc();
+        self.color[d as usize].clone()
+      })
+      .collect()
   }
 }
 
@@ -308,7 +310,7 @@ where
 }
 impl<T, C> Render for RenderingScanlineBinSolid<'_, T, C>
 where
-C: Color + FromColor,
+  C: Color + FromColor,
   T: Pixel,
 {
   /// Render a single Scanline Row

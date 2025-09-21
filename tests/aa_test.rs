@@ -338,11 +338,13 @@ fn calc_linear_gradient_transform(x1: f64, y1: f64, x2: f64, y2: f64) -> agg::Tr
 fn color_gradient<C: Color>(begin: C, end: C, n: usize) -> Vec<Rgb64> {
   let begin = begin.srgba8();
   let end = end.srgba8();
-  (0..n).map(|i| {
-    let a = (i as f64 / (n - 1) as f64 * 255.).round() as u8;
-    let red = lerp_u8(begin.red.0, end.red.0, a);
-    let green = lerp_u8(begin.green.0, end.green.0, a);
-    let blue = lerp_u8(begin.blue.0, end.blue.0, a);
-    Srgba8::from_raw(red, green, blue, 255).rgb()
-  }).collect()
+  (0..n)
+    .map(|i| {
+      let a = (i as f64 / (n - 1) as f64 * 255.).round() as u8;
+      let red = lerp_u8(begin.red.0, end.red.0, a);
+      let green = lerp_u8(begin.green.0, end.green.0, a);
+      let blue = lerp_u8(begin.blue.0, end.blue.0, a);
+      Srgba8::from_raw(red, green, blue, 255).rgb()
+    })
+    .collect()
 }

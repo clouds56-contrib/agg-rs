@@ -34,8 +34,13 @@ fn t21_line_join() {
   assert!(agg::ppm::img_diff("tests/tmp/line_join.png", "images/line_join.png").unwrap());
 }
 
-fn text<T, C>(ras: &mut agg::RasterizerScanline, ren: &mut agg::RenderingScanlineAASolid<T, C>, x: f64, y: f64, txt: &str)
-where
+fn text<T, C>(
+  ras: &mut agg::RasterizerScanline,
+  ren: &mut agg::RenderingScanlineAASolid<T, C>,
+  x: f64,
+  y: f64,
+  txt: &str,
+) where
   T: agg::Pixel,
   C: Color + FromColor,
 {

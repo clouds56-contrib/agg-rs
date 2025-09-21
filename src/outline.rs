@@ -2,12 +2,11 @@
 //!
 //! ```
 //! use agg::prelude::*;
-//! let pix = Pixfmt::<Rgb8>::new(100,100);
+//! let pix = Pixfmt::<Rgb8>::new(100, 100);
 //! let mut ren_base = agg::RenderingBase::new(pix);
 //! ren_base.clear(Rgb8::WHITE);
 //!
-//! let mut ren = RendererPrimatives::new_black(&mut ren_base)
-//!   .with_line_color(agg::Rgba8::BLUE);
+//! let mut ren = RendererPrimatives::new_black(&mut ren_base).with_line_color(agg::Rgba8::BLUE);
 //!
 //! let mut path = agg::Path::new();
 //! path.move_to(10.0, 10.0);

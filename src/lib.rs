@@ -30,7 +30,7 @@
 //! use agg::{NamedColor, Render};
 //!
 //! // Create a blank image 10x10 pixels
-//! let pix = agg::Pixfmt::<agg::Rgb8>::new(100,100);
+//! let pix = agg::Pixfmt::<agg::Rgb8>::new(100, 100);
 //! let mut ren_base = agg::RenderingBase::new(pix);
 //! ren_base.clear(agg::Rgb8::WHITE);
 //!
@@ -53,11 +53,12 @@
 //!
 //! ```
 //! use agg::prelude::*;
-//! let pix = Pixfmt::<Rgb8>::new(100,100);
+//! let pix = Pixfmt::<Rgb8>::new(100, 100);
 //! let mut ren_base = agg::RenderingBase::new(pix);
 //! ren_base.clear(Rgb8::WHITE);
 //!
-//! let mut ren = RendererOutlineAA::new(&mut ren_base, Rgba8::from_raw(102,77,26,255)).with_width(3.0);
+//! let mut ren =
+//!   RendererOutlineAA::new(&mut ren_base, Rgba8::from_raw(102, 77, 26, 255)).with_width(3.0);
 //!
 //! let mut path = agg::Path::new();
 //! path.move_to(10.0, 10.0);
@@ -77,12 +78,11 @@
 //! ```
 //! use agg::prelude::*;
 //!
-//! let pix = Pixfmt::<Rgb8>::new(100,100);
+//! let pix = Pixfmt::<Rgb8>::new(100, 100);
 //! let mut ren_base = agg::RenderingBase::new(pix);
 //! ren_base.clear(Rgb8::WHITE);
 //!
-//! let mut ren = RendererPrimatives::new_black(&mut ren_base)
-//!   .with_line_color(agg::Rgba8::BLUE);
+//! let mut ren = RendererPrimatives::new_black(&mut ren_base).with_line_color(agg::Rgba8::BLUE);
 //!
 //! let mut path = agg::Path::new();
 //! path.move_to(10.0, 10.0);
@@ -549,12 +549,15 @@ pub(crate) trait DistanceInterpolator {
 
 pub mod prelude {
   pub use crate::{
-    Color, FromColor, FromRaw2 as _, FromRaw3 as _, FromRaw4 as _, IntoRaw2 as _, IntoRaw3 as _,
-    IntoRaw4 as _, NamedColor as _, Pixel, Render as _, Source as _, VertexSource as _,
+    Color, FromColor, FromRaw2 as _, FromRaw3 as _, FromRaw4 as _, IntoRaw2 as _, IntoRaw3 as _, IntoRaw4 as _,
+    NamedColor as _, Pixel, Render as _, Source as _, VertexSource as _,
   };
 
   pub use crate::{DrawOutline, Pixfmt, PixfmtAlphaBlend, RenderingBase};
-  pub use crate::{Gray8, Gray16, Gray32, Gray64, Rgb8, Rgb16, Rgb32, Rgb64, Rgba8, Rgba16, Rgba32, Rgba64, Srgba8, Srgba16, Srgba32, Srgba64};
+  pub use crate::{
+    Gray8, Gray16, Gray32, Gray64, Rgb8, Rgb16, Rgb32, Rgb64, Rgba8, Rgba16, Rgba32, Rgba64, Srgba8, Srgba16, Srgba32,
+    Srgba64,
+  };
   pub use crate::{RasterizerOutline, RendererPrimatives};
   pub use crate::{RasterizerOutlineAA, RendererOutlineAA};
 }

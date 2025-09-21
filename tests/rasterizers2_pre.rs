@@ -162,8 +162,8 @@ fn rasterizers2_pre() {
     let y = (h / 4 + 50) as f64;
     let spiral = Spiral::new(x, y, r1, r2, step, start_angle);
 
-    let mut ren_prim = agg::RendererPrimatives::new_black(&mut ren_base)
-      .with_line_color(agg::Rgba8::from_raw(102, 77, 26, 255));
+    let mut ren_prim =
+      agg::RendererPrimatives::new_black(&mut ren_base).with_line_color(agg::Rgba8::from_raw(102, 77, 26, 255));
     let mut ras_al = agg::RasterizerOutline::with_primative(&mut ren_prim);
     let trans = Roundoff::new(spiral);
     ras_al.add_path(&trans);
@@ -175,8 +175,8 @@ fn rasterizers2_pre() {
     eprintln!("DDA SPIRAL: {} {} h {} h/4 {}", x, y, height, height / 4.0);
     let spiral = Spiral::new(x, y, r1, r2, step, start_angle);
 
-    let mut ren_prim = agg::RendererPrimatives::new_black(&mut ren_base)
-      .with_line_color(agg::Rgba8::from_raw(102, 77, 26, 255));
+    let mut ren_prim =
+      agg::RendererPrimatives::new_black(&mut ren_base).with_line_color(agg::Rgba8::from_raw(102, 77, 26, 255));
     let mut ras_al = agg::RasterizerOutline::with_primative(&mut ren_prim);
     ras_al.add_path(&spiral);
   }
@@ -186,7 +186,8 @@ fn rasterizers2_pre() {
     let y = (h - h / 4 + 20) as f64;
     let spiral = Spiral::new(x, y, r1, r2, step, start_angle);
 
-    let mut ren_oaa = agg::RendererOutlineAA::new(&mut ren_base, agg::Rgba8::from_raw(102, 77, 26, 255)).with_width(3.0);
+    let mut ren_oaa =
+      agg::RendererOutlineAA::new(&mut ren_base, agg::Rgba8::from_raw(102, 77, 26, 255)).with_width(3.0);
     let mut ras_oaa = agg::RasterizerOutlineAA::with_renderer(&mut ren_oaa);
     ras_oaa.round_cap(true);
     ras_oaa.add_path(&spiral);
@@ -260,8 +261,13 @@ fn rasterizers2_pre() {
   assert!(agg::ppm::img_diff("tests/tmp/rasterizers2_pre.png", "images/rasterizers2_pre.png",).unwrap());
 }
 
-fn text<T, C>(ras: &mut agg::RasterizerScanline, ren: &mut agg::RenderingScanlineAASolid<T, C>, x: f64, y: f64, txt: &str)
-where
+fn text<T, C>(
+  ras: &mut agg::RasterizerScanline,
+  ren: &mut agg::RenderingScanlineAASolid<T, C>,
+  x: f64,
+  y: f64,
+  txt: &str,
+) where
   T: Pixel,
   C: Color + FromColor,
 {

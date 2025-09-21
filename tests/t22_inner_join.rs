@@ -40,8 +40,13 @@ fn t22_inner_join() {
   assert!(agg::ppm::img_diff("tests/tmp/inner_join.png", "images/inner_join.png").unwrap());
 }
 
-fn text<T, C>(ras: &mut agg::RasterizerScanline, ren: &mut agg::RenderingScanlineAASolid<T, C>, x: f64, y: f64, txt: &str)
-where
+fn text<T, C>(
+  ras: &mut agg::RasterizerScanline,
+  ren: &mut agg::RenderingScanlineAASolid<T, C>,
+  x: f64,
+  y: f64,
+  txt: &str,
+) where
   T: agg::Pixel,
   C: Color + FromColor,
 {
