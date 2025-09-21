@@ -13,9 +13,7 @@
 //! ren_base.clear(Rgb8::WHITE);
 //!
 //! // Create Outline Rendering, set color and width
-//! let mut ren = RendererOutlineAA::with_base(&mut ren_base);
-//! ren.color(agg::Rgba8::from_raw(0,0,0,255));
-//! ren.width(20.0);
+//! let mut ren = RendererOutlineAA::new(&mut ren_base, Rgba8::from_raw(0,0,0,255)).with_width(20.0);
 //!
 //! // Create a Path
 //! let mut path = agg::Path::new();
@@ -34,6 +32,7 @@
 //!
 //! ![Output](https://raw.githubusercontent.com/savage13/agg/master/images/outline_aa.png)
 use crate::Color;
+use crate::FromColor;
 use crate::MAX_HALF_WIDTH;
 use crate::NamedColor;
 use crate::POLY_SUBPIXEL_MASK;
@@ -444,42 +443,58 @@ where
 
 #[derive(Debug)]
 /// Outline Renderer with Anti-Aliasing
-pub struct RendererOutlineAA<'a, T> {
+pub struct RendererOutlineAA<'a, T, C = Rgba8> {
   ren: &'a mut RenderingBase<T>,
-  color: Rgba8,
+  color: C,
   clip_box: Option<Rectangle<i64>>,
   profile: LineProfileAA,
 }
 
-impl<'a, T> RendererOutlineAA<'a, T>
+impl<'a, T> RendererOutlineAA<'a, T, Rgba8>
 where
   T: Pixel,
 {
   /// Create Outline Renderer with a [`RenderingBase`](../base/struct.RenderingBase.html)
-  pub fn with_base(ren: &'a mut RenderingBase<T>) -> Self {
+  pub fn new_black(ren: &'a mut RenderingBase<T>) -> Self {
+    Self::new(ren, Rgba8::BLACK)
+  }
+}
+impl<'a, T, C> RendererOutlineAA<'a, T, C>
+where
+  T: Pixel,
+  C: Color,
+{
+  /// Create Outline Renderer with a [`RenderingBase`](../base/struct.RenderingBase.html)
+  pub fn new(ren: &'a mut RenderingBase<T>, color: C) -> Self {
     let profile = LineProfileAA::new();
     Self {
       ren,
-      color: Rgba8::BLACK,
+      color,
       clip_box: None,
       profile,
     }
   }
   /// Set width of the line
-  pub fn width(&mut self, width: f64) {
+  #[must_use]
+  pub fn with_width(mut self, width: f64) -> Self {
     self.profile.width(width);
+    self
   }
   /// Set minimum with of the line
   ///
   /// Use [`width`](#method.width) for this to take effect
-  pub fn min_width(&mut self, width: f64) {
+  #[must_use]
+  pub fn with_min_width(mut self, width: f64) -> Self {
     self.profile.min_width(width);
+    self
   }
   /// Set smoother width of the line
   ///
   /// Use [`width`](#method.width) for this to take effect
-  pub fn smoother_width(&mut self, width: f64) {
+  #[must_use]
+  pub fn with_smoother_width(mut self, width: f64) -> Self {
     self.profile.smoother_width(width);
+    self
   }
 
   fn subpixel_width(&self) -> i64 {
@@ -635,9 +650,10 @@ where
   }
 }
 
-impl<T> RenderOutline for RendererOutlineAA<'_, T>
+impl<T, C> RenderOutline for RendererOutlineAA<'_, T, C>
 where
   T: Pixel,
+  C: Color,
 {
   fn cover(&self, d: i64) -> u64 {
     let subpixel_shift = POLY_SUBPIXEL_SHIFT;
@@ -654,9 +670,10 @@ where
   }
 }
 
-impl<T> DrawOutline for RendererOutlineAA<'_, T>
+impl<T, C> DrawOutline for RendererOutlineAA<'_, T, C>
 where
   T: Pixel,
+  C: Color + FromColor,
 {
   fn line3(&mut self, lp: &LineParameters, sx: i64, sy: i64, ex: i64, ey: i64) {
     if let Some(clip_box) = self.clip_box {
@@ -833,8 +850,8 @@ where
       self.line2_no_clip(lp, ex, ey);
     }
   }
-  fn color<C: Color>(&mut self, color: C) {
-    self.color = color.rgba();
+  fn color<C2: Color>(&mut self, color: C2) {
+    self.color = C::from_color(color)
   }
 
   fn accurate_join_only(&self) -> bool {

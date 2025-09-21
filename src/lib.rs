@@ -57,9 +57,7 @@
 //! let mut ren_base = agg::RenderingBase::new(pix);
 //! ren_base.clear(Rgb8::WHITE);
 //!
-//! let mut ren = RendererOutlineAA::with_base(&mut ren_base);
-//! ren.color(Rgba8::from_raw(102,77,26,255));
-//! ren.width(3.0);
+//! let mut ren = RendererOutlineAA::new(&mut ren_base, Rgba8::from_raw(102,77,26,255)).with_width(3.0);
 //!
 //! let mut path = agg::Path::new();
 //! path.move_to(10.0, 10.0);
@@ -83,8 +81,8 @@
 //! let mut ren_base = agg::RenderingBase::new(pix);
 //! ren_base.clear(Rgb8::WHITE);
 //!
-//! let mut ren = RendererPrimatives::with_base(&mut ren_base);
-//! ren.line_color(agg::Rgba8::from_raw(0,0,0,255));
+//! let mut ren = RendererPrimatives::new_black(&mut ren_base)
+//!   .with_line_color(agg::Rgba8::BLUE);
 //!
 //! let mut path = agg::Path::new();
 //! path.move_to(10.0, 10.0);
