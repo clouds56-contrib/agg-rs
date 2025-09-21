@@ -1,7 +1,11 @@
-use palette::{blend::Premultiply, encoding::{FromLinear, IntoLinear}};
+use palette::{
+  blend::Premultiply,
+  encoding::{FromLinear, IntoLinear},
+};
 
-use crate::{Color, ColorValue, FromColor, FromRaw2, FromRaw3, FromRaw4, IntoRaw2, IntoRaw3, IntoRaw4, NamedColor, U16, U8};
-
+use crate::{
+  Color, ColorValue, FromColor, FromRaw2, FromRaw3, FromRaw4, IntoRaw2, IntoRaw3, IntoRaw4, NamedColor, U8, U16,
+};
 
 pub type Rgba<T> = palette::rgb::LinSrgba<T>;
 pub type Rgba8 = Rgba<U8>;

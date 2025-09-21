@@ -131,8 +131,6 @@
 #[macro_use]
 extern crate log;
 
-use std::fmt::Debug;
-
 #[doc(hidden)]
 pub use freetype as ft;
 

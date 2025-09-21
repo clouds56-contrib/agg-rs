@@ -7,7 +7,6 @@ pub use color_value::*;
 pub use rgb::*;
 pub use traits::*;
 
-
 pub trait FromColor {
   fn from_color<C: Color>(c: C) -> Self;
 }

@@ -1,6 +1,5 @@
 use crate::ColorValue;
 
-
 pub trait FromRaw2: Sized {
   type Raw;
   fn from_raw(v1: Self::Raw, v2: Self::Raw) -> Self;
