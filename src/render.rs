@@ -149,7 +149,7 @@ pub trait Gradient {
 ///   guards against a zero-length color range (`d2 - d1`) by treating it as at
 ///   least 1, so callers do not need to perform that check.
 /// - [`Self::color`] should contain at least one entry; otherwise indexing will panic.
-/// The subpixel shift used by this struct is `4` (see [`Self::subpixel_shift`]).
+///   The subpixel shift used by this struct is `4` (see [`Self::subpixel_shift`]).
 #[derive(Debug)]
 pub struct SpanGradient<G, C> {
   /// sub-pixel index of gradient start

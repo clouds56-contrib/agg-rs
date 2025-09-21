@@ -26,69 +26,75 @@
 //!    [`render_all_paths`], [`render_scanlines_aa_solid`] and
 //!    [`render_scanlines_bin_solid`]
 //!
-//!       use agg::{NamedColor, Render};
+//! ```
+//! use agg::{NamedColor, Render};
 //!
-//!       // Create a blank image 10x10 pixels
-//!       let pix = agg::Pixfmt::<agg::Rgb8>::new(100,100);
-//!       let mut ren_base = agg::RenderingBase::new(pix);
-//!       ren_base.clear(agg::Rgb8::WHITE);
+//! // Create a blank image 10x10 pixels
+//! let pix = agg::Pixfmt::<agg::Rgb8>::new(100,100);
+//! let mut ren_base = agg::RenderingBase::new(pix);
+//! ren_base.clear(agg::Rgb8::WHITE);
 //!
-//!       // Draw a polygon from (10,10) - (50,90) - (90,10)
-//!       let mut ras = agg::RasterizerScanline::new();
-//!       ras.move_to(10.0, 10.0);
-//!       ras.line_to(50.0, 90.0);
-//!       ras.line_to(90.0, 10.0);
+//! // Draw a polygon from (10,10) - (50,90) - (90,10)
+//! let mut ras = agg::RasterizerScanline::new();
+//! ras.move_to(10.0, 10.0);
+//! ras.line_to(50.0, 90.0);
+//! ras.line_to(90.0, 10.0);
 //!
-//!       // Render the line to the image
-//!       let mut ren = agg::RenderingScanlineAASolid::new_black(&mut ren_base);
-//!       agg::render_scanlines(&mut ras, &mut ren);
+//! // Render the line to the image
+//! let mut ren = agg::RenderingScanlineAASolid::new_black(&mut ren_base);
+//! agg::render_scanlines(&mut ras, &mut ren);
 //!
-//!       // Save the image to a file
-//!       ren_base.to_file("little_black_triangle.png").unwrap();
+//! // Save the image to a file
+//! ren_base.to_file("little_black_triangle.png").unwrap();
+//! ```
 //!
 //!
 //! # Outline AntiAlias Renderer
 //!
-//!        use agg::prelude::*;
-//!        let pix = Pixfmt::<Rgb8>::new(100,100);
-//!        let mut ren_base = agg::RenderingBase::new(pix);
-//!        ren_base.clear( Rgba8::WHITE );
+//! ```
+//! use agg::prelude::*;
+//! let pix = Pixfmt::<Rgb8>::new(100,100);
+//! let mut ren_base = agg::RenderingBase::new(pix);
+//! ren_base.clear(Rgb8::WHITE);
 //!
-//!        let mut ren = RendererOutlineAA::with_base(&mut ren_base);
-//!        ren.color(agg::Rgba8::from_raw(102,77,26,255));
-//!        ren.width(3.0);
+//! let mut ren = RendererOutlineAA::with_base(&mut ren_base);
+//! ren.color(Rgba8::from_raw(102,77,26,255));
+//! ren.width(3.0);
 //!
-//!        let mut path = agg::Path::new();
-//!        path.move_to(10.0, 10.0);
-//!        path.line_to(50.0, 90.0);
-//!        path.line_to(90.0, 10.0);
+//! let mut path = agg::Path::new();
+//! path.move_to(10.0, 10.0);
+//! path.line_to(50.0, 90.0);
+//! path.line_to(90.0, 10.0);
 //!
-//!        let mut ras = RasterizerOutlineAA::with_renderer(&mut ren);
-//!        ras.add_path(&path);
-//!        ren_base.to_file("outline_aa.png").unwrap();
+//! let mut ras = RasterizerOutlineAA::with_renderer(&mut ren);
+//! ras.add_path(&path);
+//! ren_base.to_file("outline_aa.png").unwrap();
+//! ```
 //!
 //! # Primative Renderer
 //!
 //! Render for primative shapes: lines, rectangles, and ellipses; filled or
 //!    outlined.
 //!
-//!        use agg::prelude::*;
+//! ```
+//! use agg::prelude::*;
 //!
-//!        let pix = Pixfmt::<Rgb8>::new(100,100);
-//!        let mut ren_base = agg::RenderingBase::new(pix);
-//!        ren_base.clear( Rgba8::WHITE );
+//! let pix = Pixfmt::<Rgb8>::new(100,100);
+//! let mut ren_base = agg::RenderingBase::new(pix);
+//! ren_base.clear(Rgb8::WHITE);
 //!
-//!        let mut ren = RendererPrimatives::with_base(&mut ren_base);
-//!        ren.line_color(agg::Rgba8::from_raw(0,0,0,255));
+//! let mut ren = RendererPrimatives::with_base(&mut ren_base);
+//! ren.line_color(agg::Rgba8::from_raw(0,0,0,255));
 //!
-//!        let mut path = agg::Path::new();
-//!        path.move_to(10.0, 10.0);
-//!        path.line_to(50.0, 90.0);
-//!        path.line_to(90.0, 10.0);
+//! let mut path = agg::Path::new();
+//! path.move_to(10.0, 10.0);
+//! path.line_to(50.0, 90.0);
+//! path.line_to(90.0, 10.0);
 //!
-//!        let mut ras = RasterizerOutline::with_primative(&mut ren);
-//!        ras.add_path(&path);
-//!        ren_base.to_file("primative.png").unwrap();
+//! let mut ras = RasterizerOutline::with_primative(&mut ren);
+//! ras.add_path(&path);
+//! ren_base.to_file("primative.png").unwrap();
+//! ```
 //!
 //!
 //! # Raw Pixel Manipulation

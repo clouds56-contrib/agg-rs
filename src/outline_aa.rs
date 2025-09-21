@@ -2,32 +2,33 @@
 //!
 //! # Example
 //!
+//! ```
+//! use agg::{Pixfmt,Rgb8,Rgba8,DrawOutline};
+//! use agg::{RendererOutlineAA,RasterizerOutlineAA};
+//! use agg::prelude::*;
 //!
-//!     use agg::{Pixfmt,Rgb8,Rgba8,DrawOutline};
-//!     use agg::{RendererOutlineAA,RasterizerOutlineAA};
-//!     use agg::prelude::*;
+//! // Create Image and Rendering Base
+//! let pix = Pixfmt::<Rgb8>::new(100,100);
+//! let mut ren_base = agg::RenderingBase::new(pix);
+//! ren_base.clear(Rgb8::WHITE);
 //!
-//!     // Create Image and Rendering Base
-//!     let pix = Pixfmt::<Rgb8>::new(100,100);
-//!     let mut ren_base = agg::RenderingBase::new(pix);
-//!     ren_base.clear( Rgba8::WHITE );
+//! // Create Outline Rendering, set color and width
+//! let mut ren = RendererOutlineAA::with_base(&mut ren_base);
+//! ren.color(agg::Rgba8::from_raw(0,0,0,255));
+//! ren.width(20.0);
 //!
-//!     // Create Outline Rendering, set color and width
-//!     let mut ren = RendererOutlineAA::with_base(&mut ren_base);
-//!     ren.color(agg::Rgba8::from_raw(0,0,0,255));
-//!     ren.width(20.0);
+//! // Create a Path
+//! let mut path = agg::Path::new();
+//! path.move_to(10.0, 10.0);
+//! path.line_to(50.0, 90.0);
+//! path.line_to(90.0, 10.0);
 //!
-//!     // Create a Path
-//!     let mut path = agg::Path::new();
-//!     path.move_to(10.0, 10.0);
-//!     path.line_to(50.0, 90.0);
-//!     path.line_to(90.0, 10.0);
-//!
-//!     // Create Outline Rasterizer and add path
-//!     let mut ras = RasterizerOutlineAA::with_renderer(&mut ren);
-//!     ras.round_cap(true);
-//!     ras.add_path(&path);
-//!     ren_base.to_file("outline_aa.png").unwrap();
+//! // Create Outline Rasterizer and add path
+//! let mut ras = RasterizerOutlineAA::with_renderer(&mut ren);
+//! ras.round_cap(true);
+//! ras.add_path(&path);
+//! ren_base.to_file("outline_aa.png").unwrap();
+//! ```
 //!
 //! The above code will produce:
 //!

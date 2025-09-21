@@ -1,21 +1,23 @@
 //! Rendering Outline, not Anti-Aliased
 //!
-//!     use agg::prelude::*;
-//!     let pix = Pixfmt::<Rgb8>::new(100,100);
-//!     let mut ren_base = agg::RenderingBase::new(pix);
-//!     ren_base.clear( Rgba8::WHITE );
+//! ```
+//! use agg::prelude::*;
+//! let pix = Pixfmt::<Rgb8>::new(100,100);
+//! let mut ren_base = agg::RenderingBase::new(pix);
+//! ren_base.clear(Rgb8::WHITE);
 //!
-//!     let mut ren = RendererPrimatives::new_black(&mut ren_base);
-//!     ren.line_color(agg::Rgba8::from_raw(0,0,0,255));
+//! let mut ren = RendererPrimatives::with_base(&mut ren_base);
+//! ren.line_color(agg::Rgba8::from_raw(0,0,0,255));
 //!
-//!     let mut path = agg::Path::new();
-//!     path.move_to(10.0, 10.0);
-//!     path.line_to(50.0, 90.0);
-//!     path.line_to(90.0, 10.0);
+//! let mut path = agg::Path::new();
+//! path.move_to(10.0, 10.0);
+//! path.line_to(50.0, 90.0);
+//! path.line_to(90.0, 10.0);
 //!
-//!     let mut ras = RasterizerOutline::with_primative(&mut ren);
-//!     ras.add_path(&path);
-//!     ren_base.to_file("primative.png").unwrap();
+//! let mut ras = RasterizerOutline::with_primative(&mut ren);
+//! ras.add_path(&path);
+//! ren_base.to_file("primative.png").unwrap();
+//! ```
 //!
 //! The above code produces:
 //!
