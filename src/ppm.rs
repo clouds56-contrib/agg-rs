@@ -20,15 +20,28 @@ pub fn img_diff<P: AsRef<Path>>(f1: P, f2: P) -> Result<bool, image::ImageError>
     return Ok(false);
   }
   if d1.len() != d2.len() {
-    println!("files not equal length");
+    error!("files not equal length");
     return Ok(false);
   }
   let mut flag = true;
+  use std::collections::BTreeSet;
+  let mut pixel_diffs: BTreeSet<usize> = BTreeSet::new();
   for (i, (v1, v2)) in d1.iter().zip(d2.iter()).enumerate() {
     if v1 != v2 {
-      println!("{} [{},{},{}]: {} {}", i, (i / 3) % w1, (i / 3) / w1, i % 3, v1, v2);
+      pixel_diffs.insert(i / 3);
       flag = false;
     }
+  }
+  if !flag {
+    for &pixel in pixel_diffs.iter() {
+      let cx = pixel % w1;
+      let cy = pixel / w1;
+      let off = pixel * 3;
+      let a1 = (d1[off], d1[off + 1], d1[off + 2]);
+      let a2 = (d2[off], d2[off + 1], d2[off + 2]);
+      info!("pixel {} ({},{}): left={:?} right={:?}", pixel, cx, cy, a1, a2);
+    }
+    error!("files differ at {} pixels", pixel_diffs.len());
   }
   Ok(flag)
 }
