@@ -20,9 +20,9 @@ fn repro_transparent_white_over_black() {
   let p2 = ren_base.pixf.get((2, 0));
 
   // Expected: lerp(0,255,alpha) -> ~alpha for rgb, alpha channel becomes 255
-  let expected = agg::Rgba8::from_raw(alpha, alpha, alpha, 255);
+  let expected = agg::Rgb8::from_raw(alpha, alpha, alpha);
   assert_eq!(p0, expected);
   assert_eq!(p1, expected);
   // untouched pixel remains white of clear (clear sets WHITE) but we cleared to BLACK, so p2 should be BLACK
-  assert_eq!(p2, agg::Rgba8::BLACK);
+  assert_eq!(p2, agg::Rgb8::BLACK);
 }

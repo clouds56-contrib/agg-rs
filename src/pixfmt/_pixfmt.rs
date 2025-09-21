@@ -1,7 +1,7 @@
 use std::marker::PhantomData;
 
 use crate::{
-  Color, FromRaw2, FromRaw3, FromRaw4, Gray8, Pixel, RenderingBuffer, Rgb8, Rgba8, Rgba32, RgbaPre8,
+  Color, FromRaw2, FromRaw3, FromRaw4, Gray8, NamedColor, Pixel, RenderingBuffer, Rgb8, Rgba8, Rgba32, RgbaPre8,
   math::{lerp_u8, multiply_u8, prelerp_u8},
 };
 
@@ -16,7 +16,7 @@ impl<T> Pixfmt<T>
 where
   Pixfmt<T>: Pixel,
 {
-  pub(crate) fn new(rbuf: RenderingBuffer) -> Self {
+  pub fn new(rbuf: RenderingBuffer) -> Self {
     // if rbuf.width == 0 || rbuf.height == 0 || rbuf.len() == 0 || rbuf.len() % Self::bpp() != 0 {
     //   panic!("Cannot create pixfmt with 0 width or height");
     // }
@@ -47,27 +47,40 @@ where
   ///
   /// All color components are set to 255, including `alpha` if present
   ///
-  ///     use agg::prelude::*;
+  /// ```
+  /// use agg::prelude::*;
   ///
-  ///     // Pixfmt with Rgb8, not Alpha Component
-  ///     let mut pix = Pixfmt::<Rgb8>::create(2,2);
-  ///     pix.clear();
-  ///     let empty = Rgba8::WHITE;
-  ///     assert_eq!(pix.get((0,0)), empty);
-  ///     assert_eq!(pix.get((0,1)), empty);
-  ///     assert_eq!(pix.get((1,0)), empty);
-  ///     assert_eq!(pix.get((1,1)), empty);
+  /// // Pixfmt with Rgb8, not Alpha Component
+  /// let mut pix = Pixfmt::<Rgb8>::create(2, 2);
+  /// pix.clear();
+  /// let empty = Rgb8::WHITE;
+  /// assert_eq!(pix.get((0, 0)), empty);
+  /// assert_eq!(pix.get((0, 1)), empty);
+  /// assert_eq!(pix.get((1, 0)), empty);
+  /// assert_eq!(pix.get((1, 1)), empty);
   ///
-  ///     // Pixfmt with Rgba8, including Alpha Component
-  ///     let mut pix = Pixfmt::<Rgb8>::create(2,2);
-  ///     pix.clear();
-  ///     let empty = Rgba8::WHITE;
-  ///     assert_eq!(pix.get((0,0)), empty);
-  ///     assert_eq!(pix.get((0,1)), empty);
-  ///     assert_eq!(pix.get((1,0)), empty);
-  ///     assert_eq!(pix.get((1,1)), empty);
-  pub fn clear(&mut self) {
-    self.rbuf.clear();
+  /// // Pixfmt with Rgba8, including Alpha Component
+  /// let mut pix = Pixfmt::<Rgba8>::create(2, 2);
+  /// pix.clear();
+  /// let empty = Rgba8::WHITE;
+  /// assert_eq!(pix.get((0, 0)), empty);
+  /// assert_eq!(pix.get((0, 1)), empty);
+  /// assert_eq!(pix.get((1, 0)), empty);
+  /// assert_eq!(pix.get((1, 1)), empty);
+  ///
+  /// let mut pix = Pixfmt::<Rgba32>::create(2, 2);
+  /// pix.clear();
+  /// let empty = Rgba32::WHITE;
+  /// assert_eq!(pix.get((0, 0)), empty);
+  /// assert_eq!(pix.get((0, 1)), empty);
+  /// assert_eq!(pix.get((1, 0)), empty);
+  /// assert_eq!(pix.get((1, 1)), empty);
+  /// ```
+  pub fn clear(&mut self)
+  where
+    <Self as Pixel>::Color: NamedColor,
+  {
+    self.fill(<Self as Pixel>::Color::WHITE);
   }
   //pub fn from(rbuf: RenderingBuffer) -> Self {
   //    Self { rbuf, phantom: PhantomData }
@@ -103,7 +116,7 @@ where
   /// use agg::{NamedColor, Pixfmt, Rgb8, Rgba8, Source};
   ///
   /// let mut pix = Pixfmt::<Rgb8>::create(10, 1);
-  /// let black = Rgba8::BLACK;
+  /// let black = Rgb8::BLACK;
   /// pix.copy_hline(0, 0, 10, black);
   /// assert_eq!(pix.get((0, 0)), black);
   /// assert_eq!(pix.get((1, 0)), black);
@@ -198,19 +211,18 @@ impl Pixfmt<Rgba8> {
 }
 
 impl Pixfmt<Gray8> {
-  pub fn mix_pix(&mut self, id: (usize, usize), c: Gray8, alpha: u8) -> Gray8 {
-    let p = Gray8::from_slice(&self.rbuf[id]);
+  pub fn mix_pix(&mut self, (x, y): (usize, usize), c: Gray8, alpha: u8) -> Gray8 {
+    let p = Gray8::from_slice(self.rbuf.get_pixel(x, y));
     Gray8::from_raw(lerp_u8(p.luma.0, c.luma.0, alpha), alpha)
   }
-  pub fn raw(&self, id: (usize, usize)) -> Gray8 {
-    Gray8::from_slice(&self.rbuf[id])
+  pub fn raw(&self, (x, y): (usize, usize)) -> Gray8 {
+    Gray8::from_slice(self.rbuf.get_pixel(x, y))
   }
 }
 
 impl Pixfmt<Rgb8> {
-  pub fn raw(&self, id: (usize, usize)) -> Rgb8 {
-    let p = &self.rbuf[id];
-    Rgb8::from_slice(p)
+  pub fn raw(&self, (x, y): (usize, usize)) -> Rgb8 {
+    Rgb8::from_slice(self.rbuf.get_pixel(x, y))
   }
   /// Compute **over** operator
   ///
@@ -268,37 +280,38 @@ impl Pixfmt<RgbaPre8> {
 
 /// Access Pixel source color
 pub trait Source {
-  fn get(&self, id: (usize, usize)) -> Rgba8;
+  type Color: Color;
+  fn get(&self, id: (usize, usize)) -> Self::Color;
 }
 
 impl Source for Pixfmt<Rgba8> {
-  fn get(&self, id: (usize, usize)) -> Rgba8 {
-    let p = &self.rbuf[id];
-    Rgba8::from_slice(p)
+  type Color = Rgba8;
+  fn get(&self, (x, y): (usize, usize)) -> Self::Color {
+    Rgba8::from_slice(self.rbuf.get_pixel(x, y))
   }
 }
 impl Source for Pixfmt<RgbaPre8> {
-  fn get(&self, id: (usize, usize)) -> Rgba8 {
-    let p = &self.rbuf[id];
-    RgbaPre8::from_slice(p).rgba()
+  type Color = Rgba8;
+  fn get(&self, (x, y): (usize, usize)) -> Self::Color {
+    RgbaPre8::from_slice(self.rbuf.get_pixel(x, y)).rgba()
   }
 }
 impl Source for Pixfmt<Rgb8> {
-  fn get(&self, id: (usize, usize)) -> Rgba8 {
-    let p = &self.rbuf[id];
-    Rgb8::from_slice(p).rgba()
+  type Color = Rgb8;
+  fn get(&self, (x, y): (usize, usize)) -> Self::Color {
+    Rgb8::from_slice(self.rbuf.get_pixel(x, y))
   }
 }
 impl Source for Pixfmt<Rgba32> {
-  fn get(&self, id: (usize, usize)) -> Rgba8 {
+  type Color = Rgba32;
+  fn get(&self, (x, y): (usize, usize)) -> Self::Color {
     //let n = (id.0 + id.1 * self.rbuf.width) * Pixfmt::<Rgba32>::bpp();
-    let p = &self.rbuf[id];
+    let p = self.rbuf.get_pixel(x, y);
     let red = f32::from_ne_bytes([p[0], p[1], p[2], p[3]]);
     let green = f32::from_ne_bytes([p[4], p[5], p[6], p[7]]);
     let blue = f32::from_ne_bytes([p[8], p[9], p[10], p[11]]);
     let alpha = f32::from_ne_bytes([p[12], p[13], p[14], p[15]]);
 
-    let c = Rgba32::new(red, green, blue, alpha);
-    c.rgba()
+    Rgba32::new(red, green, blue, alpha)
   }
 }
