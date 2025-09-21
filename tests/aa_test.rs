@@ -1,6 +1,6 @@
 mod assets;
 
-use agg::{color::{NamedColor, Srgba8}, math::lerp_u8, prelude::*};
+use agg::{math::lerp_u8, prelude::*};
 
 use crate::assets::start_logger;
 
@@ -16,8 +16,8 @@ fn path_from_slice(pts: &[f64]) -> agg::Path {
 }
 
 #[allow(clippy::too_many_arguments)]
-fn dash_line<T: Pixel>(
-  ren: &mut agg::RenderingScanlineAASolid<T::Color, T>,
+fn dash_line<T: Pixel, C: Color + FromColor>(
+  ren: &mut agg::RenderingScanlineAASolid<T, C>,
   ras: &mut agg::RasterizerScanline,
   x1: f64,
   y1: f64,
@@ -64,7 +64,7 @@ fn t26_aa_test() {
 
   let mut ras = agg::RasterizerScanline::new();
   {
-    let mut ren = agg::RenderingScanlineAASolid::new(&mut ren_base, Rgb8::BLACK);
+    let mut ren = agg::RenderingScanlineAASolid::new(&mut ren_base, Rgba8::BLACK);
     ren.color(agg::Rgba64::from_raw(1.0, 1.0, 1.0, 0.2));
     for i in (1..=180).rev() {
       let n = 2.0 * (i as f64) * std::f64::consts::PI / 180.0;
@@ -306,7 +306,9 @@ fn t26_aa_test() {
   }
 
   output.push("aa_test.png");
+  // let mut images = images.parent().unwrap().parent().unwrap().join("examples/out");
   images.push("aa_test.png");
+  // println!("Output: {:?} Images: {:?}", output, images);
   ren_base.to_file(&output).unwrap();
   assert!(agg::ppm::img_diff(output, images).unwrap());
 }
@@ -333,7 +335,7 @@ fn calc_linear_gradient_transform(x1: f64, y1: f64, x2: f64, y2: f64) -> agg::Tr
   mtx
 }
 
-fn color_gradient<C: Color>(begin: C, end: C, n: usize) -> Vec<Srgba8> {
+fn color_gradient<C: Color>(begin: C, end: C, n: usize) -> Vec<Rgb64> {
   let begin = begin.srgba8();
   let end = end.srgba8();
   (0..n).map(|i| {
@@ -341,6 +343,6 @@ fn color_gradient<C: Color>(begin: C, end: C, n: usize) -> Vec<Srgba8> {
     let red = lerp_u8(begin.red.0, end.red.0, a);
     let green = lerp_u8(begin.green.0, end.green.0, a);
     let blue = lerp_u8(begin.blue.0, end.blue.0, a);
-    Srgba8::from_raw(red, green, blue, 255)
+    Srgba8::from_raw(red, green, blue, 255).rgb()
   }).collect()
 }

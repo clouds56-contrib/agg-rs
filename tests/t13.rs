@@ -4,6 +4,8 @@ use agg::prelude::*;
 
 #[test]
 fn t13_aliased() {
+  flexi_logger::Logger::try_with_env_or_str("debug").unwrap().start().ok();
+
   let (w, h) = (100, 100);
 
   let pixf = agg::Pixfmt::<agg::Rgb8>::new(w, h);
@@ -12,7 +14,7 @@ fn t13_aliased() {
 
   ren_base.clear(agg::Rgb8::WHITE);
 
-  let mut ren = agg::RenderingScanlineAASolid::new(&mut ren_base, Rgb8::RED);
+  let mut ren = agg::RenderingScanlineBinSolid::new(&mut ren_base, Rgba8::RED);
 
   let mut ras = agg::RasterizerScanline::new();
 

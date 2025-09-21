@@ -34,9 +34,10 @@ fn t21_line_join() {
   assert!(agg::ppm::img_diff("tests/tmp/line_join.png", "images/line_join.png").unwrap());
 }
 
-fn text<T>(ras: &mut agg::RasterizerScanline, ren: &mut agg::RenderingScanlineAASolid<T::Color, T>, x: f64, y: f64, txt: &str)
+fn text<T, C>(ras: &mut agg::RasterizerScanline, ren: &mut agg::RenderingScanlineAASolid<T, C>, x: f64, y: f64, txt: &str)
 where
   T: agg::Pixel,
+  C: Color + FromColor,
 {
   let mut t = agg::GsvText::new();
   t.size(12.0, 0.0);

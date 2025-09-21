@@ -19,10 +19,9 @@ pub struct Pixfmt<T> {
   phantom: PhantomData<T>,
 }
 
-impl<C0, T> Pixfmt<T>
+impl<T> Pixfmt<T>
 where
-  Pixfmt<T>: Pixel<Color = C0>,
-  C0: Color + FromColor,
+  Pixfmt<T>: Pixel,
 {
   /// Create new Pixel Format of width * height * bpp
   ///
@@ -228,7 +227,7 @@ impl Pixel for Pixfmt<Rgba8> {
   impl_pixel!();
   fn _set(&mut self, id: (usize, usize), n: usize, c: Self::Color) {
     let bpp = Self::bpp();
-    let c = c.rgba8().into_slice();
+    let c = c.into_slice();
     let p = &mut self.rbuf[id][..n * bpp];
     for chunk in p.chunks_mut(bpp) {
       chunk.copy_from_slice(&c);
@@ -326,6 +325,14 @@ impl Pixel for Pixfmt<RgbaPre8> {
     for chunk in p.chunks_mut(bpp) {
       chunk.copy_from_slice(&c);
     }
+  }
+  fn set<C: Color>(&mut self, id: (usize, usize), c: C) {
+    let c = RgbaPre8::from_raw(c.red8(), c.green8(), c.blue8(), c.alpha8());
+    self._set(id, 1, c);
+  }
+  fn setn<C: Color>(&mut self, id: (usize, usize), n: usize, c: C) {
+    let c = RgbaPre8::from_raw(c.red8(), c.green8(), c.blue8(), c.alpha8());
+    self._set(id, n, c);
   }
   fn bpp() -> usize {
     4
@@ -798,5 +805,26 @@ mod tests {
     assert_eq!(pix.get((0, 0)), Rgba8::from_raw(255, 255, 255, 128)); // Alpha channel is ignored
     pix.copy_or_blend_pix_with_cover((0, 0), Rgba8::from_raw(0, 0, 0, beta), cover);
     assert_eq!(pix.get((0, 0)), Rgba8::from_raw(191, 191, 191, 160));
+  }
+
+  #[test]
+  fn test_fill() {
+    let (w, h) = (3, 5);
+    let mut pix = Pixfmt::<RgbaPre8>::new(w, h);
+    let black = Rgba8::BLACK;
+    let white = Rgba8::WHITE;
+
+    pix.clear();
+    pix.fill(black);
+    for y in 0..h {
+      for x in 0..w {
+        assert_eq!(pix.get((x, y)), black, "pix({},{}): {:?}", x, y, pix.get((x, y)));
+      }
+    }
+
+    pix.copy_hline(0, 0, w, white);
+    for x in 0..w {
+      assert_eq!(pix.get((x, 0)), white, "pix({},0): {:?}", x, pix.get((x, 0)));
+    }
   }
 }

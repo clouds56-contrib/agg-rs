@@ -1,7 +1,5 @@
 //! Renderer
 
-use std::marker::PhantomData;
-
 use crate::FromColor;
 use crate::FromRaw4;
 use crate::MAX_HALF_WIDTH;
@@ -36,22 +34,21 @@ pub(crate) const LINE_MAX_LENGTH: i64 = 1 << (POLY_SUBPIXEL_SHIFT + 10);
 
 /// Aliased Renderer
 #[derive(Debug)]
-pub struct RenderingScanlineBinSolid<'a, Color, Pixel: 'a> {
+pub struct RenderingScanlineBinSolid<'a, Pixel: 'a, Color = Rgba8> {
   pub base: &'a mut RenderingBase<Pixel>,
   pub color: Color,
 }
 /// Anti-Aliased Renderer
 #[derive(Debug)]
-pub struct RenderingScanlineAASolid<'a, Color, Pixel: 'a> {
+pub struct RenderingScanlineAASolid<'a, Pixel: 'a, Color = Rgba8> {
   base: &'a mut RenderingBase<Pixel>,
   color: Color,
 }
 
 #[derive(Debug)]
-pub struct RenderingScanlineAA<'a, Color, Pixel, Gradient> {
+pub struct RenderingScanlineAA<'a, Pixel, Gradient> {
   base: &'a mut RenderingBase<Pixel>,
   span: Gradient,
-  color: PhantomData<Color>,
 }
 
 pub trait GradientCalculation {
@@ -235,7 +232,7 @@ impl<G: GradientCalculation, C: Clone> Gradient for SpanGradient<G, C> {
 }
 
 /// Render a single Scanline (y-row) without Anti-Aliasing (Binary?)
-fn render_scanline_bin_solid<T: Pixel>(sl: &ScanlineU8, ren: &mut RenderingBase<T>, color: T::Color) {
+fn render_scanline_bin_solid<T: Pixel, C: Color>(sl: &ScanlineU8, ren: &mut RenderingBase<T>, color: C) {
   let cover_full = 255;
   for span in &sl.spans {
     ren.blend_hline(span.x, sl.y, span.x - 1 + span.len.abs(), color, cover_full);
@@ -243,7 +240,7 @@ fn render_scanline_bin_solid<T: Pixel>(sl: &ScanlineU8, ren: &mut RenderingBase<
 }
 
 /// Render a single Scanline (y-row) with Anti Aliasing
-fn render_scanline_aa_solid<T: Pixel>(sl: &ScanlineU8, ren: &mut RenderingBase<T>, color: T::Color) {
+fn render_scanline_aa_solid<T: Pixel, C: Color>(sl: &ScanlineU8, ren: &mut RenderingBase<T>, color: C) {
   let y = sl.y;
   for span in &sl.spans {
     let x = span.x;
@@ -256,11 +253,11 @@ fn render_scanline_aa_solid<T: Pixel>(sl: &ScanlineU8, ren: &mut RenderingBase<T
 }
 
 /// Render a single Scanline (y-row) with Anti-Aliasing
-fn render_scanline_aa<C, T, G>(sl: &ScanlineU8, ren: &mut RenderingBase<T>, span_gen: &G)
+fn render_scanline_aa<T, G>(sl: &ScanlineU8, ren: &mut RenderingBase<T>, span_gen: &G)
 where
-  C: Color,
-  T: Pixel<Color=C>,
-  G: Gradient<Color=C>,
+  T: Pixel,
+  G: Gradient,
+  G::Color: Color,
 {
   let y = sl.y;
   for span in &sl.spans {
@@ -295,10 +292,10 @@ impl RenderData {
   }
 }
 
-impl<C, T> Render for RenderingScanlineAASolid<'_, C, T>
+impl<T, C> Render for RenderingScanlineAASolid<'_, T, C>
 where
-C: Color + FromColor,
-  T: Pixel<Color = C>,
+  C: Color + FromColor,
+  T: Pixel,
 {
   /// Render a single Scanline Row
   fn render(&mut self, data: &RenderData) {
@@ -309,10 +306,10 @@ C: Color + FromColor,
     self.color = C::from_color(color);
   }
 }
-impl<C, T> Render for RenderingScanlineBinSolid<'_, C, T>
+impl<T, C> Render for RenderingScanlineBinSolid<'_, T, C>
 where
 C: Color + FromColor,
-  T: Pixel<Color = C>,
+  T: Pixel,
 {
   /// Render a single Scanline Row
   fn render(&mut self, data: &RenderData) {
@@ -323,11 +320,11 @@ C: Color + FromColor,
     self.color = C::from_color(color);
   }
 }
-impl< C,T, G> Render for RenderingScanlineAA<'_,C,  T, G>
+impl<T, G> Render for RenderingScanlineAA<'_, T, G>
 where
-C: Color,
-  T: Pixel<Color = C>,
-  G: Gradient<Color = C>,
+  T: Pixel,
+  G: Gradient,
+  G::Color: Color,
 {
   /// Render a single Scanline Row
   fn render(&mut self, data: &RenderData) {
@@ -339,17 +336,14 @@ C: Color,
   }
 }
 
-impl<'a, C, T> RenderingScanlineBinSolid<'a, C, T>
+impl<'a, T, C> RenderingScanlineBinSolid<'a, T, C>
 where
-  T: Pixel<Color = C>,
+  T: Pixel,
   C: Color,
 {
   /// Create a new Renderer from a Rendering Base
   pub fn new(base: &'a mut RenderingBase<T>, color: C) -> Self {
     Self { base, color }
-  }
-  pub fn new_black(base: &'a mut RenderingBase<T>) -> Self where  C: NamedColor {
-    Self { base, color: C::BLACK }
   }
   pub fn as_bytes(&self) -> &[u8] {
     self.base.as_bytes()
@@ -358,45 +352,52 @@ where
     self.base.to_file(filename)
   }
 }
-impl<'a, C, T, G> RenderingScanlineAA<'a, C, T, G>
+impl<'a, T: Pixel> RenderingScanlineBinSolid<'a, T, Rgba8> {
+  pub fn new_black(base: &'a mut RenderingBase<T>) -> Self {
+    Self::new(base, Rgba8::BLACK)
+  }
+}
+impl<'a, T, G> RenderingScanlineAA<'a, T, G>
 where
-C: Color,
-  T: Pixel<Color = C>,
-  G: Gradient<Color = C>,
+  T: Pixel,
+  G: Gradient,
 {
   pub fn new(base: &'a mut RenderingBase<T>, span: G) -> Self {
-    Self { base, span, color: PhantomData }
-  }
-}
-impl<'a, C, T> RenderingScanlineAASolid<'a, C, T>
-where
-  T: Pixel<Color = C>,
-  C: Color,
-{
-  /// Create a new Renderer from a Rendering Base
-  pub fn new(base: &'a mut RenderingBase<T>, color: C) -> Self {
-    Self { base, color }
-  }
-  pub fn new_black(base: &'a mut RenderingBase<T>) -> Self where  C: NamedColor {
-    Self { base, color: C::BLACK }
-  }
-  pub fn as_bytes(&self) -> &[u8] {
-    self.base.as_bytes()
-  }
-  pub fn to_file<P: AsRef<std::path::Path>>(&self, filename: P) -> Result<(), std::io::Error> {
-    self.base.to_file(filename)
+    Self { base, span }
   }
 }
 
+impl<'a, T, C> RenderingScanlineAASolid<'a, T, C>
+where
+  T: Pixel,
+  C: Color,
+{
+  /// Create a new Renderer from a Rendering Base
+  pub fn new(base: &'a mut RenderingBase<T>, color: C) -> Self {
+    Self { base, color }
+  }
+  pub fn as_bytes(&self) -> &[u8] {
+    self.base.as_bytes()
+  }
+  pub fn to_file<P: AsRef<std::path::Path>>(&self, filename: P) -> Result<(), std::io::Error> {
+    self.base.to_file(filename)
+  }
+}
+impl<'a, T: Pixel> RenderingScanlineAASolid<'a, T, Rgba8> {
+  pub fn new_black(base: &'a mut RenderingBase<T>) -> Self {
+    Self::new(base, Rgba8::BLACK)
+  }
+}
 /* pub trait Scale<T> {
     fn upscale(v: f64)   -> T;
     fn downscale(v: i64) -> T;
 }*/
 
 /// Render rasterized data to an image using a single color, Binary
-pub fn render_scanlines_bin_solid<T>(ras: &mut RasterizerScanline, ren: &mut RenderingBase<T>, color: T::Color)
+pub fn render_scanlines_bin_solid<T, C>(ras: &mut RasterizerScanline, ren: &mut RenderingBase<T>, color: C)
 where
   T: Pixel,
+  C: Color,
 {
   let mut sl = ScanlineU8::new();
   if ras.rewind_scanlines() {
@@ -408,9 +409,10 @@ where
 }
 
 /// Render rasterized data to an image using a single color, Anti-aliased
-pub fn render_scanlines_aa_solid<T>(ras: &mut RasterizerScanline, ren: &mut RenderingBase<T>, color: T::Color)
+pub fn render_scanlines_aa_solid<T, C>(ras: &mut RasterizerScanline, ren: &mut RenderingBase<T>, color: C)
 where
   T: Pixel,
+  C: Color,
 {
   let mut sl = ScanlineU8::new();
   if ras.rewind_scanlines() {

@@ -263,9 +263,10 @@ fn rasterizers2_pre() {
   assert!(agg::ppm::img_diff("tests/tmp/rasterizers2_pre.png", "images/rasterizers2_pre.png",).unwrap());
 }
 
-fn text<T>(ras: &mut agg::RasterizerScanline, ren: &mut agg::RenderingScanlineAASolid<T::Color, T>, x: f64, y: f64, txt: &str)
+fn text<T, C>(ras: &mut agg::RasterizerScanline, ren: &mut agg::RenderingScanlineAASolid<T, C>, x: f64, y: f64, txt: &str)
 where
-  T: agg::Pixel,
+  T: Pixel,
+  C: Color + FromColor,
 {
   let mut t = agg::GsvText::new();
   t.size(8.0, 0.0);

@@ -5,7 +5,6 @@ use crate::color::Gray8;
 use crate::pixfmt::Pixfmt;
 
 use crate::Color;
-use crate::FromColor;
 use crate::FromRaw4;
 use crate::Pixel;
 use crate::Source;
@@ -22,10 +21,9 @@ where
   pub alpha: Pixfmt<Gray8>,
 }
 
-impl<C0, T> AlphaMaskAdaptor<T>
+impl<T> AlphaMaskAdaptor<T>
 where
-  C0: FromColor,
-  Pixfmt<T>: Pixel<Color=C0> + Source,
+  Pixfmt<T>: Pixel + Source,
 {
   /// Create a new Alpha Mask Adapator from a two PixelFormats
   pub fn new(rgb: Pixfmt<T>, alpha: Pixfmt<Gray8>) -> Self {
