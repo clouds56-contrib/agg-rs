@@ -336,11 +336,21 @@ pub trait Pixel {
   fn to_file<P: AsRef<std::path::Path>>(&self, filename: P) -> Result<(), std::io::Error>;
   fn width(&self) -> usize;
   fn height(&self) -> usize;
-  fn set(&mut self, id: (usize, usize), c: Self::Color);
-  fn setn(&mut self, id: (usize, usize), n: usize, c: Self::Color);
-  fn blend_pix(&mut self, id: (usize, usize), c: Self::Color, cover: u64);
+  fn _set(&mut self, id: (usize, usize), n: usize, c: Self::Color);
+  fn set<C: Color>(&mut self, id: (usize, usize), c: C) {
+    self._set(id, 1, Self::Color::from_color(c));
+  }
+  fn setn<C: Color>(&mut self, id: (usize, usize), n: usize, c: C) {
+    self._set(id, n, Self::Color::from_color(c));
+  }
   /// Fill the data with the specified `color`
-  fn fill(&mut self, color: Self::Color);
+  fn fill<C: Color>(&mut self, color: C) {
+    let (w, h) = (self.width(), self.height());
+    for i in 0..w {
+      self.setn((i, 0), h, color);
+    }
+  }
+  fn blend_pix<C: Color>(&mut self, id: (usize, usize), c: C, cover: u64);
   /// Copy or blend a pixel at `id` with `color`
   ///
   /// If `color` [`is_opaque`], the color is copied directly to the pixel,
@@ -352,7 +362,6 @@ pub trait Pixel {
   /// [`is_transparent`]: ../trait.Color.html#method.is_transparent
   fn copy_or_blend_pix<C: Color>(&mut self, id: (usize, usize), color: C) {
     if !color.is_transparent() {
-      let color = Self::Color::from_color(color);
       if color.is_opaque() {
         self.set(id, color);
       } else {
@@ -398,7 +407,6 @@ pub trait Pixel {
   /// [`cover_mask`]: ../trait.Pixel.html#method.cover_mask
   fn copy_or_blend_pix_with_cover<C: Color>(&mut self, id: (usize, usize), color: C, cover: u64) {
     if !color.is_transparent() {
-      let color = Self::Color::from_color(color);
       if color.is_opaque() && cover == Self::cover_mask() {
         self.set(id, color);
       } else {
@@ -413,7 +421,6 @@ pub trait Pixel {
       return;
     }
     let (x, y, len) = (x as usize, y as usize, len as usize);
-    let color = Self::Color::from_color(color);
     if color.is_opaque() && cover == Self::cover_mask() {
       self.setn((x, y), len, color);
     } else {

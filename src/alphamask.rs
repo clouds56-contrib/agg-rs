@@ -52,7 +52,7 @@ where
       let pix = &mut self.rgb.get((x + i, y));
       let alpha = u64::from(self.alpha.raw((x + i, y)).luma.0);
       let pix = blend_pix(pix, color, alpha);
-      self.rgb.set((x + i, y), C0::from_color(pix));
+      self.rgb.set((x + i, y), pix);
     }
   }
 }

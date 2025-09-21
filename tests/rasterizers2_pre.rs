@@ -121,7 +121,7 @@ fn chain() -> agg::Pixfmt<agg::Rgba32> {
   let mut k = 0;
   for j in 0..height {
     for i in 0..width {
-      pix.set((i, j), colors[k].rgba());
+      pix.set((i, j), colors[k]);
       k += 1;
     }
   }
