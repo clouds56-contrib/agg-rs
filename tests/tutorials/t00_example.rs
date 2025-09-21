@@ -18,11 +18,11 @@ fn t00_example() {
   agg::render_scanlines(&mut ras, &mut ren);
 
   // Save the image to a file
-  ren_base.to_file("tests/tmp/little_black_triangle.png").unwrap();
+  ren_base.to_file("tests/tmp/t00_example.png").unwrap();
   assert!(
     agg::ppm::img_diff(
-      "tests/tmp/little_black_triangle.png",
-      "images/little_black_triangle.png"
+      "tests/tmp/t00_example.png",
+      "images/t00_example.png"
     )
     .unwrap()
   );

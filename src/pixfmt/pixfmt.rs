@@ -26,9 +26,9 @@ where
     }
   }
 
-  /// Create new Pixel Format of width * height * bpp
+  /// Create new Pixel Format of `width` x `height``
   ///
-  /// Allocates memory of width * height * bpp
+  /// Allocates memory of `width * height * bpp`
   pub fn create(width: usize, height: usize) -> Self {
     if width == 0 || height == 0 {
       panic!("Cannot create pixfmt with 0 width or height");
@@ -38,15 +38,6 @@ where
       phantom: PhantomData,
     }
   }
-  // /// Fill with a color
-  // pub fn fill<C: Color>(&mut self, color: C) {
-  //     let (w,h) = (self.width(), self.height());
-  //     for i in 0 .. w {
-  //         for j in 0 .. h {
-  //             self.set((i,j),color);
-  //         }
-  //     }
-  // }
 
   /// Size of Rendering Buffer in bytes; width * height * bpp
   pub fn size(&self) -> usize {
@@ -85,15 +76,17 @@ where
   ///
   /// Locations outside of the region are igorned
   ///
-  ///     use agg::prelude::*;
+  /// ```
+  /// use agg::prelude::*;
   ///
-  ///     let mut pix = Pixfmt::<Rgba8>::create(1,2);
-  ///     let black = Rgba8::BLACK;
-  ///     pix.copy_pixel(0,1, black);
-  ///     assert_eq!(pix.get((0,0)), Rgba8::from_raw(0,0,0,0));
-  ///     assert_eq!(pix.get((0,1)), black);
+  /// let mut pix = Pixfmt::<Rgba8>::create(1,2);
+  /// let black = Rgba8::BLACK;
+  /// pix.copy_pixel(0,1, black);
+  /// assert_eq!(pix.get((0,0)), Rgba8::from_raw(0,0,0,0));
+  /// assert_eq!(pix.get((0,1)), black);
   ///
-  ///     pix.copy_pixel(10,10, black); // Ignored, outside of range
+  /// pix.copy_pixel(10,10, black); // Ignored, outside of range
+  /// ```
   ///
   /// [Color]: ../trait.Color.html
   pub fn copy_pixel<C: Color>(&mut self, x: usize, y: usize, c: C) {
@@ -106,16 +99,18 @@ where
   ///
   /// Locations outside of the region are ignored
   ///
-  ///     use agg::{NamedColor,Source,Pixfmt,Rgb8,Rgba8};
+  /// ```
+  /// use agg::{NamedColor,Source,Pixfmt,Rgb8,Rgba8};
   ///
-  ///     let mut pix = Pixfmt::<Rgb8>::create(10,1);
-  ///     let black = Rgba8::BLACK;
-  ///     pix.copy_hline(0,0,10, black);
-  ///     assert_eq!(pix.get((0,0)), black);
-  ///     assert_eq!(pix.get((1,0)), black);
-  ///     assert_eq!(pix.get((9,0)), black);
+  /// let mut pix = Pixfmt::<Rgb8>::create(10,1);
+  /// let black = Rgba8::BLACK;
+  /// pix.copy_hline(0,0,10, black);
+  /// assert_eq!(pix.get((0,0)), black);
+  /// assert_eq!(pix.get((1,0)), black);
+  /// assert_eq!(pix.get((9,0)), black);
   ///
-  ///     pix.copy_hline(1,1,10, black); // Ignored, outside of range
+  /// pix.copy_hline(1,1,10, black); // Ignored, outside of range
+  /// ```
   ///
   /// [Color]: ../trait.Color.html
   pub fn copy_hline<C: Color>(&mut self, x: usize, y: usize, n: usize, c: C) {
@@ -131,22 +126,24 @@ where
       self.set((x + i, y), c);
     }
   }
-  /// Copies the [Color] `c` to pixels from (`x`,`y`) to (`x`,`y+n-1`)
+  /// Copies the [`c: Color`](Color) to pixels from `(x, y)` to `(x, y+n-1)`
   ///
   /// Locations outside of the region are ignored
   ///
-  ///     use agg::prelude::*;
+  /// ```
+  /// use agg::prelude::*;
   ///
-  ///     let mut pix = Pixfmt::<Rgba32>::create(1,10);
-  ///     let black  = Rgba32::new(0.,0.,0.,1.);
-  ///     pix.copy_vline(0,0,10, black);
+  /// let mut pix = Pixfmt::<Rgba32>::create(1,10);
+  /// let black  = Rgba32::new(0.,0.,0.,1.);
+  /// pix.copy_vline(0,0,10, black);
   ///
-  ///     let black8 = black.rgba(); // pix.get() returns Rgba8
-  ///     assert_eq!(pix.get((0,0)), black8);
-  ///     assert_eq!(pix.get((0,1)), black8);
-  ///     assert_eq!(pix.get((0,9)), black8);
+  /// let black8 = black.rgba(); // pix.get() returns Rgba8
+  /// assert_eq!(pix.get((0,0)), black8);
+  /// assert_eq!(pix.get((0,1)), black8);
+  /// assert_eq!(pix.get((0,9)), black8);
   ///
-  ///     pix.copy_vline(1,1,10, black); // Ignored, outside of range
+  /// pix.copy_vline(1,1,10, black); // Ignored, outside of range
+  /// ```
   ///
   /// [Color]: ../trait.Color.html
   /// [Rgba8]: ../Color/struct.Rgba8.html

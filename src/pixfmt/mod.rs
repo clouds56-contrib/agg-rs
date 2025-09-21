@@ -1,12 +1,12 @@
 //! Pixel Format
 
 pub mod alpha_blend;
-pub(crate) mod buffer;
+pub mod buffer;
 pub mod pixel;
 pub mod pixfmt;
 
 pub use alpha_blend::*;
-pub(crate) use buffer::*;
+pub use buffer::*;
 pub use pixel::*;
 pub use pixfmt::*;
 

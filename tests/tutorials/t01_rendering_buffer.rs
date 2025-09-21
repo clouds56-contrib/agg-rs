@@ -30,6 +30,6 @@ fn t01_rendering_buffer() {
     pix.set((i, i), agg::Rgb8::from_raw(127, 200, 98));
   }
 
-  pix.to_file("tests/tmp/agg_test_01.png").unwrap();
-  assert!(agg::ppm::img_diff("tests/tmp/agg_test_01.png", "images/agg_test_01.png").unwrap());
+  pix.to_file("tests/tmp/t01_rendering_buffer.png").unwrap();
+  assert!(agg::ppm::img_diff("tests/tmp/t01_rendering_buffer.png", "images/t01_rendering_buffer.png").unwrap());
 }

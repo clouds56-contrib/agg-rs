@@ -4,7 +4,7 @@
 ///
 /// Data is stored as row-major order (C-format)
 #[derive(Debug, Default)]
-pub(crate) struct RenderingBuffer {
+pub struct RenderingBuffer {
   /// Pixel / Component level data of Image
   pub data: Vec<u8>,
   /// Image Width in pixels
