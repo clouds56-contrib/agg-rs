@@ -21,7 +21,7 @@ fn draw_black_frame(pix: &mut agg::Pixfmt<agg::Rgb8>) {
 fn t02_pixel_formats() {
   //let rbuf = agg::RenderingBuffer::new(320, 220, 3);
   let mut pix = agg::Pixfmt::<agg::Rgb8>::create(320, 220);
-  pix.clear();
+  pix.fill(Rgb8::WHITE);
   draw_black_frame(&mut pix);
 
   for i in 0..pix.height() / 2 {

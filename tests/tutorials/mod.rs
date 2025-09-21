@@ -3,9 +3,7 @@
 pub mod t00_example;
 pub mod t01_rendering_buffer;
 pub mod t02_pixel_formats;
-pub mod t03_solar_spectrum;
-pub mod t04_solar_spectrum_alpha;
-pub mod t05_solar_spectrum_alpha;
+pub mod t03_spectrum;
 pub mod t11;
 pub mod t12;
 pub mod t13;

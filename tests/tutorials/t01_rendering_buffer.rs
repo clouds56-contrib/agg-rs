@@ -1,4 +1,5 @@
 extern crate agg;
+
 use agg::{pixfmt::RenderingBuffer, prelude::*};
 
 /// Draw a black frame around the rendering buffer, assuming it has
