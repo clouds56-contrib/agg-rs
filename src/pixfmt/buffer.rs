@@ -91,29 +91,41 @@ impl RenderingBuffer {
   /// Get a slice starting at pixel (`x`,`y`), `0 <= x < width`, `0 <= y < height`
   ///
   /// The slice goes to the end of the underlying [`data`](Self::data)
-  pub fn offset(&self, x: usize, y: usize) -> &[u8] {
+  pub fn offset(&self, (x, y): (usize, usize)) -> &[u8] {
     let i = self.offset_index(x, y);
     &self.data[i..]
   }
   /// Get a mutable slice starting at pixel (`x`,`y`), `0 <= x < width`, `0 <= y < height`
   ///
   /// The slice goes to the end of the underlying [`data`](Self::data)
-  pub fn offset_mut(&mut self, x: usize, y: usize) -> &mut [u8] {
+  pub fn offset_mut(&mut self, (x, y): (usize, usize)) -> &mut [u8] {
     let i = self.offset_index(x, y);
     &mut self.data[i..]
+  }
+  pub fn slice(&self, id: (usize, usize), len: usize) -> &[u8] {
+    let start = self.offset_index(id.0, id.1);
+    let end = start + len * self.bpp;
+    debug_assert!(end <= self.data.len(), "slice out of bounds");
+    &self.data[start..end]
+  }
+  pub fn slice_mut(&mut self, id: (usize, usize), len: usize) -> &mut [u8] {
+    let start = self.offset_index(id.0, id.1);
+    let end = start + len * self.bpp;
+    debug_assert!(end <= self.data.len(), "slice out of bounds");
+    &mut self.data[start..end]
   }
   /// Get a slice of pixel at (`x`,`y`), `0 <= x < width`, `0 <= y < height`
   ///
   /// The length of the slice is `bpp`
-  pub fn get_pixel(&self, p: (usize, usize)) -> &[u8] {
-    let i = self.offset_index(p.0, p.1);
+  pub fn get_pixel(&self, x: usize, y: usize) -> &[u8] {
+    let i = self.offset_index(x, y);
     &self.data[i..i + self.bpp]
   }
   /// Get a mutable slice of pixel at (`x`,`y`), `0 <= x < width`, `0 <= y < height`
   ///
   /// The length of the slice is `bpp`
-  pub fn get_pixel_mut(&mut self, p: (usize, usize)) -> &mut [u8] {
-    let i = self.offset_index(p.0, p.1);
+  pub fn get_pixel_mut(&mut self, x: usize, y: usize) -> &mut [u8] {
+    let i = self.offset_index(x, y);
     &mut self.data[i..i + self.bpp]
   }
   /// Fill the underlying [`data`](Self::data) with value `v`
@@ -132,48 +144,5 @@ impl RenderingBuffer {
       data,
       flip: false,
     }
-  }
-}
-
-use std::ops::Index;
-use std::ops::IndexMut;
-
-impl Index<(usize, usize)> for RenderingBuffer {
-  type Output = [u8];
-  fn index(&self, index: (usize, usize)) -> &[u8] {
-    debug_assert!(
-      index.0 < self.width,
-      "request {} >= {} width :: index",
-      index.0,
-      self.width
-    );
-    debug_assert!(
-      index.1 < self.height,
-      "request {} >= {} height :: index",
-      index.1,
-      self.height
-    );
-    let i = ((index.1 * self.width) + index.0) * self.bpp;
-    debug_assert!(i < self.data.len());
-    &self.data[i..]
-  }
-}
-impl IndexMut<(usize, usize)> for RenderingBuffer {
-  fn index_mut(&mut self, index: (usize, usize)) -> &mut [u8] {
-    debug_assert!(
-      index.0 < self.width,
-      "request {} >= {} width :: index_mut",
-      index.0,
-      self.width
-    );
-    debug_assert!(
-      index.1 < self.height,
-      "request {} >= {} height :: index_mut",
-      index.1,
-      self.height
-    );
-    let i = ((index.1 * self.width) + index.0) * self.bpp;
-    debug_assert!(i < self.data.len());
-    &mut self.data[i..]
   }
 }

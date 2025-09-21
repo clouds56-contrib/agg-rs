@@ -1,7 +1,6 @@
 use crate::math::multiply_u8;
 use crate::{
-  Color, FromColor, FromRaw4, Gray8, IntoRaw2, IntoRaw3, IntoRaw4, Pixfmt, PixfmtAlphaBlend, Rgb8, Rgba8, Rgba32,
-  RgbaPre8, Source,
+  Color, FromColor, FromRaw4, Gray8, IntoRaw2, IntoRaw3, IntoRaw4, Pixfmt, Rgb8, Rgba8, Rgba32, RgbaPre8, Source,
 };
 
 /// Drawing and pixel related routines
@@ -54,30 +53,32 @@ pub trait Pixel {
   ///
   /// If `color` [`is_transparent`] nothing is done
   ///
-  ///     use agg::prelude::*;
+  /// ```
+  /// use agg::prelude::*;
   ///
-  ///     let mut pix = Pixfmt::<Rgb8>::create(1,1);
-  ///     let black  = Rgb8::BLACK;
-  ///     let white  = Rgb8::WHITE;
-  ///     pix.copy_pixel(0,0,black);
-  ///     assert_eq!(pix.get((0,0)), black);
+  /// let mut pix = Pixfmt::<Rgb8>::create(1, 1);
+  /// let black = Rgb8::BLACK;
+  /// let white = Rgb8::WHITE;
+  /// pix.copy_pixel(0, 0, black);
+  /// assert_eq!(pix.get((0, 0)), black);
   ///
-  ///     let (alpha, cover) = (255, 255); // Copy Pixel
-  ///     let color = Rgba8::from_raw(255,255,255,alpha);
-  ///     pix.copy_or_blend_pix_with_cover((0,0), color, cover);
-  ///     assert_eq!(pix.get((0,0)), white);
+  /// let (alpha, cover) = (255, 255); // Copy Pixel
+  /// let color = Rgba8::from_raw(255, 255, 255, alpha);
+  /// pix.copy_or_blend_pix_with_cover((0, 0), color, cover);
+  /// assert_eq!(pix.get((0, 0)), white);
   ///
-  ///     let (alpha, cover) = (255, 128); // Partial Coverage, Blend
-  ///     let color = Rgba8::from_raw(255,255,255,alpha);
-  ///     pix.copy_pixel(0,0,black);
-  ///     pix.copy_or_blend_pix_with_cover((0,0), color, cover);
-  ///     assert_eq!(pix.get((0,0)), Rgb8::from_raw(128,128,128));
+  /// let (alpha, cover) = (255, 128); // Partial Coverage, Blend
+  /// let color = Rgba8::from_raw(255, 255, 255, alpha);
+  /// pix.copy_pixel(0, 0, black);
+  /// pix.copy_or_blend_pix_with_cover((0, 0), color, cover);
+  /// assert_eq!(pix.get((0, 0)), Rgb8::from_raw(128, 128, 128));
   ///
-  ///     let (alpha, cover) = (128, 255); // Partial Coverage, Blend
-  ///     let color = Rgba8::from_raw(255,255,255,alpha);
-  ///     pix.copy_pixel(0,0,black);
-  ///     pix.copy_or_blend_pix_with_cover((0,0), color, cover);
-  ///     assert_eq!(pix.get((0,0)), Rgb8::from_raw(128,128,128));
+  /// let (alpha, cover) = (128, 255); // Partial Coverage, Blend
+  /// let color = Rgba8::from_raw(255, 255, 255, alpha);
+  /// pix.copy_pixel(0, 0, black);
+  /// pix.copy_or_blend_pix_with_cover((0, 0), color, cover);
+  /// assert_eq!(pix.get((0, 0)), Rgb8::from_raw(128, 128, 128));
+  /// ```
   ///
   /// [`is_opaque`]: ../trait.Color.html#method.is_opaque
   /// [`is_transparent`]: ../trait.Color.html#method.is_transparent
@@ -209,9 +210,10 @@ impl Pixel for Pixfmt<Rgba8> {
   type Color = Rgba8;
   impl_pixel!();
   fn _set(&mut self, id: (usize, usize), n: usize, c: Self::Color) {
-    let bpp = Self::bpp();
+    let bpp = self.rbuf.bpp;
     let c = c.into_slice();
-    let p = &mut self.rbuf[id][..n * bpp];
+    debug_assert_eq!(c.len(), bpp);
+    let p = self.rbuf.slice_mut(id, n);
     for chunk in p.chunks_mut(bpp) {
       chunk.copy_from_slice(&c);
     }
@@ -243,9 +245,10 @@ impl Pixel for Pixfmt<Rgb8> {
   type Color = Rgb8;
   impl_pixel!();
   fn _set(&mut self, id: (usize, usize), n: usize, c: Self::Color) {
-    let bpp = Self::bpp();
+    let bpp = self.rbuf.bpp;
     let c = c.into_slice();
-    let p = &mut self.rbuf[id][..bpp * n];
+    debug_assert_eq!(c.len(), bpp);
+    let p = self.rbuf.slice_mut(id, n);
     for chunk in p.chunks_mut(bpp) {
       chunk.copy_from_slice(&c);
     }
@@ -267,9 +270,10 @@ impl Pixel for Pixfmt<RgbaPre8> {
   type Color = RgbaPre8;
   impl_pixel!();
   fn _set(&mut self, id: (usize, usize), n: usize, c: Self::Color) {
-    let bpp = Self::bpp();
+    let bpp = self.rbuf.bpp;
     let c = c.into_slice();
-    let p = &mut self.rbuf[id][..n * bpp];
+    debug_assert_eq!(c.len(), bpp);
+    let p = self.rbuf.slice_mut(id, n);
     for chunk in p.chunks_mut(bpp) {
       chunk.copy_from_slice(&c);
     }
@@ -307,15 +311,13 @@ impl Pixel for Pixfmt<Rgba32> {
   fn set<C: Color>(&mut self, id: (usize, usize), c: C) {
     let c = Rgba32::from_color(c);
     assert!(!self.rbuf.data.is_empty());
+    let pixel = self.rbuf.get_pixel_mut(id.0, id.1);
+    debug_assert_eq!(pixel.len(), 16);
 
-    self.rbuf[id][..4].copy_from_slice(&c.red.to_ne_bytes());
-    self.rbuf[id][4..8].copy_from_slice(&c.green.to_ne_bytes());
-    self.rbuf[id][8..12].copy_from_slice(&c.blue.to_ne_bytes());
-    self.rbuf[id][12..16].copy_from_slice(&c.alpha.to_ne_bytes());
-
-    //self.rbuf[id][ 4.. 8] = unsafe { std::mem::transmute(c.g) };
-    //self.rbuf[id][ 8..12] = unsafe { std::mem::transmute(c.b) };
-    //self.rbuf[id][12..16] = unsafe { std::mem::transmute(c.a) };
+    pixel[0..4].copy_from_slice(&c.red.to_ne_bytes());
+    pixel[4..8].copy_from_slice(&c.green.to_ne_bytes());
+    pixel[8..12].copy_from_slice(&c.blue.to_ne_bytes());
+    pixel[12..16].copy_from_slice(&c.alpha.to_ne_bytes());
   }
   fn bpp() -> usize {
     4 * 4
@@ -340,7 +342,8 @@ impl Pixel for Pixfmt<Gray8> {
   fn _set(&mut self, id: (usize, usize), n: usize, color: Self::Color) {
     let bpp = Self::bpp();
     let c = color.into_slice();
-    let p = &mut self.rbuf[id][..n * bpp];
+    debug_assert_eq!(c.len(), bpp);
+    let p = self.rbuf.slice_mut(id, n);
     for chunk in p.chunks_mut(bpp) {
       chunk.copy_from_slice(&c);
     }
@@ -355,60 +358,5 @@ impl Pixel for Pixfmt<Gray8> {
     let alpha = multiply_u8(c.alpha8(), cover as u8);
     let p0 = self.mix_pix(id, Gray8::from_color(c), alpha);
     self.set(id, p0);
-  }
-}
-
-impl Pixel for PixfmtAlphaBlend<'_, Pixfmt<Rgb8>, Gray8> {
-  type Color = Gray8;
-  fn width(&self) -> usize {
-    self.ren.pixf.width()
-  }
-  fn height(&self) -> usize {
-    self.ren.pixf.height()
-  }
-  fn as_bytes(&self) -> &[u8] {
-    self.ren.pixf.as_bytes()
-  }
-  fn to_file<P: AsRef<std::path::Path>>(&self, filename: P) -> Result<(), std::io::Error> {
-    crate::ppm::write_file(self.as_bytes(), self.width(), self.height(), filename)
-  }
-  fn _set(&mut self, id: (usize, usize), n: usize, c: Self::Color) {
-    let c = c.rgb8();
-    for i in 0..n {
-      self.ren.pixf.rbuf[(id.0 + i, id.1)][self.offset] = self.component(c).luma.0;
-    }
-  }
-  fn cover_mask() -> u64 {
-    Pixfmt::<Rgb8>::cover_mask()
-  }
-  fn bpp() -> usize {
-    Pixfmt::<Rgb8>::bpp()
-  }
-  fn blend_pix<C: Color>(&mut self, id: (usize, usize), c: C, cover: u64) {
-    let alpha = multiply_u8(c.alpha8(), cover as u8);
-
-    let c = c.rgb();
-    let c0 = self.component(c);
-    let p0 = self.mix_pix(id, c0, alpha);
-    self.set(id, p0);
-  }
-
-  fn blend_color_vspan<C: Color>(&mut self, x: i64, y: i64, len: i64, colors: &[C], covers: &[u64], cover: u64) {
-    assert_eq!(len as usize, colors.len());
-    let (x, y) = (x as usize, y as usize);
-    if !covers.is_empty() {
-      assert_eq!(colors.len(), covers.len());
-      for (i, (&color, &cover)) in colors.iter().zip(covers.iter()).enumerate() {
-        self.copy_or_blend_pix_with_cover((x, y + i), color, cover);
-      }
-    } else if cover == Self::cover_mask() {
-      for (i, &color) in colors.iter().enumerate() {
-        self.copy_or_blend_pix((x, y + i), color);
-      }
-    } else {
-      for (i, &color) in colors.iter().enumerate() {
-        self.copy_or_blend_pix_with_cover((x, y + i), color, cover);
-      }
-    }
   }
 }
