@@ -57,8 +57,8 @@ pub trait Pixel {
   ///     use agg::prelude::*;
   ///
   ///     let mut pix = Pixfmt::<Rgb8>::create(1,1);
-  ///     let black  = Rgba8::BLACK;
-  ///     let white  = Rgba8::WHITE;
+  ///     let black  = Rgb8::BLACK;
+  ///     let white  = Rgb8::WHITE;
   ///     pix.copy_pixel(0,0,black);
   ///     assert_eq!(pix.get((0,0)), black);
   ///
@@ -71,13 +71,13 @@ pub trait Pixel {
   ///     let color = Rgba8::from_raw(255,255,255,alpha);
   ///     pix.copy_pixel(0,0,black);
   ///     pix.copy_or_blend_pix_with_cover((0,0), color, cover);
-  ///     assert_eq!(pix.get((0,0)), Rgba8::from_raw(128,128,128,255));
+  ///     assert_eq!(pix.get((0,0)), Rgb8::from_raw(128,128,128));
   ///
   ///     let (alpha, cover) = (128, 255); // Partial Coverage, Blend
   ///     let color = Rgba8::from_raw(255,255,255,alpha);
   ///     pix.copy_pixel(0,0,black);
   ///     pix.copy_or_blend_pix_with_cover((0,0), color, cover);
-  ///     assert_eq!(pix.get((0,0)), Rgba8::from_raw(128,128,128,255));
+  ///     assert_eq!(pix.get((0,0)), Rgb8::from_raw(128,128,128));
   ///
   /// [`is_opaque`]: ../trait.Color.html#method.is_opaque
   /// [`is_transparent`]: ../trait.Color.html#method.is_transparent
