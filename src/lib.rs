@@ -150,7 +150,6 @@ pub mod stroke;
 pub mod text;
 pub mod transform;
 
-pub(crate) mod buffer;
 pub(crate) mod cell;
 pub mod math;
 pub(crate) mod scan;

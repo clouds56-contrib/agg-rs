@@ -1,8 +1,7 @@
 use std::marker::PhantomData;
 
 use crate::{
-  Color, FromRaw2, FromRaw3, FromRaw4, Gray8, Pixel, Rgb8, Rgba8, Rgba32, RgbaPre8,
-  buffer::RenderingBuffer,
+  Color, FromRaw2, FromRaw3, FromRaw4, Gray8, Pixel, RenderingBuffer, Rgb8, Rgba8, Rgba32, RgbaPre8,
   math::{lerp_u8, multiply_u8, prelerp_u8},
 };
 
