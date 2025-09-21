@@ -146,3 +146,83 @@ impl RenderingBuffer {
     }
   }
 }
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+  #[test]
+  fn test_rendering_buffer() {
+    let mut buf = RenderingBuffer::new(3, 5, 4);
+    assert_eq!(buf.width, 3);
+    assert_eq!(buf.height, 5);
+    assert_eq!(buf.bpp, 4);
+    assert_eq!(buf.stride(), 12);
+    assert!(!buf.is_empty());
+    assert_eq!(buf.len(), 3 * 5 * 4);
+    assert_eq!(buf.row_index(0), 0);
+    assert_eq!(buf.row_index(1), 12);
+    assert_eq!(buf.row_index(4), 48);
+    assert_eq!(buf.offset_index(0, 0), 0);
+    assert_eq!(buf.offset_index(1, 0), 4);
+    assert_eq!(buf.offset_index(2, 0), 8);
+    assert_eq!(buf.offset_index(0, 1), 12);
+    assert_eq!(buf.offset_index(1, 1), 16);
+    assert_eq!(buf.offset_index(2, 1), 20);
+    assert_eq!(buf.offset_index(0, 4), 48);
+    assert_eq!(buf.offset_index(1, 4), 52);
+    assert_eq!(buf.offset_index(2, 4), 56);
+
+    assert!(buf.data.iter().all(|&x| x == 0));
+    buf.fill(255);
+    assert!(buf.data.iter().all(|&x| x == 255));
+
+    let p = buf.get_pixel_mut(2, 1);
+    p[0] = 127;
+    p[1] = 200;
+    p[2] = 98;
+    assert_eq!(p.len(), 4);
+    assert_eq!(buf.data[20..24], [127, 200, 98, 255]);
+
+    let p = buf.get_pixel(2, 1);
+    assert_eq!(p.len(), 4);
+    assert_eq!(p, [127, 200, 98, 255]);
+
+    let row = buf.row(1);
+    assert_eq!(row.len(), 12);
+    assert_eq!(row[8..12], [127, 200, 98, 255]);
+
+    let offset = buf.offset((2, 1));
+    assert_eq!(offset.len(), 3 * 5 * 4 - 20);
+    assert_eq!(offset[0..4], [127, 200, 98, 255]);
+
+    let buf = buf.fliped();
+    assert!(buf.flip);
+    assert_eq!(buf.width, 3);
+    assert_eq!(buf.height, 5);
+    assert_eq!(buf.bpp, 4);
+    assert_eq!(buf.stride(), 12);
+    assert!(!buf.is_empty());
+    assert_eq!(buf.len(), 3 * 5 * 4);
+    assert_eq!(buf.row_index(0), 48);
+    assert_eq!(buf.row_index(1), 36);
+    assert_eq!(buf.row_index(4), 0);
+    assert_eq!(buf.offset_index(0, 0), 48);
+    assert_eq!(buf.offset_index(1, 0), 52);
+    assert_eq!(buf.offset_index(2, 0), 56);
+    assert_eq!(buf.offset_index(0, 1), 36);
+    assert_eq!(buf.offset_index(1, 1), 40);
+    assert_eq!(buf.offset_index(2, 1), 44);
+    assert_eq!(buf.offset_index(0, 4), 0);
+    assert_eq!(buf.offset_index(1, 4), 4);
+    assert_eq!(buf.offset_index(2, 4), 8);
+
+    assert_eq!(buf.data[20..24], [127, 200, 98, 255]);
+    assert_eq!(buf.get_pixel(2, 3), [127, 200, 98, 255]);
+    assert_eq!(buf.row(3)[8..12], [127, 200, 98, 255]);
+    let offset = buf.offset((2, 3));
+    assert_eq!(offset[0..4], [127, 200, 98, 255]);
+    assert_eq!(offset.len(), 3 * 5 * 4 - 20);
+
+    assert_eq!(buf.len(), 3 * 5 * 4);
+  }
+}
