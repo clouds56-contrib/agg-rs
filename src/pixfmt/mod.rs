@@ -115,7 +115,7 @@ mod tests {
   fn pixfmt_rgb8_test() {
     let mut pix = Pixfmt::<Rgb8>::create(1, 1);
     let black = Rgb8::BLACK;
-    let white= Rgb8::WHITE;
+    let white = Rgb8::WHITE;
 
     pix.copy_pixel(0, 0, Rgba8::from_raw(0, 0, 0, 255));
     assert_eq!(pix.get((0, 0)), black);

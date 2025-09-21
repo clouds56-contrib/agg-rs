@@ -59,12 +59,7 @@ impl RenderingBuffer {
   ///
   /// This would consider the [`flip`](Self::flip) flag
   pub fn row_index(&self, y: usize) -> usize {
-    debug_assert!(
-      y < self.height,
-      "request {} >= {} height :: index",
-      y,
-      self.height
-    );
+    debug_assert!(y < self.height, "request {} >= {} height :: index", y, self.height);
     if self.flip {
       (self.height - 1 - y) * self.stride()
     } else {
@@ -90,12 +85,7 @@ impl RenderingBuffer {
   ///
   /// This would consider the [`flip`](Self::flip) flag
   pub fn offset_index(&self, x: usize, y: usize) -> usize {
-    debug_assert!(
-      x < self.width,
-      "request {} >= {} width :: index",
-      x,
-      self.width
-    );
+    debug_assert!(x < self.width, "request {} >= {} width :: index", x, self.width);
     self.row_index(y) + x * self.bpp
   }
   /// Get a slice starting at pixel (`x`,`y`), `0 <= x < width`, `0 <= y < height`

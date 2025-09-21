@@ -1,7 +1,8 @@
 use std::marker::PhantomData;
 
 use crate::{
-  math::{lerp_u8, multiply_u8, prelerp_u8}, Color, FromRaw2, FromRaw3, FromRaw4, Gray8, NamedColor, Pixel, RenderingBuffer, Rgb8, Rgba32, Rgba8, RgbaPre8
+  Color, FromRaw2, FromRaw3, FromRaw4, Gray8, NamedColor, Pixel, RenderingBuffer, Rgb8, Rgba8, Rgba32, RgbaPre8,
+  math::{lerp_u8, multiply_u8, prelerp_u8},
 };
 
 /// Pixel Format Wrapper around raw pixel component data
@@ -15,7 +16,7 @@ impl<T> Pixfmt<T>
 where
   Pixfmt<T>: Pixel,
 {
-  pub(crate) fn new(rbuf: RenderingBuffer) -> Self {
+  pub fn new(rbuf: RenderingBuffer) -> Self {
     // if rbuf.width == 0 || rbuf.height == 0 || rbuf.len() == 0 || rbuf.len() % Self::bpp() != 0 {
     //   panic!("Cannot create pixfmt with 0 width or height");
     // }
@@ -50,32 +51,35 @@ where
   /// use agg::prelude::*;
   ///
   /// // Pixfmt with Rgb8, not Alpha Component
-  /// let mut pix = Pixfmt::<Rgb8>::create(2,2);
+  /// let mut pix = Pixfmt::<Rgb8>::create(2, 2);
   /// pix.clear();
   /// let empty = Rgb8::WHITE;
-  /// assert_eq!(pix.get((0,0)), empty);
-  /// assert_eq!(pix.get((0,1)), empty);
-  /// assert_eq!(pix.get((1,0)), empty);
-  /// assert_eq!(pix.get((1,1)), empty);
+  /// assert_eq!(pix.get((0, 0)), empty);
+  /// assert_eq!(pix.get((0, 1)), empty);
+  /// assert_eq!(pix.get((1, 0)), empty);
+  /// assert_eq!(pix.get((1, 1)), empty);
   ///
   /// // Pixfmt with Rgba8, including Alpha Component
-  /// let mut pix = Pixfmt::<Rgba8>::create(2,2);
+  /// let mut pix = Pixfmt::<Rgba8>::create(2, 2);
   /// pix.clear();
   /// let empty = Rgba8::WHITE;
-  /// assert_eq!(pix.get((0,0)), empty);
-  /// assert_eq!(pix.get((0,1)), empty);
-  /// assert_eq!(pix.get((1,0)), empty);
-  /// assert_eq!(pix.get((1,1)), empty);
+  /// assert_eq!(pix.get((0, 0)), empty);
+  /// assert_eq!(pix.get((0, 1)), empty);
+  /// assert_eq!(pix.get((1, 0)), empty);
+  /// assert_eq!(pix.get((1, 1)), empty);
   ///
-  /// let mut pix = Pixfmt::<Rgba32>::create(2,2);
+  /// let mut pix = Pixfmt::<Rgba32>::create(2, 2);
   /// pix.clear();
   /// let empty = Rgba32::WHITE;
-  /// assert_eq!(pix.get((0,0)), empty);
-  /// assert_eq!(pix.get((0,1)), empty);
-  /// assert_eq!(pix.get((1,0)), empty);
-  /// assert_eq!(pix.get((1,1)), empty);
+  /// assert_eq!(pix.get((0, 0)), empty);
+  /// assert_eq!(pix.get((0, 1)), empty);
+  /// assert_eq!(pix.get((1, 0)), empty);
+  /// assert_eq!(pix.get((1, 1)), empty);
   /// ```
-  pub fn clear(&mut self) where <Self as Pixel>::Color: NamedColor {
+  pub fn clear(&mut self)
+  where
+    <Self as Pixel>::Color: NamedColor,
+  {
     self.fill(<Self as Pixel>::Color::WHITE);
   }
   //pub fn from(rbuf: RenderingBuffer) -> Self {
