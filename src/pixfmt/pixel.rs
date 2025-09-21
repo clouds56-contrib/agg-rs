@@ -1,5 +1,8 @@
 use crate::math::multiply_u8;
-use crate::{Color, FromColor, FromRaw4, Gray8, IntoRaw2, IntoRaw3, IntoRaw4, Pixfmt, PixfmtAlphaBlend, Rgb8, Rgba32, Rgba8, RgbaPre8, Source};
+use crate::{
+  Color, FromColor, FromRaw4, Gray8, IntoRaw2, IntoRaw3, IntoRaw4, Pixfmt, PixfmtAlphaBlend, Rgb8, Rgba8, Rgba32,
+  RgbaPre8, Source,
+};
 
 /// Drawing and pixel related routines
 pub trait Pixel {
@@ -182,7 +185,6 @@ pub trait Pixel {
   }
 }
 
-
 macro_rules! impl_pixel {
   () => {
     /// Height of rendering buffer in pixels
@@ -293,7 +295,6 @@ impl Pixel for Pixfmt<RgbaPre8> {
     self.set(id, p);
   }
 }
-
 
 impl Pixel for Pixfmt<Rgba32> {
   type Color = Rgba32;

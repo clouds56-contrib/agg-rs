@@ -1,7 +1,10 @@
 use std::marker::PhantomData;
 
-use crate::{buffer::RenderingBuffer, math::{lerp_u8, multiply_u8, prelerp_u8}, Color, FromRaw2, FromRaw3, FromRaw4, Gray8, Pixel, Rgb8, Rgba32, Rgba8, RgbaPre8};
-
+use crate::{
+  Color, FromRaw2, FromRaw3, FromRaw4, Gray8, Pixel, Rgb8, Rgba8, Rgba32, RgbaPre8,
+  buffer::RenderingBuffer,
+  math::{lerp_u8, multiply_u8, prelerp_u8},
+};
 
 /// Pixel Format Wrapper around raw pixel component data
 #[derive(Debug)]
@@ -171,7 +174,6 @@ where
   }
 }
 
-
 impl Pixfmt<Rgba8> {
   /// Computer **over** operator
   ///
@@ -198,7 +200,6 @@ impl Pixfmt<Rgba8> {
     self.set(id, pix);
   }
 }
-
 
 impl Pixfmt<Gray8> {
   pub fn mix_pix(&mut self, id: (usize, usize), c: Gray8, alpha: u8) -> Gray8 {

@@ -325,9 +325,6 @@ pub trait Rasterize {
 }
 */
 
-
-
-
 pub(crate) trait LineInterp {
   fn init(&mut self);
   fn step_hor(&mut self);

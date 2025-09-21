@@ -1,12 +1,11 @@
 //! Pixel Format
 
-pub mod pixfmt;
-pub mod pixel;
 pub mod alpha_blend;
-pub use pixfmt::*;
-pub use pixel::*;
+pub mod pixel;
+pub mod pixfmt;
 pub use alpha_blend::*;
-
+pub use pixel::*;
+pub use pixfmt::*;
 
 #[cfg(test)]
 mod tests {
