@@ -4,9 +4,9 @@ use agg::prelude::*;
 fn draw(alpha: u8, filename: &str) {
   let (w, h) = (320, 320);
 
-  let pixf = agg::Pixfmt::<agg::Rgb8>::new(w, h);
+  let pixf = agg::Pixfmt::<Rgb8>::new(w, h);
   let mut ren_base = agg::RenderingBase::new(pixf);
-  ren_base.clear(agg::Rgba8::WHITE);
+  ren_base.clear(Rgb8::WHITE);
   let g8 = Gray8::from_raw(0, alpha);
 
   let w2 = (w / 2) as f64;

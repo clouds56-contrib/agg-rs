@@ -1,11 +1,10 @@
 use agg::prelude::*;
-use agg::{Pixfmt, Rgb8, Rgba8};
 
 #[test]
 fn t22_inner_join() {
   let pix = Pixfmt::<Rgb8>::new(400, 100);
   let mut ren_base = agg::RenderingBase::new(pix);
-  ren_base.clear(Rgba8::WHITE);
+  ren_base.clear(Rgb8::WHITE);
 
   let joins = [
     agg::InnerJoin::Miter,
@@ -27,11 +26,11 @@ fn t22_inner_join() {
     let mut ras = agg::RasterizerScanline::new();
     ras.add_path(&stroke);
 
-    let mut ren = agg::RenderingScanlineAASolid::with_base(&mut ren_base);
+    let mut ren = agg::RenderingScanlineAASolid::new_black(&mut ren_base);
     agg::render_scanlines(&mut ras, &mut ren);
   }
   let mut ras = agg::RasterizerScanline::new();
-  let mut ren = agg::RenderingScanlineAASolid::with_base(&mut ren_base);
+  let mut ren = agg::RenderingScanlineAASolid::new_black(&mut ren_base);
   text(&mut ras, &mut ren, 29.0, 90.0, "Miter");
   text(&mut ras, &mut ren, 125.0, 90.0, "Round");
   text(&mut ras, &mut ren, 225.0, 90.0, "Bevel");
@@ -41,7 +40,7 @@ fn t22_inner_join() {
   assert!(agg::ppm::img_diff("tests/tmp/inner_join.png", "images/inner_join.png").unwrap());
 }
 
-fn text<T>(ras: &mut agg::RasterizerScanline, ren: &mut agg::RenderingScanlineAASolid<T>, x: f64, y: f64, txt: &str)
+fn text<T>(ras: &mut agg::RasterizerScanline, ren: &mut agg::RenderingScanlineAASolid<T::Color, T>, x: f64, y: f64, txt: &str)
 where
   T: agg::Pixel,
 {

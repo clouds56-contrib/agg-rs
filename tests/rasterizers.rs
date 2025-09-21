@@ -15,7 +15,7 @@ fn rasterizers() {
 
   let pixf = agg::Pixfmt::<agg::Rgb8>::new(w, h);
   let mut ren_base = agg::RenderingBase::new(pixf);
-  ren_base.clear(agg::Rgba8::WHITE);
+  ren_base.clear(agg::Rgb8::WHITE);
 
   //let gamma = 1.0;
   let alpha = 0.5;
@@ -24,7 +24,7 @@ fn rasterizers() {
 
   // Anti-Aliased
   {
-    let mut ren_aa = agg::RenderingScanlineAASolid::with_base(&mut ren_base);
+    let mut ren_aa = agg::RenderingScanlineAASolid::new_black(&mut ren_base);
     let mut path = agg::Path::new();
 
     path.move_to(m_x[0], m_y[0]);
@@ -38,7 +38,7 @@ fn rasterizers() {
 
   // Aliased
   {
-    let mut ren_bin = agg::RenderingScanlineBinSolid::with_base(&mut ren_base);
+    let mut ren_bin = agg::RenderingScanlineBinSolid::new_black(&mut ren_base);
     let mut path = agg::Path::new();
 
     path.move_to(m_x[0] - 200., m_y[0]);
@@ -63,7 +63,7 @@ fn rasterizers_gamma() {
 
   let pixf = agg::Pixfmt::<agg::Rgb8>::new(w, h);
   let mut ren_base = agg::RenderingBase::new(pixf);
-  ren_base.clear(agg::Rgba8::WHITE);
+  ren_base.clear(agg::Rgb8::WHITE);
 
   let gamma = 1.0;
   let alpha = 0.5;
@@ -72,7 +72,7 @@ fn rasterizers_gamma() {
 
   // Anti-Aliased
   {
-    let mut ren_aa = agg::RenderingScanlineAASolid::with_base(&mut ren_base);
+    let mut ren_aa = agg::RenderingScanlineAASolid::new_black(&mut ren_base);
     let mut path = agg::Path::new();
 
     path.move_to(m_x[0], m_y[0]);
@@ -88,7 +88,7 @@ fn rasterizers_gamma() {
 
   // Aliased
   {
-    let mut ren_bin = agg::RenderingScanlineBinSolid::with_base(&mut ren_base);
+    let mut ren_bin = agg::RenderingScanlineBinSolid::new_black(&mut ren_base);
     let mut path = agg::Path::new();
 
     path.move_to(m_x[0] - 200., m_y[0]);

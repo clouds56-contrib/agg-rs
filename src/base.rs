@@ -2,7 +2,6 @@
 
 use crate::Color;
 use crate::Pixel;
-use crate::color::*;
 use std::cmp::max;
 use std::cmp::min;
 
@@ -28,7 +27,7 @@ where
     self.pixf.to_file(filename)
   }
   /// Set Image to a single color
-  pub fn clear(&mut self, color: Rgba8) {
+  pub fn clear(&mut self, color: T::Color) {
     self.pixf.fill(color);
   }
   /// Get Image size

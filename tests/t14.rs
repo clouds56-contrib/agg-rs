@@ -10,11 +10,9 @@ fn t14_with_gamma() {
 
   let mut ren_base = agg::RenderingBase::new(pixf);
 
-  ren_base.clear(agg::Rgba8::WHITE);
+  ren_base.clear(agg::Rgb8::WHITE);
 
-  let mut ren = agg::RenderingScanlineAASolid::with_base(&mut ren_base);
-
-  ren.color(agg::Rgba8::RED);
+  let mut ren = agg::RenderingScanlineAASolid::new(&mut ren_base, Rgb8::RED);
 
   let mut ras = agg::RasterizerScanline::new();
 

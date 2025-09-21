@@ -329,17 +329,18 @@ pub trait Source {
 
 /// Drawing and pixel related routines
 pub trait Pixel {
+  type Color: Color + FromColor;
   fn cover_mask() -> u64;
   fn bpp() -> usize;
   fn as_bytes(&self) -> &[u8];
   fn to_file<P: AsRef<std::path::Path>>(&self, filename: P) -> Result<(), std::io::Error>;
   fn width(&self) -> usize;
   fn height(&self) -> usize;
-  fn set<C: Color>(&mut self, id: (usize, usize), c: C);
-  fn setn<C: Color>(&mut self, id: (usize, usize), n: usize, c: C);
-  fn blend_pix<C: Color>(&mut self, id: (usize, usize), c: C, cover: u64);
+  fn set(&mut self, id: (usize, usize), c: Self::Color);
+  fn setn(&mut self, id: (usize, usize), n: usize, c: Self::Color);
+  fn blend_pix(&mut self, id: (usize, usize), c: Self::Color, cover: u64);
   /// Fill the data with the specified `color`
-  fn fill<C: Color>(&mut self, color: C);
+  fn fill(&mut self, color: Self::Color);
   /// Copy or blend a pixel at `id` with `color`
   ///
   /// If `color` [`is_opaque`], the color is copied directly to the pixel,
@@ -351,6 +352,7 @@ pub trait Pixel {
   /// [`is_transparent`]: ../trait.Color.html#method.is_transparent
   fn copy_or_blend_pix<C: Color>(&mut self, id: (usize, usize), color: C) {
     if !color.is_transparent() {
+      let color = Self::Color::from_color(color);
       if color.is_opaque() {
         self.set(id, color);
       } else {
@@ -396,6 +398,7 @@ pub trait Pixel {
   /// [`cover_mask`]: ../trait.Pixel.html#method.cover_mask
   fn copy_or_blend_pix_with_cover<C: Color>(&mut self, id: (usize, usize), color: C, cover: u64) {
     if !color.is_transparent() {
+      let color = Self::Color::from_color(color);
       if color.is_opaque() && cover == Self::cover_mask() {
         self.set(id, color);
       } else {
@@ -410,6 +413,7 @@ pub trait Pixel {
       return;
     }
     let (x, y, len) = (x as usize, y as usize, len as usize);
+    let color = Self::Color::from_color(color);
     if color.is_opaque() && cover == Self::cover_mask() {
       self.setn((x, y), len, color);
     } else {
@@ -428,27 +432,28 @@ pub trait Pixel {
   }
   /// Copy or Blend a single `color` from (`x`,`y`) to (`x`,`y+len-1`)
   ///    with `cover`
-  fn blend_vline<C: Color>(&mut self, x: i64, y: i64, len: i64, c: C, cover: u64) {
-    if c.is_transparent() {
+  fn blend_vline<C: Color>(&mut self, x: i64, y: i64, len: i64, color: C, cover: u64) {
+    if color.is_transparent() {
       return;
     }
     let (x, y, len) = (x as usize, y as usize, len as usize);
-    if c.is_opaque() && cover == Self::cover_mask() {
+    let color = Self::Color::from_color(color);
+    if color.is_opaque() && cover == Self::cover_mask() {
       for i in 0..len {
-        self.set((x, y + i), c);
+        self.set((x, y + i), color);
       }
     } else {
       for i in 0..len {
-        self.blend_pix((x, y + i), c, cover);
+        self.blend_pix((x, y + i), color, cover);
       }
     }
   }
   /// Blend a single `color` from (`x`,`y`) to (`x`,`y+len-1`) with collection
   ///   of `covers`
-  fn blend_solid_vspan<C: Color>(&mut self, x: i64, y: i64, len: i64, c: C, covers: &[u64]) {
+  fn blend_solid_vspan<C: Color>(&mut self, x: i64, y: i64, len: i64, color: C, covers: &[u64]) {
     assert_eq!(len as usize, covers.len());
     for (i, &cover) in covers.iter().enumerate() {
-      self.blend_vline(x, y + i as i64, 1, c, cover);
+      self.blend_vline(x, y + i as i64, 1, color, cover);
     }
   }
   /// Blend a collection of `colors` from (`x`,`y`) to (`x+len-1`,`y`) with
@@ -535,12 +540,12 @@ pub(crate) trait DistanceInterpolator {
 
 pub mod prelude {
   pub use crate::{
-    Color as _, FromColor as _, FromRaw2 as _, FromRaw3 as _, FromRaw4 as _, IntoRaw2 as _, IntoRaw3 as _,
-    IntoRaw4 as _, NamedColor as _, Pixel as _, Render as _, Source as _, VertexSource as _,
+    Color, FromColor, FromRaw2 as _, FromRaw3 as _, FromRaw4 as _, IntoRaw2 as _, IntoRaw3 as _,
+    IntoRaw4 as _, NamedColor as _, Pixel, Render as _, Source as _, VertexSource as _,
   };
 
   pub use crate::{DrawOutline, Pixfmt, PixfmtAlphaBlend, RenderingBase};
-  pub use crate::{Gray8, Gray16, Gray32, Gray64, Rgb8, Rgb16, Rgb32, Rgb64, Rgba8, Rgba16, Rgba32, Rgba64};
+  pub use crate::{Gray8, Gray16, Gray32, Gray64, Rgb8, Rgb16, Rgb32, Rgb64, Rgba8, Rgba16, Rgba32, Rgba64, Srgba8, Srgba16, Srgba32, Srgba64};
   pub use crate::{RasterizerOutline, RendererPrimatives};
   pub use crate::{RasterizerOutlineAA, RendererOutlineAA};
 }

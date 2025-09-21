@@ -19,9 +19,10 @@ pub struct Pixfmt<T> {
   phantom: PhantomData<T>,
 }
 
-impl<T> Pixfmt<T>
+impl<C0, T> Pixfmt<T>
 where
-  Pixfmt<T>: Pixel,
+  Pixfmt<T>: Pixel<Color = C0>,
+  C0: FromColor,
 {
   /// Create new Pixel Format of width * height * bpp
   ///
@@ -97,7 +98,7 @@ where
     if x >= self.rbuf.width || y >= self.rbuf.height {
       return;
     }
-    self.set((x, y), c);
+    self.set((x, y), C0::from_color(c));
   }
   /// Copies the [Color] `c` to pixels from (`x`,`y`) to (`x+n-1`,y)
   ///
@@ -125,7 +126,7 @@ where
       n
     };
     for i in 0..n {
-      self.set((x + i, y), c);
+      self.set((x + i, y), C0::from_color(c));
     }
   }
   /// Copies the [Color] `c` to pixels from (`x`,`y`) to (`x`,`y+n-1`)
@@ -157,7 +158,7 @@ where
       n
     };
     for i in 0..n {
-      self.set((x, y + i), c);
+      self.set((x, y + i), C0::from_color(c));
     }
   }
 
@@ -223,8 +224,9 @@ macro_rules! impl_pixel {
 }
 
 impl Pixel for Pixfmt<Rgba8> {
+  type Color = Rgba8;
   impl_pixel!();
-  fn setn<C: Color>(&mut self, id: (usize, usize), n: usize, c: C) {
+  fn setn(&mut self, id: (usize, usize), n: usize, c: Self::Color) {
     let bpp = Self::bpp();
     let c = c.rgba8().into_slice();
     let p = &mut self.rbuf[id][..n * bpp];
@@ -238,7 +240,7 @@ impl Pixel for Pixfmt<Rgba8> {
   fn cover_mask() -> u64 {
     255
   }
-  fn set<C: Color>(&mut self, id: (usize, usize), c: C) {
+  fn set(&mut self, id: (usize, usize), c: Self::Color) {
     let c = c.rgba8();
     assert!(!self.rbuf.data.is_empty());
     self.rbuf[id][0] = c.red8();
@@ -255,13 +257,13 @@ impl Pixel for Pixfmt<Rgba8> {
   ///
   /// # Output
   ///   - lerp(pixel(x,y), color, cover * alpha(color))
-  fn blend_pix<C: Color>(&mut self, id: (usize, usize), c: C, cover: u64) {
-    let alpha = multiply_u8(c.alpha8(), cover as u8);
+  fn blend_pix(&mut self, id: (usize, usize), color: Self::Color, cover: u64) {
+    let alpha = multiply_u8(color.alpha8(), cover as u8);
     let pix0 = self.get(id); // Rgba8
-    let pix = self.mix_pix(pix0, c.rgba(), alpha);
+    let pix = self.mix_pix(pix0, color, alpha);
     self.set(id, pix);
   }
-  fn fill<C: Color>(&mut self, color: C) {
+  fn fill(&mut self, color: Self::Color) {
     let n = 4;
     let bpp = Self::bpp();
     let c = color.rgba8().into_slice();
@@ -279,8 +281,9 @@ impl Pixel for Pixfmt<Rgba8> {
 }
 
 impl Pixel for Pixfmt<Rgb8> {
+  type Color = Rgb8;
   impl_pixel!();
-  fn setn<C: Color>(&mut self, id: (usize, usize), n: usize, c: C) {
+  fn setn(&mut self, id: (usize, usize), n: usize, c: Self::Color) {
     let bpp = Self::bpp();
     let c = c.rgb8().into_slice();
     let p = &mut self.rbuf[id][..bpp * n];
@@ -288,7 +291,7 @@ impl Pixel for Pixfmt<Rgb8> {
       chunk.copy_from_slice(&c);
     }
   }
-  fn set<C: Color>(&mut self, id: (usize, usize), c: C) {
+  fn set(&mut self, id: (usize, usize), c: Self::Color) {
     let c = c.rgb8().into_slice();
     let p = &mut self.rbuf[id][..3];
     p.copy_from_slice(&c);
@@ -302,12 +305,12 @@ impl Pixel for Pixfmt<Rgb8> {
   fn cover_mask() -> u64 {
     255
   }
-  fn blend_pix<C: Color>(&mut self, id: (usize, usize), c: C, cover: u64) {
+  fn blend_pix(&mut self, id: (usize, usize), c: Self::Color, cover: u64) {
     let pix0 = self.raw(id);
     let pix = self.mix_pix(pix0, c.rgb(), c.alpha8(), cover);
     self.set(id, pix);
   }
-  fn fill<C: Color>(&mut self, color: C) {
+  fn fill(&mut self, color: Self::Color) {
     let n = 4;
     let bpp = Self::bpp();
     let c = color.rgb8().into_slice();
@@ -358,16 +361,17 @@ impl Pixfmt<Rgba8> {
   }
 }
 impl Pixel for Pixfmt<RgbaPre8> {
+  type Color = RgbaPre8;
   impl_pixel!();
-  fn setn<C: Color>(&mut self, id: (usize, usize), n: usize, c: C) {
+  fn setn(&mut self, id: (usize, usize), n: usize, c: Self::Color) {
     let bpp = Self::bpp();
-    let c = RgbaPre8::from_color(c).into_slice();
+    let c = c.into_slice();
     let p = &mut self.rbuf[id][..n * bpp];
     for chunk in p.chunks_mut(bpp) {
       chunk.copy_from_slice(&c);
     }
   }
-  fn set<C: Color>(&mut self, id: (usize, usize), c: C) {
+  fn set(&mut self, id: (usize, usize), c: Self::Color) {
     //let c = Rgba8pre::from(c);
     self.rbuf[id][0] = c.red8();
     self.rbuf[id][1] = c.green8();
@@ -380,13 +384,13 @@ impl Pixel for Pixfmt<RgbaPre8> {
   fn cover_mask() -> u64 {
     255
   }
-  fn blend_pix<C: Color>(&mut self, id: (usize, usize), c: C, cover: u64) {
+  fn blend_pix(&mut self, id: (usize, usize), color: Self::Color, cover: u64) {
     let p = self.get(id);
     let p0 = RgbaPre8::from_raw(p.red8(), p.green8(), p.blue8(), p.alpha8());
-    let p = self.mix_pix(p0, c.rgba(), c.alpha8(), cover);
+    let p = self.mix_pix(p0, color.rgba(), color.alpha8(), cover);
     self.set(id, p);
   }
-  fn fill<C: Color>(&mut self, color: C) {
+  fn fill(&mut self, color: Self::Color) {
     let n = 4;
     let bpp = Self::bpp();
     let c = RgbaPre8::from_color(color).into_slice();
@@ -465,13 +469,14 @@ impl Pixfmt<RgbaPre8> {
 }
 
 impl Pixel for Pixfmt<Rgba32> {
+  type Color = Rgba32;
   impl_pixel!();
-  fn setn<C: Color>(&mut self, id: (usize, usize), n: usize, c: C) {
+  fn setn(&mut self, id: (usize, usize), n: usize, c: Self::Color) {
     for i in 0..n {
       self.set((id.0 + i, id.1), c);
     }
   }
-  fn set<C: Color>(&mut self, id: (usize, usize), c: C) {
+  fn set(&mut self, id: (usize, usize), c: Self::Color) {
     let c = Rgba32::from_color(c);
     assert!(!self.rbuf.data.is_empty());
 
@@ -490,7 +495,7 @@ impl Pixel for Pixfmt<Rgba32> {
   fn cover_mask() -> u64 {
     unimplemented!("no cover mask")
   }
-  fn blend_pix<C: Color>(&mut self, _id: (usize, usize), _c: C, _cover: u64) {
+  fn blend_pix(&mut self, _id: (usize, usize), _color: Self::Color, _cover: u64) {
     unimplemented!("no blending");
     /*
     let alpha = multiply_u8(c.alpha8(), cover as u8);
@@ -499,7 +504,7 @@ impl Pixel for Pixfmt<Rgba32> {
     self.set(id, &pix);
      */
   }
-  fn fill<C: Color>(&mut self, color: C) {
+  fn fill(&mut self, color: Self::Color) {
     let (w, h) = (self.width(), self.height());
     for i in 0..h {
       self.copy_hline(0, i, w, color);
@@ -508,17 +513,17 @@ impl Pixel for Pixfmt<Rgba32> {
 }
 
 impl Pixel for Pixfmt<Gray8> {
+  type Color = Gray8;
   impl_pixel!();
-  fn setn<C: Color>(&mut self, id: (usize, usize), n: usize, color: C) {
+  fn setn(&mut self, id: (usize, usize), n: usize, color: Self::Color) {
     let bpp = Self::bpp();
-    let c = Gray8::from_color(color).into_slice();
+    let c = color.into_slice();
     let p = &mut self.rbuf[id][..n * bpp];
     for chunk in p.chunks_mut(bpp) {
       chunk.copy_from_slice(&c);
     }
   }
-  fn set<C: Color>(&mut self, id: (usize, usize), c: C) {
-    let c = Gray8::from_color(c);
+  fn set(&mut self, id: (usize, usize), c: Self::Color) {
     self.rbuf[id][0] = c.luma.0;
     self.rbuf[id][1] = c.alpha.0;
   }
@@ -528,15 +533,15 @@ impl Pixel for Pixfmt<Gray8> {
   fn bpp() -> usize {
     2
   }
-  fn blend_pix<C: Color>(&mut self, id: (usize, usize), c: C, cover: u64) {
-    let alpha = multiply_u8(c.alpha8(), cover as u8);
-    let p0 = self.mix_pix(id, Gray8::from_color(c), alpha);
+  fn blend_pix(&mut self, id: (usize, usize), color: Self::Color, cover: u64) {
+    let alpha = multiply_u8(color.alpha8(), cover as u8);
+    let p0 = self.mix_pix(id, color, alpha);
     self.set(id, p0);
   }
-  fn fill<C: Color>(&mut self, color: C) {
+  fn fill(&mut self, color: Self::Color) {
     let n = 4;
     let bpp = Self::bpp();
-    let c = Gray8::from_color(color).into_slice();
+    let c = color.into_slice();
     let c2 = [c[0], c[1], c[0], c[1], c[0], c[1], c[0], c[1]];
     let mut chunks = self.rbuf.data.chunks_exact_mut(bpp * n);
     for chunk in chunks.by_ref() {
@@ -589,6 +594,7 @@ impl PixfmtAlphaBlend<'_, Pixfmt<Rgb8>, Gray8> {
 }
 
 impl Pixel for PixfmtAlphaBlend<'_, Pixfmt<Rgb8>, Gray8> {
+  type Color = Gray8;
   fn width(&self) -> usize {
     self.ren.pixf.width()
   }
@@ -601,7 +607,7 @@ impl Pixel for PixfmtAlphaBlend<'_, Pixfmt<Rgb8>, Gray8> {
   fn to_file<P: AsRef<std::path::Path>>(&self, filename: P) -> Result<(), std::io::Error> {
     crate::ppm::write_file(self.as_bytes(), self.width(), self.height(), filename)
   }
-  fn fill<C: Color>(&mut self, color: C) {
+  fn fill(&mut self, color: Self::Color) {
     let (w, h) = (self.width(), self.height());
     for i in 0..w {
       for j in 0..h {
@@ -609,14 +615,15 @@ impl Pixel for PixfmtAlphaBlend<'_, Pixfmt<Rgb8>, Gray8> {
       }
     }
   }
-  fn setn<C: Color>(&mut self, id: (usize, usize), n: usize, c: C) {
-    let c = c.rgb8();
+  fn setn(&mut self, id: (usize, usize), n: usize, color: Self::Color) {
+    // TODO: why use Rgb8 here
+    let c = color.rgb8();
     for i in 0..n {
       self.ren.pixf.rbuf[(id.0 + i, id.1)][self.offset] = self.component(c).luma.0;
     }
   }
-  fn set<C: Color>(&mut self, id: (usize, usize), c: C) {
-    let c = c.rgb();
+  fn set(&mut self, id: (usize, usize), color: Self::Color) {
+    let c = color.rgb();
     self.ren.pixf.rbuf[id][self.offset] = self.component(c).luma.0;
   }
   fn cover_mask() -> u64 {
@@ -625,10 +632,10 @@ impl Pixel for PixfmtAlphaBlend<'_, Pixfmt<Rgb8>, Gray8> {
   fn bpp() -> usize {
     Pixfmt::<Rgb8>::bpp()
   }
-  fn blend_pix<C: Color>(&mut self, id: (usize, usize), c: C, cover: u64) {
-    let alpha = multiply_u8(c.alpha8(), cover as u8);
+  fn blend_pix(&mut self, id: (usize, usize), color: Self::Color, cover: u64) {
+    let alpha = multiply_u8(color.alpha8(), cover as u8);
 
-    let c = c.rgb();
+    let c = color.rgb();
     let c0 = self.component(c);
     let p0 = self.mix_pix(id, c0, alpha);
     self.set(id, p0);

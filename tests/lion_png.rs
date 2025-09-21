@@ -97,9 +97,8 @@ mod tests {
     let (paths, colors) = parse_lion(false);
     let pixf = agg::Pixfmt::<agg::Rgb8>::new(w, h);
     let mut ren_base = agg::RenderingBase::new(pixf);
-    ren_base.clear(agg::Rgba8::WHITE);
-    let mut ren = agg::RenderingScanlineBinSolid::with_base(&mut ren_base);
-    ren.color(agg::Rgba8::RED);
+    ren_base.clear(agg::Rgb8::WHITE);
+    let mut ren = agg::RenderingScanlineBinSolid::new(&mut ren_base, Rgb8::RED);
 
     let mut ras = agg::RasterizerScanline::new();
 
@@ -121,9 +120,8 @@ mod tests {
     let (paths, colors) = parse_lion(true);
     let pixf = agg::Pixfmt::<agg::Rgb8>::new(w, h);
     let mut ren_base = agg::RenderingBase::new(pixf);
-    ren_base.clear(agg::Rgba8::WHITE);
-    let mut ren = agg::RenderingScanlineBinSolid::with_base(&mut ren_base);
-    ren.color(agg::Rgba8::RED);
+    ren_base.clear(agg::Rgb8::WHITE);
+    let mut ren = agg::RenderingScanlineBinSolid::new(&mut ren_base, Rgb8::RED);
 
     let mut ras = agg::RasterizerScanline::new();
 
@@ -144,9 +142,8 @@ mod tests {
     let (paths, colors) = parse_lion(true);
     let pixf = agg::Pixfmt::<agg::Rgb8>::new(w, h);
     let mut ren_base = agg::RenderingBase::new(pixf);
-    ren_base.clear(agg::Rgba8::WHITE);
-    let mut ren = agg::RenderingScanlineAASolid::with_base(&mut ren_base);
-    ren.color(agg::Rgba8::RED);
+    ren_base.clear(agg::Rgb8::WHITE);
+    let mut ren = agg::RenderingScanlineAASolid::new(&mut ren_base, Rgb8::RED);
 
     let mut ras = agg::RasterizerScanline::new();
 
@@ -168,10 +165,8 @@ mod tests {
     let pixf = agg::Pixfmt::<agg::Rgb8>::new(w, h);
     let mut ren_base = agg::RenderingBase::new(pixf);
     //ren_base.clear( agg::Srgba8::new([255, 255, 255, 255]) );
-    ren_base.clear(agg::Rgba8::WHITE);
-    let mut ren = agg::RenderingScanlineAASolid::with_base(&mut ren_base);
-    //ren.color( &agg::Srgba8::new([255,0,0,255]) );
-    ren.color(agg::Rgba8::RED);
+    ren_base.clear(agg::Rgb8::WHITE);
+    let mut ren = agg::RenderingScanlineAASolid::new(&mut ren_base, Rgb8::RED);
 
     let mut ras = agg::RasterizerScanline::new();
 
@@ -194,10 +189,8 @@ mod tests {
     let pixf = agg::Pixfmt::<agg::Rgb8>::new(w, h);
     let mut ren_base = agg::RenderingBase::new(pixf);
     //ren_base.clear( agg::Srgba8::new([255, 255, 255, 255]) );
-    ren_base.clear(agg::Rgba8::WHITE);
-    let mut ren = agg::RenderingScanlineAASolid::with_base(&mut ren_base);
-    //ren.color( &agg::Srgba8::new([255,0,0,255]) );
-    ren.color(agg::Rgba8::RED);
+    ren_base.clear(agg::Rgb8::WHITE);
+    let mut ren = agg::RenderingScanlineAASolid::new(&mut ren_base, Rgb8::RED);
 
     let mut ras = agg::RasterizerScanline::new();
 
@@ -220,10 +213,8 @@ mod tests {
     let pixf = agg::Pixfmt::<agg::Rgb8>::new(w, h);
     let mut ren_base = agg::RenderingBase::new(pixf);
     //ren_base.clear( agg::Srgba8::new([255, 255, 255, 255]) );
-    ren_base.clear(agg::Rgba8::WHITE);
-    let mut ren = agg::RenderingScanlineAASolid::with_base(&mut ren_base);
-    //ren.color( &agg::Srgba8::new([255,0,0,255]) );
-    ren.color(agg::Rgba8::RED);
+    ren_base.clear(Rgb8::WHITE);
+    let mut ren = agg::RenderingScanlineAASolid::new(&mut ren_base, Rgb8::RED);
 
     let mut ras = agg::RasterizerScanline::new();
 

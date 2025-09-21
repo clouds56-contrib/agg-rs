@@ -1,6 +1,6 @@
 mod assets;
 
-use agg::{math::lerp_u8, prelude::*};
+use agg::{color::{NamedColor, Srgba8}, math::lerp_u8, prelude::*};
 
 use crate::assets::start_logger;
 
@@ -16,8 +16,8 @@ fn path_from_slice(pts: &[f64]) -> agg::Path {
 }
 
 #[allow(clippy::too_many_arguments)]
-fn dash_line<T: agg::Pixel>(
-  ren: &mut agg::RenderingScanlineAASolid<T>,
+fn dash_line<T: Pixel>(
+  ren: &mut agg::RenderingScanlineAASolid<T::Color, T>,
   ras: &mut agg::RasterizerScanline,
   x1: f64,
   y1: f64,
@@ -55,7 +55,7 @@ fn t26_aa_test() {
   let pix = agg::Pixfmt::<agg::Rgb8>::new(width, height);
   let mut ren_base = agg::RenderingBase::new(pix);
 
-  ren_base.clear(agg::Rgba8::BLACK);
+  ren_base.clear(Rgb8::BLACK);
 
   // Radial Line Test
   let cx = width as f64 / 2.0;
@@ -64,7 +64,7 @@ fn t26_aa_test() {
 
   let mut ras = agg::RasterizerScanline::new();
   {
-    let mut ren = agg::RenderingScanlineAASolid::with_base(&mut ren_base);
+    let mut ren = agg::RenderingScanlineAASolid::new(&mut ren_base, Rgb8::BLACK);
     ren.color(agg::Rgba64::from_raw(1.0, 1.0, 1.0, 0.2));
     for i in (1..=180).rev() {
       let n = 2.0 * (i as f64) * std::f64::consts::PI / 180.0;
@@ -83,7 +83,7 @@ fn t26_aa_test() {
 
   for i in 1..=20 {
     let k = i as f64;
-    let mut ren = agg::RenderingScanlineAASolid::with_base(&mut ren_base);
+    let mut ren = agg::RenderingScanlineAASolid::new(&mut ren_base, Rgb8::BLACK);
     // Integral Point Sizes 1..=20
     ras.reset();
     ren.color(agg::Rgb8::WHITE);
@@ -232,7 +232,7 @@ fn t26_aa_test() {
     ras.add_path(&stroke);
     agg::render_scanlines(&mut ras, &mut ren_grad);
 
-    let mut ren = agg::RenderingScanlineAASolid::with_base(&mut ren_base);
+    let mut ren = agg::RenderingScanlineAASolid::new(&mut ren_base, Rgb8::BLACK);
     ren.color(agg::Rgb8::WHITE);
     if i <= 10 {
       // Integral line width, horz aligned (mipmap test)
@@ -273,7 +273,7 @@ fn t26_aa_test() {
     agg::render_scanlines(&mut ras, &mut ren);
   }
 
-  let mut ren = agg::RenderingScanlineAASolid::with_base(&mut ren_base);
+  let mut ren = agg::RenderingScanlineAASolid::new(&mut ren_base, Rgb8::BLACK);
   ren.color(agg::Rgb8::WHITE);
   for i in 1..=13 {
     let k = i as f64;
@@ -333,22 +333,14 @@ fn calc_linear_gradient_transform(x1: f64, y1: f64, x2: f64, y2: f64) -> agg::Tr
   mtx
 }
 
-fn color_gradient(begin: agg::Rgb64, end: agg::Rgb64, len: usize) -> Vec<agg::Rgb64> {
-  let mut gradient_colors = vec![agg::Rgb64::WHITE; len];
-  fill_color_array(&mut gradient_colors, begin, end);
-  gradient_colors
-}
-
-fn fill_color_array(array: &mut [agg::Rgb64], begin: agg::Rgb64, end: agg::Rgb64) {
-  let n = (array.len() - 1) as f64;
+fn color_gradient<C: Color>(begin: C, end: C, n: usize) -> Vec<Srgba8> {
   let begin = begin.srgba8();
   let end = end.srgba8();
-  for (i, v) in array.iter_mut().enumerate() {
-    let a = (i as f64 / n * 255.).round() as u8;
+  (0..n).map(|i| {
+    let a = (i as f64 / (n - 1) as f64 * 255.).round() as u8;
     let red = lerp_u8(begin.red.0, end.red.0, a);
     let green = lerp_u8(begin.green.0, end.green.0, a);
     let blue = lerp_u8(begin.blue.0, end.blue.0, a);
-    *v = agg::Srgba8::from_raw(red, green, blue, 255).rgb();
-    // println!("fill_color_array idx={} a={:.3} color={:.3?} [{:?}]", i, a, v.srgba64().into_slice().map(|i| i*255.), v.srgba8().into_raw());
-  }
+    Srgba8::from_raw(red, green, blue, 255)
+  }).collect()
 }

@@ -9,7 +9,7 @@ fn t23_font() {
 
   let pix = agg::Pixfmt::<agg::Rgb8>::new(100, 100);
   let mut ren_base = agg::RenderingBase::new(pix);
-  ren_base.clear(agg::Rgba8::WHITE);
+  ren_base.clear(agg::Rgb8::WHITE);
 
   agg::draw_text("Hello World!!!", 50, 45, &font, &mut ren_base);
 

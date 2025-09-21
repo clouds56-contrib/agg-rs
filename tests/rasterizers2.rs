@@ -94,7 +94,7 @@ fn rasterizers2() {
   let pixf = agg::Pixfmt::<agg::Rgb8>::new(w, h);
   let mut ren_base = agg::RenderingBase::new(pixf);
 
-  ren_base.clear(agg::Rgba8::from_raw(255, 255, 242, 255));
+  ren_base.clear(agg::Rgb8::from_raw(255, 255, 242));
 
   let start_angle = 0.0;
   let line_width = 3.0;
@@ -109,11 +109,10 @@ fn rasterizers2() {
     let spiral = Spiral::new(x, y, r1, r2, step, start_angle);
 
     let mut ras_aa = agg::RasterizerScanline::new();
-    let mut ren_aa = agg::RenderingScanlineAASolid::with_base(&mut ren_base);
+    let mut ren_aa = agg::RenderingScanlineAASolid::new(&mut ren_base, agg::Rgb8::from_raw(102, 77, 26));
     let mut stroke = agg::Stroke::new(spiral);
     stroke.width(line_width);
     //stroke.cap(round_cap);
-    ren_aa.color(agg::Rgba8::from_raw(102, 77, 26, 255));
     ras_aa.add_path(&stroke);
     agg::render_scanlines(&mut ras_aa, &mut ren_aa);
   }

@@ -2,10 +2,10 @@
 
 //use crate::math::blend_pix;
 use crate::color::Gray8;
-use crate::color::Rgb8;
 use crate::pixfmt::Pixfmt;
 
 use crate::Color;
+use crate::FromColor;
 use crate::FromRaw4;
 use crate::Pixel;
 use crate::Source;
@@ -22,9 +22,10 @@ where
   pub alpha: Pixfmt<Gray8>,
 }
 
-impl<T> AlphaMaskAdaptor<T>
+impl<C0, T> AlphaMaskAdaptor<T>
 where
-  Pixfmt<T>: Pixel + Source,
+  C0: FromColor,
+  Pixfmt<T>: Pixel<Color=C0> + Source,
 {
   /// Create a new Alpha Mask Adapator from a two PixelFormats
   pub fn new(rgb: Pixfmt<T>, alpha: Pixfmt<Gray8>) -> Self {
@@ -43,7 +44,7 @@ where
   //   alpha = alpha
   //   new   = c
   //   old   = p[j]
-  pub fn blend_color_hspan(&mut self, x: usize, y: usize, n: usize, colors: &[Rgb8], _cover: usize) {
+  pub fn blend_color_hspan<C: Color>(&mut self, x: usize, y: usize, n: usize, colors: &[C], _cover: usize) {
     //for i in 0 .. n {
     //assert!(1==2);
     assert_eq!(n, colors.len());
@@ -51,7 +52,7 @@ where
       let pix = &mut self.rgb.get((x + i, y));
       let alpha = u64::from(self.alpha.raw((x + i, y)).luma.0);
       let pix = blend_pix(pix, color, alpha);
-      self.rgb.set((x + i, y), pix);
+      self.rgb.set((x + i, y), C0::from_color(pix));
     }
   }
 }
