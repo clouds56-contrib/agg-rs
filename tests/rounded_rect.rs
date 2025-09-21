@@ -8,7 +8,7 @@ fn rounded_rect() {
   let m_x = [100., 500.];
   let m_y = [100., 350.];
 
-  let pixf = agg::Pixfmt::<agg::Rgb8>::new(w, h);
+  let pixf = agg::Pixfmt::<agg::Rgb8>::create(w, h);
 
   let mut ren_base = agg::RenderingBase::new(pixf);
 

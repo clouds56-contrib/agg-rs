@@ -13,7 +13,7 @@ fn rasterizers() {
   let m_x = [100. + 120., 369. + 120., 143. + 120.];
   let m_y = [60., 170., 310.0];
 
-  let pixf = agg::Pixfmt::<agg::Rgb8>::new(w, h);
+  let pixf = agg::Pixfmt::<agg::Rgb8>::create(w, h);
   let mut ren_base = agg::RenderingBase::new(pixf);
   ren_base.clear(agg::Rgb8::WHITE);
 
@@ -61,7 +61,7 @@ fn rasterizers_gamma() {
   let m_x = [100. + 120., 369. + 120., 143. + 120.];
   let m_y = [60., 170., 310.0];
 
-  let pixf = agg::Pixfmt::<agg::Rgb8>::new(w, h);
+  let pixf = agg::Pixfmt::<agg::Rgb8>::create(w, h);
   let mut ren_base = agg::RenderingBase::new(pixf);
   ren_base.clear(agg::Rgb8::WHITE);
 

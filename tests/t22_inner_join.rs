@@ -2,7 +2,7 @@ use agg::prelude::*;
 
 #[test]
 fn t22_inner_join() {
-  let pix = Pixfmt::<Rgb8>::new(400, 100);
+  let pix = Pixfmt::<Rgb8>::create(400, 100);
   let mut ren_base = agg::RenderingBase::new(pix);
   ren_base.clear(Rgb8::WHITE);
 

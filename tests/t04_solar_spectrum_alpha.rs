@@ -4,10 +4,10 @@ use agg::prelude::*;
 
 #[test]
 fn t04_solar_spectrum_alpha() {
-  let mut pix = agg::Pixfmt::<agg::Rgb8>::new(320, 200);
+  let mut pix = agg::Pixfmt::<agg::Rgb8>::create(320, 200);
   pix.clear();
 
-  let mut alpha = agg::Pixfmt::<agg::Gray8>::new(320, 200);
+  let mut alpha = agg::Pixfmt::<agg::Gray8>::create(320, 200);
 
   let w = pix.width();
   let h = pix.height();

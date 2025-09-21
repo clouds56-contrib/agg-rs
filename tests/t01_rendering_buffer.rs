@@ -17,7 +17,7 @@ fn draw_black_frame(pix: &mut agg::Pixfmt<agg::Rgb8>) {
 #[test]
 fn t01_rendering_buffer() {
   //let mut rbuf = RenderingBuffer::new(320, 220, 3);
-  let mut pix = agg::Pixfmt::<agg::Rgb8>::new(320, 220);
+  let mut pix = agg::Pixfmt::<agg::Rgb8>::create(320, 220);
   for i in 0..pix.width() {
     for j in 0..pix.height() {
       pix.set((i, j), agg::Rgb8::WHITE);

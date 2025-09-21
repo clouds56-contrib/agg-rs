@@ -6,7 +6,7 @@ use agg::prelude::*;
 fn t12_clip_box() {
   let (w, h) = (100, 100);
 
-  let pixf = agg::Pixfmt::<agg::Rgb8>::new(w, h);
+  let pixf = agg::Pixfmt::<agg::Rgb8>::create(w, h);
 
   let mut ren_base = agg::RenderingBase::new(pixf);
 

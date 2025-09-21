@@ -14,7 +14,7 @@ fn draw_black_frame(pix: &mut agg::Pixfmt<agg::Rgb8>) {
 
 #[test]
 fn t03_solar_specturm() {
-  let mut pix = agg::Pixfmt::<agg::Rgb8>::new(320, 200);
+  let mut pix = agg::Pixfmt::<agg::Rgb8>::create(320, 200);
   pix.clear();
   draw_black_frame(&mut pix);
 

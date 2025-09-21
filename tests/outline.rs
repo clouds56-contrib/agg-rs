@@ -2,7 +2,7 @@ use agg::prelude::*;
 
 #[test]
 fn t24_outline_basic_render() {
-  let pix = Pixfmt::<Rgb8>::new(100, 100);
+  let pix = Pixfmt::<Rgb8>::create(100, 100);
   let mut ren_base = agg::RenderingBase::new(pix);
   ren_base.clear(Rgb8::WHITE);
 
@@ -22,7 +22,7 @@ fn t24_outline_basic_render() {
 
 #[test]
 fn t20_outline_render() {
-  let pix = Pixfmt::<Rgb8>::new(100, 100);
+  let pix = Pixfmt::<Rgb8>::create(100, 100);
   let mut ren_base = agg::RenderingBase::new(pix);
   ren_base.clear(Rgb8::WHITE);
   let mut ren = RendererOutlineAA::new_black(&mut ren_base).with_width(20.0);

@@ -3,7 +3,7 @@ fn t00_example() {
   use agg::NamedColor;
 
   // Create a blank image 10x10 pixels
-  let pix = agg::Pixfmt::<agg::Rgb8>::new(100, 100);
+  let pix = agg::Pixfmt::<agg::Rgb8>::create(100, 100);
   let mut ren_base = agg::RenderingBase::new(pix);
   ren_base.clear(agg::Rgb8::WHITE);
 

@@ -7,7 +7,7 @@ fn t23_font() {
   let font = lib.new_face("/System/Library/Fonts/Helvetica.ttc", 0).unwrap();
   font.set_char_size(13 * 64, 0, 72, 0).unwrap();
 
-  let pix = agg::Pixfmt::<agg::Rgb8>::new(100, 100);
+  let pix = agg::Pixfmt::<agg::Rgb8>::create(100, 100);
   let mut ren_base = agg::RenderingBase::new(pix);
   ren_base.clear(agg::Rgb8::WHITE);
 

@@ -914,7 +914,7 @@ impl LineImagePattern {
       width_hr: 0,
       half_height_hr: 0,
       offset_y_hr: 0,
-      pix: Pixfmt::new(1, 1),
+      pix: Pixfmt::create(1, 1),
     }
   }
   pub fn create<T>(&mut self, src: &T)
@@ -928,7 +928,7 @@ impl LineImagePattern {
     self.offset_y_hr = self.dilation_hr + self.half_height_hr - POLY_SUBPIXEL_SCALE / 2;
     self.half_height_hr += POLY_SUBPIXEL_SCALE / 2;
 
-    self.pix = Pixfmt::<Rgba8>::new(
+    self.pix = Pixfmt::<Rgba8>::create(
       (self.width + self.dilation * 2) as usize,
       (self.height + self.dilation * 2) as usize,
     );
