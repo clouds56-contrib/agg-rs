@@ -1,5 +1,5 @@
 use crate::{
-  blend_mix_on_gray, blend_mix_on_rgb, blend_mix_on_rgba_pre, blend_pix_on_rgba, Color, FromColor, FromRaw2, FromRaw4, Gray8, IntoRaw2, IntoRaw3, IntoRaw4, Pixfmt, Rgb8, Rgba32, Rgba8, RgbaPre8, Source, U8
+  blend_mix_on_gray, blend_mix_on_rgb, blend_mix_on_rgba_pre, blend_pix_on_rgba, Color, FromColor, FromRaw4, Gray8, IntoRaw2, IntoRaw3, IntoRaw4, Pixfmt, Rgb8, Rgba32, Rgba8, RgbaPre8, Source, U8
 };
 
 /// Drawing and pixel related routines
@@ -258,7 +258,7 @@ impl Pixel for Pixfmt<Rgb8> {
     255
   }
   fn blend_pix<C: Color>(&mut self, id: (usize, usize), c: C, cover: u64) {
-    let pix0 = self.raw(id);
+    let pix0 = self.get(id);
     let pix = blend_mix_on_rgb(pix0, c, U8::new(cover as u8));
     self.set(id, pix);
   }
@@ -353,7 +353,7 @@ impl Pixel for Pixfmt<Gray8> {
     2
   }
   fn blend_pix<C: Color>(&mut self, id: (usize, usize), c: C, cover: u64) {
-    let p = Gray8::from_slice(self.rbuf.get_pixel(id.0, id.1));
+    let p = self.get(id);
     let p = blend_mix_on_gray(p, c, U8::new(cover as u8));
     self.set(id, p);
   }
