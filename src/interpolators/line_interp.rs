@@ -2,7 +2,6 @@ use crate::renders::LineInterpolator;
 use crate::renders::LineInterpolatorImage;
 //use crate::renders::RendererPrimatives;
 
-use crate::DistanceInterpolator;
 use crate::MAX_HALF_WIDTH;
 use crate::POLY_MR_SUBPIXEL_SHIFT;
 use crate::POLY_SUBPIXEL_MASK;
@@ -11,6 +10,14 @@ use crate::POLY_SUBPIXEL_SHIFT;
 use crate::RealLike;
 use crate::RenderOutline;
 use crate::U8;
+
+pub(crate) trait DistanceInterpolator {
+  fn dist(&self) -> i64;
+  fn inc_x(&mut self, dy: i64);
+  fn inc_y(&mut self, dx: i64);
+  fn dec_x(&mut self, dy: i64);
+  fn dec_y(&mut self, dx: i64);
+}
 
 /// Line Interpolator AA
 #[derive(Debug)]
