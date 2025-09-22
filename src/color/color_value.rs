@@ -182,6 +182,14 @@ pub trait RealLike:
   const ONE: Self;
   const _MAX: f64;
   fn to_f64(self) -> f64;
+  fn as_<T: RealLike>(self) -> T {
+    if std::any::TypeId::of::<Self>() == std::any::TypeId::of::<T>() {
+      // This is safe because we just checked that Self and T are the same type
+      unsafe { std::mem::transmute_copy(&self) }
+    } else {
+      T::from_f64(self.to_f64())
+    }
+  }
 }
 
 impl_num!(u8 u16);

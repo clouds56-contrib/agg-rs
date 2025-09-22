@@ -8,7 +8,9 @@ use crate::POLY_MR_SUBPIXEL_SHIFT;
 use crate::POLY_SUBPIXEL_MASK;
 use crate::POLY_SUBPIXEL_SCALE;
 use crate::POLY_SUBPIXEL_SHIFT;
+use crate::RealLike;
 use crate::RenderOutline;
+use crate::U8;
 
 /// Line Interpolator AA
 #[derive(Debug)]
@@ -39,7 +41,7 @@ pub(crate) struct LineInterpolatorAA {
   //pub dist: [i64; MAX_HALF_WIDTH + 1],
   dist: Vec<i64>,
   //pub covers: [u64; MAX_HALF_WIDTH * 2 + 4],
-  covers: Vec<u64>,
+  covers: Vec<U8>,
 }
 
 impl LineInterpolatorAA {
@@ -89,7 +91,7 @@ impl LineInterpolatorAA {
     }
     dist[MAX_HALF_WIDTH] = 0x7FFF_0000;
     // Setup covers to 0
-    let covers = vec![0u64; MAX_HALF_WIDTH * 2 + 4];
+    let covers = vec![U8::ZERO; MAX_HALF_WIDTH * 2 + 4];
     Self {
       lp,
       li: m_li,
@@ -183,7 +185,7 @@ impl AA0 {
   /// Conduct a horizontal step, used for "horizontal lines"
   pub fn step_hor<R>(&mut self, ren: &mut R) -> bool
   where
-    R: RenderOutline,
+    R: RenderOutline<Cover = U8>,
   {
     // Step the Interpolator horizontally and get the width
     //   projected onto the vertical
@@ -225,7 +227,7 @@ impl AA0 {
     self.li.step < self.li.count
   }
   /// Conduct a vertical step, used for "vertical lines"
-  pub fn step_ver<R: RenderOutline>(&mut self, ren: &mut R) -> bool {
+  pub fn step_ver<R: RenderOutline<Cover = U8>>(&mut self, ren: &mut R) -> bool {
     let s1 = self.li.step_ver_base(&mut self.di);
     let mut p0 = MAX_HALF_WIDTH + 2;
     let mut p1 = p0;
@@ -371,13 +373,13 @@ impl AA1 {
   pub fn vertical(&self) -> bool {
     self.li.lp.vertical
   }
-  pub fn step_hor<R: RenderOutline>(&mut self, ren: &mut R) -> bool {
+  pub fn step_hor<R: RenderOutline<Cover = U8>>(&mut self, ren: &mut R) -> bool {
     let s1 = self.li.step_hor_base(&mut self.di);
 
     let mut dist_start = self.di.dist_start;
     let mut p0 = MAX_HALF_WIDTH + 2;
     let mut p1 = p0;
-    self.li.covers[p1] = 0;
+    self.li.covers[p1] = RealLike::ZERO;
     if dist_start <= 0 {
       self.li.covers[p1] = ren.cover(s1);
     }
@@ -386,7 +388,7 @@ impl AA1 {
     let mut dist = self.li.dist[dy] - s1;
     while dist <= self.li.width {
       dist_start -= self.di.dx_start;
-      self.li.covers[p1] = 0;
+      self.li.covers[p1] = RealLike::ZERO;
       if dist_start <= 0 {
         self.li.covers[p1] = ren.cover(dist);
       }
@@ -401,7 +403,7 @@ impl AA1 {
     while dist <= self.li.width {
       dist_start += self.di.dx_start;
       p0 -= 1;
-      self.li.covers[p0] = 0;
+      self.li.covers[p0] = RealLike::ZERO;
       if dist_start <= 0 {
         self.li.covers[p0] = ren.cover(dist);
       }
@@ -417,13 +419,13 @@ impl AA1 {
     self.li.step += 1;
     self.li.step < self.li.count
   }
-  pub fn step_ver<R: RenderOutline>(&mut self, ren: &mut R) -> bool {
+  pub fn step_ver<R: RenderOutline<Cover = U8>>(&mut self, ren: &mut R) -> bool {
     let s1 = self.li.step_ver_base(&mut self.di);
     let mut p0 = MAX_HALF_WIDTH + 2;
     let mut p1 = p0;
 
     let mut dist_start = self.di.dist_start;
-    self.li.covers[p1] = 0;
+    self.li.covers[p1] = RealLike::ZERO;
     if dist_start <= 0 {
       self.li.covers[p1] = ren.cover(s1);
     }
@@ -432,7 +434,7 @@ impl AA1 {
     let mut dist = self.li.dist[dx] - s1;
     while dist <= self.li.width {
       dist_start += self.di.dy_start;
-      self.li.covers[p1] = 0;
+      self.li.covers[p1] = RealLike::ZERO;
       if dist_start <= 0 {
         self.li.covers[p1] = ren.cover(dist);
       }
@@ -446,7 +448,7 @@ impl AA1 {
     while dist <= self.li.width {
       dist_start -= self.di.dy_start;
       p0 -= 1;
-      self.li.covers[p0] = 0;
+      self.li.covers[p0] = RealLike::ZERO;
       if dist_start <= 0 {
         self.li.covers[p0] = ren.cover(dist);
       }
@@ -490,7 +492,7 @@ impl AA2 {
   pub fn vertical(&self) -> bool {
     self.li.lp.vertical
   }
-  pub fn step_hor<R: RenderOutline>(&mut self, ren: &mut R) -> bool {
+  pub fn step_hor<R: RenderOutline<Cover = U8>>(&mut self, ren: &mut R) -> bool {
     let s1 = self.li.step_hor_base(&mut self.di);
     let mut p0 = MAX_HALF_WIDTH + 2;
     let mut p1 = p0;
@@ -498,7 +500,7 @@ impl AA2 {
     let mut dist_end = self.di.dist_start;
 
     let mut npix = 0;
-    self.li.covers[p1] = 0;
+    self.li.covers[p1] = RealLike::ZERO;
     if dist_end > 0 {
       self.li.covers[p1] = ren.cover(s1);
       npix += 1;
@@ -509,7 +511,7 @@ impl AA2 {
     let mut dist = self.li.dist[dy] - s1;
     while dist <= self.li.width {
       dist_end -= self.di.dx_start;
-      self.li.covers[p1] = 0;
+      self.li.covers[p1] = RealLike::ZERO;
       if dist_end > 0 {
         self.li.covers[p1] = ren.cover(dist);
         npix += 1;
@@ -525,7 +527,7 @@ impl AA2 {
     while dist <= self.li.width {
       dist_end += self.di.dx_start;
       p0 -= 1;
-      self.li.covers[p0] = 0;
+      self.li.covers[p0] = RealLike::ZERO;
       if dist_end > 0 {
         self.li.covers[p0] = ren.cover(dist);
         npix += 1;
@@ -542,7 +544,7 @@ impl AA2 {
     self.li.step += 1;
     npix != 0 && self.li.step < self.li.count
   }
-  pub fn step_ver<R: RenderOutline>(&mut self, ren: &mut R) -> bool {
+  pub fn step_ver<R: RenderOutline<Cover = U8>>(&mut self, ren: &mut R) -> bool {
     let s1 = self.li.step_ver_base(&mut self.di);
     let mut p0 = MAX_HALF_WIDTH + 2;
     let mut p1 = p0;
@@ -550,7 +552,7 @@ impl AA2 {
     let mut dist_end = self.di.dist_start; // Really dist_end
 
     let mut npix = 0;
-    self.li.covers[p1] = 0;
+    self.li.covers[p1] = RealLike::ZERO;
     if dist_end > 0 {
       self.li.covers[p1] = ren.cover(s1);
       npix += 1;
@@ -561,7 +563,7 @@ impl AA2 {
     let mut dist = self.li.dist[dx] - s1;
     while dist <= self.li.width {
       dist_end += self.di.dy_start;
-      self.li.covers[p1] = 0;
+      self.li.covers[p1] = RealLike::ZERO;
       if dist_end > 0 {
         self.li.covers[p1] = ren.cover(dist);
         npix += 1;
@@ -577,7 +579,7 @@ impl AA2 {
     while dist <= self.li.width {
       dist_end -= self.di.dy_start;
       p0 -= 1;
-      self.li.covers[p0] = 0;
+      self.li.covers[p0] = RealLike::ZERO;
       if dist_end > 0 {
         self.li.covers[p0] = ren.cover(dist);
         npix += 1;
@@ -713,7 +715,7 @@ impl AA3 {
   pub fn vertical(&self) -> bool {
     self.li.lp.vertical
   }
-  pub fn step_hor<R: RenderOutline>(&mut self, ren: &mut R) -> bool {
+  pub fn step_hor<R: RenderOutline<Cover = U8>>(&mut self, ren: &mut R) -> bool {
     let s1 = self.li.step_hor_base(&mut self.di);
     let mut p0 = MAX_HALF_WIDTH + 2;
     let mut p1 = p0;
@@ -722,7 +724,7 @@ impl AA3 {
     let mut dist_end = self.di.dist_end;
 
     let mut npix = 0;
-    self.li.covers[p1] = 0;
+    self.li.covers[p1] = RealLike::ZERO;
     if dist_end > 0 {
       if dist_start <= 0 {
         self.li.covers[p1] = ren.cover(s1);
@@ -736,7 +738,7 @@ impl AA3 {
     while dist <= self.li.width {
       dist_start -= self.di.dx_start;
       dist_end -= self.di.dx_end;
-      self.li.covers[p1] = 0;
+      self.li.covers[p1] = RealLike::ZERO;
       if dist_end > 0 && dist_start <= 0 {
         self.li.covers[p1] = ren.cover(dist);
         npix += 1;
@@ -754,7 +756,7 @@ impl AA3 {
       dist_start += self.di.dx_start;
       dist_end += self.di.dx_end;
       p0 -= 1;
-      self.li.covers[p0] = 0;
+      self.li.covers[p0] = RealLike::ZERO;
       if dist_end > 0 && dist_start <= 0 {
         self.li.covers[p0] = ren.cover(dist);
         npix += 1;
@@ -770,7 +772,7 @@ impl AA3 {
     self.li.step -= 1;
     npix != 0 && self.li.step < self.li.count
   }
-  pub fn step_ver<R: RenderOutline>(&mut self, ren: &mut R) -> bool {
+  pub fn step_ver<R: RenderOutline<Cover = U8>>(&mut self, ren: &mut R) -> bool {
     let s1 = self.li.step_ver_base(&mut self.di);
     let mut p0 = MAX_HALF_WIDTH + 2;
     let mut p1 = p0;
@@ -779,7 +781,7 @@ impl AA3 {
     let mut dist_end = self.di.dist_end;
 
     let mut npix = 0;
-    self.li.covers[p1] = 0;
+    self.li.covers[p1] = RealLike::ZERO;
     if dist_end > 0 {
       if dist_start <= 0 {
         self.li.covers[p1] = ren.cover(s1);
@@ -793,7 +795,7 @@ impl AA3 {
     while dist <= self.li.width {
       dist_start += self.di.dy_start;
       dist_end += self.di.dy_end;
-      self.li.covers[p1] = 0;
+      self.li.covers[p1] = RealLike::ZERO;
       if dist_end > 0 && dist_start <= 0 {
         self.li.covers[p1] = ren.cover(dist);
         npix += 1;
@@ -811,7 +813,7 @@ impl AA3 {
       dist_start -= self.di.dy_start;
       dist_end -= self.di.dy_end;
       p0 -= 1;
-      self.li.covers[p0] = 0;
+      self.li.covers[p0] = RealLike::ZERO;
       if dist_end > 0 && dist_start <= 0 {
         self.li.covers[p0] = ren.cover(dist);
         npix += 1;

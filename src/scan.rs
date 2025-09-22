@@ -2,6 +2,8 @@
 
 //use std::collections::HashMap;
 
+use crate::U8;
+
 /// Contigious area of data
 #[derive(Debug, Default)]
 pub(crate) struct Span {
@@ -10,7 +12,7 @@ pub(crate) struct Span {
   /// Length of span
   pub len: i64,
   /// Cover values with len values
-  pub covers: Vec<u64>,
+  pub covers: Vec<U8>,
 }
 
 /// Unpacked Scanline
@@ -77,6 +79,7 @@ impl ScanlineU8 {
   /// Otherwise, not a new span is created
   pub fn add_span(&mut self, x: i64, len: i64, cover: u64) {
     let x = x - self.min_x;
+    let cover = U8::new(cover as _);
     //self.covers.insert( x, cover );
     if x == self.last_x + 1 {
       let cur = self.spans.last_mut().unwrap();
@@ -98,6 +101,7 @@ impl ScanlineU8 {
   /// cover is append, otherwise a new span is created
   pub fn add_cell(&mut self, x: i64, cover: u64) {
     let x = x - self.min_x;
+    let cover = U8::new(cover as _);
     //self.covers.insert( x, cover );
     if x == self.last_x + 1 {
       let cur = self.spans.last_mut().unwrap();
