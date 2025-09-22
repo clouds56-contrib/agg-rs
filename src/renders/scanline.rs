@@ -13,12 +13,12 @@ use crate::RenderingBase;
 use crate::color::Rgba8;
 use crate::scanlines::ScanlineU8;
 
+use crate::LineParameters;
 use crate::RasterizerScanline;
 use crate::clip::Rectangle;
 use crate::clip::{BOTTOM, INSIDE, LEFT, RIGHT, TOP};
 use crate::len_i64_xy;
-use crate::line_interp::LineParameters;
-use crate::line_interp::line_mr;
+use crate::line_mr;
 use crate::pixels::Pixfmt;
 
 use crate::Color;

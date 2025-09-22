@@ -1,5 +1,8 @@
 use crate::Color;
+use crate::DistanceInterpolator00;
+use crate::DistanceInterpolator0;
 use crate::FromColor;
+use crate::LineParameters;
 use crate::MAX_HALF_WIDTH;
 use crate::NamedColor;
 use crate::POLY_SUBPIXEL_MASK;
@@ -8,9 +11,6 @@ use crate::Pixel;
 use crate::RenderOutline;
 use crate::RenderingBase;
 use crate::color::Rgba8;
-use crate::line_interp::DistanceInterpolator00;
-use crate::line_interp::DistanceInterpolator0;
-use crate::line_interp::LineParameters;
 use crate::rasters::len_i64_xy;
 use crate::renders::LINE_MAX_LENGTH;
 use crate::renders::clip_line_segment;

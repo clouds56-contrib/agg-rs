@@ -1,10 +1,12 @@
 pub mod clip;
+pub mod gradient;
 pub mod paths;
 pub mod stroke;
 pub mod text;
 pub mod transform;
 
 pub use clip::*;
+pub use gradient::*;
 pub use paths::*;
 pub use stroke::*;
 pub use text::*;

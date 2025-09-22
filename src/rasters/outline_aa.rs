@@ -33,8 +33,8 @@
 //!
 //! ![Output](https://raw.githubusercontent.com/savage13/agg/master/images/outline_aa.png)
 
-use crate::line_interp::DrawVars;
-use crate::line_interp::LineParameters;
+use crate::DrawVars;
+use crate::LineParameters;
 use crate::paths::PathCommand;
 use crate::paths::Vertex;
 use crate::stroke::LineJoin;
