@@ -74,7 +74,7 @@ fn example_alpha_mask() {
       }
     }
     alpha_show.to_file("tests/tmp/alpha_mask.a.png").unwrap();
-    assert!(agg::ppm::img_diff("tests/tmp/alpha_mask.a.png", "images/alpha_mask.a.png").unwrap())
+    assert!(agg::utils::img_diff("tests/tmp/alpha_mask.a.png", "images/alpha_mask.a.png").unwrap())
   }
 
   // Extract the alpha pixfmt back (we move it out of the RenderingBase)
@@ -103,5 +103,5 @@ fn example_alpha_mask() {
   agg::render_all_paths(&mut ras, &mut ren, &t, &colors);
   // Save the resulting RGBA buffer
   mix_base.to_file("tests/tmp/alpha_mask.png").unwrap();
-  assert!(agg::ppm::img_diff("tests/tmp/alpha_mask.png", "images/alpha_mask.png").unwrap());
+  assert!(agg::utils::img_diff("tests/tmp/alpha_mask.png", "images/alpha_mask.png").unwrap());
 }

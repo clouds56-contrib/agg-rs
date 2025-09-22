@@ -24,7 +24,7 @@ mod tests {
 
     ren.to_file("tests/tmp/lion.png").unwrap();
 
-    if !agg::ppm::img_diff("tests/tmp/lion.png", "images/lion.png").unwrap() {
+    if !agg::utils::img_diff("tests/tmp/lion.png", "images/lion.png").unwrap() {
       panic!("PNG Images differ");
     }
   }
@@ -47,7 +47,7 @@ mod tests {
 
     ren.to_file("tests/tmp/lion_cw.png").unwrap();
 
-    assert!(agg::ppm::img_diff("tests/tmp/lion_cw.png", "images/lion_cw.png").unwrap());
+    assert!(agg::utils::img_diff("tests/tmp/lion_cw.png", "images/lion_cw.png").unwrap());
   }
   // compare -verbose -metric AE lion.ppm ./tests/lion.ppm blarg.ppm
 
@@ -69,7 +69,7 @@ mod tests {
 
     ren.to_file("tests/tmp/lion_cw_aa.png").unwrap();
 
-    assert!(agg::ppm::img_diff("tests/tmp/lion_cw_aa.png", "images/lion_cw_aa.png").unwrap());
+    assert!(agg::utils::img_diff("tests/tmp/lion_cw_aa.png", "images/lion_cw_aa.png").unwrap());
   }
   // compare -verbose -metric AE lion.ppm ./tests/lion.ppm blarg.ppm
 
@@ -93,7 +93,7 @@ mod tests {
 
     ren.to_file("tests/tmp/lion_cw_aa_srgba.png").unwrap();
 
-    assert!(agg::ppm::img_diff("tests/tmp/lion_cw_aa_srgba.png", "images/lion_cw_aa_srgba.png").unwrap());
+    assert!(agg::utils::img_diff("tests/tmp/lion_cw_aa_srgba.png", "images/lion_cw_aa_srgba.png").unwrap());
   }
   // compare -verbose -metric AE lion.ppm ./tests/lion.ppm blarg.ppm
 
@@ -118,7 +118,7 @@ mod tests {
     agg::render_all_paths(&mut ras, &mut ren, &stroke, &colors);
 
     ren.to_file("tests/tmp/lion_outline_width1.png").unwrap();
-    assert!(agg::ppm::img_diff("tests/tmp/lion_outline_width1.png", "images/lion_outline_width1.png").unwrap());
+    assert!(agg::utils::img_diff("tests/tmp/lion_outline_width1.png", "images/lion_outline_width1.png").unwrap());
   }
 
   #[test]
@@ -142,7 +142,7 @@ mod tests {
     agg::render_all_paths(&mut ras, &mut ren, &stroke, &colors);
 
     ren.to_file("tests/tmp/lion_outline.png").unwrap();
-    assert!(agg::ppm::img_diff("tests/tmp/lion_outline.png", "images/lion_outline.png").unwrap());
+    assert!(agg::utils::img_diff("tests/tmp/lion_outline.png", "images/lion_outline.png").unwrap());
   }
   // compare -verbose -metric AE lion.ppm ./tests/lion.ppm diff.ppm
 }

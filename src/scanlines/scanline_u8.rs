@@ -6,7 +6,7 @@ use crate::U8;
 
 /// Contigious area of data
 #[derive(Debug, Default)]
-pub(crate) struct Span {
+pub struct Span {
   /// Starting x position
   pub x: i64,
   /// Length of span
@@ -19,7 +19,7 @@ pub(crate) struct Span {
 ///
 /// Represents a single row of an image
 #[derive(Debug, Default)]
-pub(crate) struct ScanlineU8 {
+pub struct ScanlineU8 {
   /// Last x value used
   ///
   /// Used as a state variable

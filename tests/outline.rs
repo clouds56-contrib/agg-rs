@@ -17,7 +17,7 @@ fn t24_outline_basic_render() {
   ras.add_path(&path);
   ren_base.to_file("tests/tmp/outline.png").unwrap();
 
-  assert!(agg::ppm::img_diff("tests/tmp/outline.png", "images/outline.png").unwrap());
+  assert!(agg::utils::img_diff("tests/tmp/outline.png", "images/outline.png").unwrap());
 }
 
 #[test]
@@ -37,5 +37,5 @@ fn t20_outline_render() {
   ras.add_path(&path);
   ren_base.to_file("tests/tmp/outline_aa.png").unwrap();
 
-  assert!(agg::ppm::img_diff("tests/tmp/outline_aa.png", "images/outline_aa.png").unwrap());
+  assert!(agg::utils::img_diff("tests/tmp/outline_aa.png", "images/outline_aa.png").unwrap());
 }

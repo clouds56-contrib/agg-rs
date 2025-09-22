@@ -22,5 +22,5 @@ fn t23_font() {
   ren_base.blend_hline(50, 57, 50, agg::Rgba8::RED, 1.0);
 
   ren_base.to_file("tests/tmp/font.png").unwrap();
-  assert!(agg::ppm::img_diff("tests/tmp/font.png", "images/font.png").unwrap());
+  assert!(agg::utils::img_diff("tests/tmp/font.png", "images/font.png").unwrap());
 }

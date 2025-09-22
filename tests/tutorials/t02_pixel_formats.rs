@@ -29,5 +29,5 @@ fn t02_pixel_formats() {
   }
 
   pix.to_file("tests/tmp/t02_pixel_formats.png").unwrap();
-  assert!(agg::ppm::img_diff("tests/tmp/t02_pixel_formats.png", "images/t02_pixel_formats.png").unwrap());
+  assert!(agg::utils::img_diff("tests/tmp/t02_pixel_formats.png", "images/t02_pixel_formats.png").unwrap());
 }

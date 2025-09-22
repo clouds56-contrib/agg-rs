@@ -8,7 +8,7 @@ use crate::cell::RasterizerCell;
 use crate::clip::Clip;
 use crate::paths::PathCommand;
 use crate::paths::Vertex;
-use crate::scan::ScanlineU8;
+use crate::scanlines::ScanlineU8;
 
 //use crate::Rasterize;
 use crate::VertexSource;

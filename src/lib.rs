@@ -134,133 +134,39 @@ extern crate log;
 #[doc(hidden)]
 pub use freetype as ft;
 
-pub mod base;
-pub mod clip;
 pub mod color;
-pub mod line_interp;
-pub mod outline;
-pub mod outline_aa;
-pub mod paths;
+pub mod interpolators;
 pub mod pixels;
-pub mod ppm;
-pub mod raster;
-pub mod render;
-pub mod stroke;
-pub mod text;
-pub mod transform;
+pub mod rasters;
+pub mod renders;
+pub mod scanlines;
+pub mod sources;
+pub mod utils;
 
-pub(crate) mod cell;
 pub mod math;
-pub(crate) mod scan;
 
 pub mod gallery;
 
 #[doc(hidden)]
-pub use crate::base::*;
-#[doc(hidden)]
-pub use crate::clip::*;
-#[doc(hidden)]
 pub use crate::color::*;
 #[doc(hidden)]
-pub use crate::line_interp::*;
-#[doc(hidden)]
-pub use crate::outline::*;
-#[doc(hidden)]
-pub use crate::outline_aa::*;
-#[doc(hidden)]
-pub use crate::paths::*;
+pub use crate::interpolators::*;
 #[doc(hidden)]
 pub use crate::pixels::*;
 #[doc(hidden)]
-pub use crate::raster::*;
+pub use crate::rasters::*;
 #[doc(hidden)]
-pub use crate::render::*;
+pub use crate::renders::*;
 #[doc(hidden)]
-pub use crate::stroke::*;
+pub use crate::scanlines::*;
 #[doc(hidden)]
-pub use crate::text::*;
-#[doc(hidden)]
-pub use crate::transform::*;
+pub use crate::sources::*;
 
 const POLY_SUBPIXEL_SHIFT: i64 = 8;
 const POLY_SUBPIXEL_SCALE: i64 = 1 << POLY_SUBPIXEL_SHIFT;
 const POLY_SUBPIXEL_MASK: i64 = POLY_SUBPIXEL_SCALE - 1;
 const POLY_MR_SUBPIXEL_SHIFT: i64 = 4;
 const MAX_HALF_WIDTH: usize = 64;
-
-/// Source of vertex points
-pub trait VertexSource {
-  /// Rewind the vertex source (unused)
-  fn rewind(&self) {}
-  /// Get values from the source
-  ///
-  /// This could be turned into an iterator
-  fn xconvert(&self) -> Vec<Vertex<f64>>;
-}
-
-/// Render scanlines to Image
-pub trait Render {
-  /// Render a single scanlines to the image
-  fn render(&mut self, data: &RenderData);
-  /// Set the Color of the Renderer
-  fn color<C: Color>(&mut self, color: C);
-  /// Prepare the Renderer
-  fn prepare(&self) {}
-}
-/*
-/// Rasterize lines, path, and other things to scanlines
-pub trait Rasterize {
-    /// Setup Rasterizer, returns if data is available
-    fn rewind_scanlines(&mut self) -> bool;
-    /// Sweeps cells in a scanline for data, returns if data is available
-    fn sweep_scanline(&mut self, sl: &mut ScanlineU8) -> bool;
-    /// Return maximum x value of rasterizer
-    fn min_x(&self) -> i64;
-    /// Return maximum x value of rasterizer
-    fn max_x(&self) -> i64;
-    /// Resets the rasterizer, clearing content
-    fn reset(&mut self);
-    /// Rasterize a path
-    fn add_path<VS: VertexSource>(&mut self, path: &VS);
-}
-*/
-
-pub(crate) trait LineInterp {
-  fn init(&mut self);
-  fn step_hor(&mut self);
-  fn step_ver(&mut self);
-}
-
-pub(crate) trait RenderOutline {
-  type Cover: RealLike;
-  fn cover(&self, d: i64) -> Self::Cover;
-  fn blend_solid_hspan(&mut self, x: i64, y: i64, len: i64, covers: &[Self::Cover]);
-  fn blend_solid_vspan(&mut self, x: i64, y: i64, len: i64, covers: &[Self::Cover]);
-}
-/// Functions for Drawing Outlines
-//pub trait DrawOutline: Lines + AccurateJoins + SetColor {}
-pub trait DrawOutline {
-  /// Set the current Color
-  fn color<C: Color>(&mut self, color: C);
-  /// If Line Joins are Accurate
-  fn accurate_join_only(&self) -> bool;
-  fn line0(&mut self, lp: &LineParameters);
-  fn line1(&mut self, lp: &LineParameters, sx: i64, sy: i64);
-  fn line2(&mut self, lp: &LineParameters, ex: i64, ey: i64);
-  fn line3(&mut self, lp: &LineParameters, sx: i64, sy: i64, ex: i64, ey: i64);
-  fn semidot<F>(&mut self, cmp: F, xc1: i64, yc1: i64, xc2: i64, yc2: i64)
-  where
-    F: Fn(i64) -> bool;
-  fn pie(&mut self, xc: i64, y: i64, x1: i64, y1: i64, x2: i64, y2: i64);
-}
-
-pub(crate) trait DistanceInterpolator {
-  fn dist(&self) -> i64;
-  fn inc_x(&mut self, dy: i64);
-  fn inc_y(&mut self, dx: i64);
-  fn dec_x(&mut self, dy: i64);
-  fn dec_y(&mut self, dx: i64);
-}
 
 pub mod prelude {
   pub use crate::{

@@ -35,5 +35,5 @@ fn t01_rendering_buffer() {
 
   let pix = agg::Pixfmt::<Rgb8>::new(rbuf);
   pix.to_file("tests/tmp/t01_rendering_buffer.png").unwrap();
-  assert!(agg::ppm::img_diff("tests/tmp/t01_rendering_buffer.png", "images/t01_rendering_buffer.png").unwrap());
+  assert!(agg::utils::img_diff("tests/tmp/t01_rendering_buffer.png", "images/t01_rendering_buffer.png").unwrap());
 }

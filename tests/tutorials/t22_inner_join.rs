@@ -37,7 +37,7 @@ fn t22_inner_join() {
   text(&mut ras, &mut ren, 332.0, 90.0, "Jag");
 
   ren_base.to_file("tests/tmp/inner_join.png").unwrap();
-  assert!(agg::ppm::img_diff("tests/tmp/inner_join.png", "images/inner_join.png").unwrap());
+  assert!(agg::utils::img_diff("tests/tmp/inner_join.png", "images/inner_join.png").unwrap());
 }
 
 fn text<T, C>(

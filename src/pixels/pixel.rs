@@ -216,7 +216,7 @@ macro_rules! impl_pixel {
       &self.rbuf.data
     }
     fn to_file<P: AsRef<std::path::Path>>(&self, filename: P) -> Result<(), std::io::Error> {
-      crate::ppm::write_file(self.as_bytes(), self.width(), self.height(), filename)
+      crate::utils::write_file(self.as_bytes(), self.width(), self.height(), filename)
     }
   };
 }
