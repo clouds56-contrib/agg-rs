@@ -1,18 +1,20 @@
 //! Pixel Format
 
-pub mod _pixfmt;
 pub mod alpha_blend;
+pub mod alpha_mask;
 pub mod blend_pix;
 pub mod buffer;
 pub mod cover;
 pub mod pixel;
+pub mod pixfmt;
 
-pub use _pixfmt::*;
 pub use alpha_blend::*;
+pub use alpha_mask::*;
 pub use blend_pix::*;
 pub use buffer::*;
 pub use cover::*;
 pub use pixel::*;
+pub use pixfmt::*;
 
 #[cfg(test)]
 mod tests {

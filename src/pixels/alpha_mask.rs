@@ -2,7 +2,7 @@
 
 //use crate::math::blend_pix;
 use crate::color::Gray8;
-use crate::pixfmt::Pixfmt;
+use crate::pixels::Pixfmt;
 
 use crate::Color;
 use crate::FromRaw4;
