@@ -181,6 +181,9 @@ pub trait RealLike:
   const ZERO: Self;
   const ONE: Self;
   const _MAX: f64;
+  fn byte_size() -> usize {
+    std::mem::size_of::<Self>()
+  }
   fn to_f64(self) -> f64;
   fn as_<T: RealLike>(self) -> T {
     if std::any::TypeId::of::<Self>() == std::any::TypeId::of::<T>() {

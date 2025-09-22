@@ -1,6 +1,5 @@
 use crate::{
-  BlendPix, Color, Covers, FromColor, FromRaw4, Gray8, IntoRaw2, IntoRaw3, IntoRaw4, Pixfmt, RealLike, Rgb8, Rgba8,
-  Rgba32, RgbaPre8, Source,
+  BlendPix, Color, Covers, FromColor, FromRaw4, Gray8, IntoRaw2, IntoRaw3, IntoRaw4, Pixfmt, RealLike, Rgb8, Rgba32, Rgba8, RgbaPre8, Source, U8
 };
 
 /// Drawing and pixel related routines
@@ -9,7 +8,12 @@ pub trait Pixel {
   fn cover_full() -> <Self::Color as Color>::Component {
     <Self::Color as Color>::Component::ONE
   }
-  fn bpp() -> usize;
+  fn bpp() -> usize {
+    Self::Color::bpp()
+  }
+  fn is_cover_full<T: RealLike>(cover: &T) -> bool {
+    cover == &T::ONE
+  }
   fn as_bytes(&self) -> &[u8];
   fn to_file<P: AsRef<std::path::Path>>(&self, filename: P) -> Result<(), std::io::Error>;
   fn width(&self) -> usize;
@@ -43,7 +47,7 @@ pub trait Pixel {
       if color.is_opaque() {
         self.set(id, color);
       } else {
-        self.blend_pix(id, color, 1.0);
+        self.blend_pix(id, color, U8::ONE);
       }
     }
   }
@@ -87,7 +91,7 @@ pub trait Pixel {
   /// [`cover_mask`]: ../trait.Pixel.html#method.cover_mask
   fn copy_or_blend_pix_with_cover<C: Color, T: RealLike>(&mut self, id: (usize, usize), color: C, cover: T) {
     if !color.is_transparent() {
-      if color.is_opaque() && cover == T::ONE {
+      if color.is_opaque() && Self::is_cover_full(&cover) {
         self.set(id, color);
       } else {
         self.blend_pix(id, color, cover);
@@ -101,7 +105,7 @@ pub trait Pixel {
       return;
     }
     let (x, y, len) = (x as usize, y as usize, len as usize);
-    if color.is_opaque() && cover == T::ONE {
+    if color.is_opaque() && Self::is_cover_full(&cover) {
       self.setn((x, y), len, color);
     } else {
       for i in 0..len {
@@ -131,7 +135,7 @@ pub trait Pixel {
       return;
     }
     let (x, y, len) = (x as usize, y as usize, len as usize);
-    if color.is_opaque() && cover == T::ONE {
+    if color.is_opaque() && Self::is_cover_full(&cover) {
       for i in 0..len {
         self.set((x, y + i), color);
       }
@@ -228,9 +232,6 @@ impl Pixel for Pixfmt<Rgba8> {
       chunk.copy_from_slice(&c);
     }
   }
-  fn bpp() -> usize {
-    4
-  }
   /// Compute **over** operator with coverage
   ///
   /// # Arguments
@@ -259,9 +260,6 @@ impl Pixel for Pixfmt<Rgb8> {
       chunk.copy_from_slice(&c);
     }
   }
-  fn bpp() -> usize {
-    3
-  }
   fn blend_pix<C: Color, T: RealLike>(&mut self, id: (usize, usize), c: C, cover: T) {
     let src = self.get(id);
     let pix = src.blend_pix(c, cover);
@@ -288,9 +286,6 @@ impl Pixel for Pixfmt<RgbaPre8> {
   fn setn<C: Color>(&mut self, id: (usize, usize), n: usize, c: C) {
     let c = RgbaPre8::from_raw(c.red8(), c.green8(), c.blue8(), c.alpha8());
     self._set(id, n, c);
-  }
-  fn bpp() -> usize {
-    4
   }
   fn blend_pix<C: Color, T: RealLike>(&mut self, id: (usize, usize), c: C, cover: T) {
     let p = self.get(id);
@@ -322,9 +317,6 @@ impl Pixel for Pixfmt<Rgba32> {
     pixel[8..12].copy_from_slice(&c.blue.to_ne_bytes());
     pixel[12..16].copy_from_slice(&c.alpha.to_ne_bytes());
   }
-  fn bpp() -> usize {
-    4 * 4
-  }
   fn blend_pix<C: Color, T: RealLike>(&mut self, id: (usize, usize), c: C, cover: T) {
     let src = self.get(id);
     let p = src.blend_pix(c, cover);
@@ -343,9 +335,6 @@ impl Pixel for Pixfmt<Gray8> {
     for chunk in p.chunks_mut(bpp) {
       chunk.copy_from_slice(&c);
     }
-  }
-  fn bpp() -> usize {
-    2
   }
   fn blend_pix<C: Color, T: RealLike>(&mut self, id: (usize, usize), c: C, cover: T) {
     let p = self.get(id);

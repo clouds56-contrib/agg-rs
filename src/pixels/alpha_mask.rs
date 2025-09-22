@@ -7,28 +7,53 @@ use crate::pixels::Pixfmt;
 use crate::Color;
 use crate::FromRaw4;
 use crate::Pixel;
+use crate::RealLike;
 use crate::Source;
 use crate::color::Rgba8;
 use crate::math::lerp_u8;
 use crate::math::multiply_u8;
+use crate::U8;
 
 /// Alpha Mask Adaptor
-pub struct AlphaMaskAdaptor<T>
-where
-  Pixfmt<T>: Pixel + Source,
-{
+pub struct PixfmtAlphaMask<T> {
   pub rgb: Pixfmt<T>,
   pub alpha: Pixfmt<Gray8>,
 }
 
-impl<T> AlphaMaskAdaptor<T>
-where
-  Pixfmt<T>: Pixel + Source,
-{
+impl<T> PixfmtAlphaMask<T> {
   /// Create a new Alpha Mask Adapator from a two PixelFormats
   pub fn new(rgb: Pixfmt<T>, alpha: Pixfmt<Gray8>) -> Self {
     Self { rgb, alpha }
   }
+}
+
+impl<T> Pixel for PixfmtAlphaMask<T>
+where
+  Pixfmt<T>: Pixel + Source,
+{
+  type Color = <Pixfmt<T> as Pixel>::Color;
+
+  fn width(&self) -> usize {
+    self.rgb.width()
+  }
+  fn height(&self) -> usize {
+    self.rgb.height()
+  }
+  fn as_bytes(&self) -> &[u8] {
+    self.rgb.as_bytes()
+  }
+  fn to_file<P: AsRef<std::path::Path>>(&self, filename: P) -> Result<(), std::io::Error> {
+    self.rgb.to_file(filename)
+  }
+  fn _set(&mut self, id: (usize, usize), n: usize, c: Self::Color) {
+    self.rgb._set(id, n, c);
+  }
+  fn is_cover_full<U: RealLike>(_cover: &U) -> bool {
+    // since we use the alpha channel from the gray scale image
+    // we can not assume that the cover is full
+    false
+  }
+
   /// Blend a set of colors starting at (x,y) with a length
   ///
   /// Background color is from the rgb image and
@@ -42,16 +67,12 @@ where
   //   alpha = alpha
   //   new   = c
   //   old   = p[j]
-  pub fn blend_color_hspan<C: Color>(&mut self, x: usize, y: usize, n: usize, colors: &[C], _cover: usize) {
-    //for i in 0 .. n {
-    //assert!(1==2);
-    assert_eq!(n, colors.len());
-    for (i, color) in colors.iter().enumerate() {
-      let pix = &mut self.rgb.get((x + i, y));
-      let alpha = u64::from(self.alpha.get((x + i, y)).luma.0);
-      let pix = blend_pix(pix, color, alpha);
-      self.rgb.set((x + i, y), pix);
-    }
+  fn blend_pix<C: Color, U: RealLike>(&mut self, id: (usize, usize), c: C, _cover: U) {
+    let (x, y) = id;
+    let pix = &mut self.rgb.get((x, y));
+    let cover = self.alpha.get((x, y)).luma;
+    let pix = blend_pix(pix, &c, cover);
+    self.rgb.set((x, y), pix);
   }
 }
 /// Blend foreground and background pixels with an cover value
@@ -63,11 +84,11 @@ where
 /// Computations are conducted using fixed point math
 ///
 /// see [Alpha Compositing](https://en.wikipedia.org/wiki/Alpha_compositing)
-fn blend_pix<C1: Color, C2: Color>(p: &C1, c: &C2, cover: u64) -> Rgba8 {
+fn blend_pix<C1: Color, C2: Color, T: RealLike>(p: &C1, c: &C2, cover: T) -> Rgba8 {
   assert!(c.alpha64() >= 0.0);
   assert!(c.alpha64() <= 1.0);
 
-  let alpha = multiply_u8(c.alpha8(), cover as u8);
+  let alpha = multiply_u8(c.alpha8(), cover.as_::<U8>().0);
 
   let red = lerp_u8(p.red8(), c.red8(), alpha);
   let green = lerp_u8(p.green8(), c.green8(), alpha);

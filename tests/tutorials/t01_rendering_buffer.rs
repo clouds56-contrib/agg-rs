@@ -1,6 +1,6 @@
 extern crate agg;
 
-use agg::{pixfmt::RenderingBuffer, prelude::*};
+use agg::{pixels::RenderingBuffer, prelude::*};
 
 /// Draw a black frame around the rendering buffer, assuming it has
 /// RGB-structure, one byte per color component
