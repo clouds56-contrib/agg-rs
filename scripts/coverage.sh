@@ -93,11 +93,13 @@ case $FORMAT in
         ;;
     "lcov")
         print_status "Generating LCOV coverage report..."
+        mkdir -p "$(dirname "$OUTPUT_DIR/lcov.info")"
         cargo llvm-cov --all-targets --all-features --workspace --lcov --output-path "$OUTPUT_DIR/lcov.info"
         print_status "LCOV coverage report generated: $OUTPUT_DIR/lcov.info"
         ;;
     "json")
         print_status "Generating JSON coverage report..."
+        mkdir -p "$(dirname "$OUTPUT_DIR/coverage.json")"
         cargo llvm-cov --all-targets --all-features --workspace --json --output-path "$OUTPUT_DIR/coverage.json"
         print_status "JSON coverage report generated: $OUTPUT_DIR/coverage.json"
         ;;

@@ -93,6 +93,8 @@ This project uses Rust's built-in code coverage capabilities through `cargo-llvm
 
 Code coverage is automatically generated and uploaded to [Codecov](https://codecov.io/gh/clouds56-contrib/agg-rs) on every push and pull request. The coverage reports help maintain code quality and identify areas that need more testing.
 
+For more detailed information about coverage setup, see [docs/COVERAGE.md](docs/COVERAGE.md).
+
 ## License
 
 This version was ported from agg-2.4 (BSD 3-Clause) and is released
