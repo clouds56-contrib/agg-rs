@@ -38,6 +38,13 @@ where
     }
   }
 
+  pub fn into_rendering_base(self) -> crate::RenderingBase<Self>
+  where
+    Self: Pixel,
+  {
+    crate::RenderingBase::new(self)
+  }
+
   /// Size of Rendering Buffer in bytes; width * height * bpp
   pub fn size(&self) -> usize {
     self.rbuf.len()

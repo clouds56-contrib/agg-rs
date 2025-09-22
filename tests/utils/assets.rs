@@ -57,3 +57,29 @@ pub fn parse_lion(arrange_orientations: bool) -> (Vec<agg::Path>, Vec<agg::Rgba8
   }
   (paths, colors)
 }
+
+// Helper that recenters paths to the middle of a w x h pixel image and
+// returns a Vec of ConvTransform wrappers ready for rendering.
+pub fn transform_paths(paths: Vec<agg::Path>, w: f64, h: f64) -> Vec<agg::ConvTransform> {
+  if paths.is_empty() {
+    return Vec::new();
+  }
+  let p = paths[0].vertices[0];
+  let mut r = agg::Rectangle::new(p.x, p.y, p.x, p.y);
+  for p in &paths {
+    if let Some(rp) = agg::bounding_rect(p) {
+      //eprintln!("dx,dy: {:?}", rp);
+      r.expand_rect(&rp);
+    }
+  }
+  //eprintln!("dx,dy: {:?}", r);
+  let g_base_dx = (r.x2() - r.x1()) / 2.0;
+  let g_base_dy = (r.y2() - r.y1()) / 2.0;
+  let mtx = agg::Transform::new()
+    .then_translate(-g_base_dx, -g_base_dy)
+    .then_translate(w / 2.0, h / 2.0);
+  //mtx.translate(0.0, 0.0);
+  let t: Vec<_> = paths.into_iter().map(|p| agg::ConvTransform::new(p, mtx)).collect();
+  println!("polygons: {}", t.len());
+  t
+}

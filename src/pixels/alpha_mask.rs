@@ -25,6 +25,13 @@ impl<T> PixfmtAlphaMask<T> {
   pub fn new(rgb: Pixfmt<T>, alpha: Pixfmt<Gray8>) -> Self {
     Self { rgb, alpha }
   }
+
+  pub fn into_rendering_base(self) -> crate::RenderingBase<Self>
+  where
+    Self: Pixel,
+  {
+    crate::RenderingBase::new(self)
+  }
 }
 
 impl<T> Pixel for PixfmtAlphaMask<T>
