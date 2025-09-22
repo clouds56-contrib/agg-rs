@@ -2,11 +2,13 @@
 
 pub mod _pixfmt;
 pub mod alpha_blend;
+pub mod blend_pix;
 pub mod buffer;
 pub mod pixel;
 
 pub use _pixfmt::*;
 pub use alpha_blend::*;
+pub use blend_pix::*;
 pub use buffer::*;
 pub use pixel::*;
 

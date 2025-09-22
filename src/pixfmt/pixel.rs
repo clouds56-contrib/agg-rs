@@ -1,6 +1,5 @@
-use crate::math::multiply_u8;
 use crate::{
-  Color, FromColor, FromRaw4, Gray8, IntoRaw2, IntoRaw3, IntoRaw4, Pixfmt, Rgb8, Rgba8, Rgba32, RgbaPre8, Source,
+  blend_mix_on_gray, blend_mix_on_rgb, blend_mix_on_rgba_pre, blend_pix_on_rgba, Color, FromColor, FromRaw2, FromRaw4, Gray8, IntoRaw2, IntoRaw3, IntoRaw4, Pixfmt, Rgb8, Rgba32, Rgba8, RgbaPre8, Source, U8
 };
 
 /// Drawing and pixel related routines
@@ -234,9 +233,8 @@ impl Pixel for Pixfmt<Rgba8> {
   /// # Output
   ///   - lerp(pixel(x,y), color, cover * alpha(color))
   fn blend_pix<C: Color>(&mut self, id: (usize, usize), c: C, cover: u64) {
-    let alpha = multiply_u8(c.alpha8(), cover as u8);
     let pix0 = self.get(id); // Rgba8
-    let pix = self.mix_pix(pix0, c.rgba(), alpha);
+    let pix = blend_pix_on_rgba(pix0, c, U8::new(cover as u8));
     self.set(id, pix);
   }
 }
@@ -261,7 +259,7 @@ impl Pixel for Pixfmt<Rgb8> {
   }
   fn blend_pix<C: Color>(&mut self, id: (usize, usize), c: C, cover: u64) {
     let pix0 = self.raw(id);
-    let pix = self.mix_pix(pix0, c.rgb(), c.alpha8(), cover);
+    let pix = blend_mix_on_rgb(pix0, c, U8::new(cover as u8));
     self.set(id, pix);
   }
 }
@@ -294,8 +292,8 @@ impl Pixel for Pixfmt<RgbaPre8> {
   }
   fn blend_pix<C: Color>(&mut self, id: (usize, usize), c: C, cover: u64) {
     let p = self.get(id);
-    let p0 = RgbaPre8::from_raw(p.red8(), p.green8(), p.blue8(), p.alpha8());
-    let p = self.mix_pix(p0, c.rgba(), c.alpha8(), cover);
+    let p0 = RgbaPre8 { color: p.color, alpha: p.alpha };
+    let p = blend_mix_on_rgba_pre(p0, c, U8::new(cover as u8));
     self.set(id, p);
   }
 }
@@ -355,8 +353,8 @@ impl Pixel for Pixfmt<Gray8> {
     2
   }
   fn blend_pix<C: Color>(&mut self, id: (usize, usize), c: C, cover: u64) {
-    let alpha = multiply_u8(c.alpha8(), cover as u8);
-    let p0 = self.mix_pix(id, Gray8::from_color(c), alpha);
-    self.set(id, p0);
+    let p = Gray8::from_slice(self.rbuf.get_pixel(id.0, id.1));
+    let p = blend_mix_on_gray(p, c, U8::new(cover as u8));
+    self.set(id, p);
   }
 }

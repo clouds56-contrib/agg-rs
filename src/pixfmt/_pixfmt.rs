@@ -195,11 +195,11 @@ impl Pixfmt<Rgba8> {
   ///   - lerp(p, c, alpha)
   ///
   /// **Change function name to over**
-  pub fn mix_pix(&mut self, p: Rgba8, c: Rgba8, alpha: u8) -> Rgba8 {
-    let red = lerp_u8(p.red8(), c.red8(), alpha);
-    let green = lerp_u8(p.green8(), c.green8(), alpha);
-    let blue = lerp_u8(p.blue8(), c.blue8(), alpha);
-    let alpha = prelerp_u8(p.alpha8(), alpha, alpha);
+  pub fn mix_pix(&mut self, p: Rgba8, c: Rgba8, beta: u8) -> Rgba8 {
+    let red = lerp_u8(p.red8(), c.red8(), beta);
+    let green = lerp_u8(p.green8(), c.green8(), beta);
+    let blue = lerp_u8(p.blue8(), c.blue8(), beta);
+    let alpha = prelerp_u8(p.alpha8(), beta, beta);
     Rgba8::from_raw(red, green, blue, alpha)
   }
   pub fn _blend_pix<C: Color>(&mut self, id: (usize, usize), c: C, cover: u64) {
@@ -211,9 +211,9 @@ impl Pixfmt<Rgba8> {
 }
 
 impl Pixfmt<Gray8> {
-  pub fn mix_pix(&mut self, (x, y): (usize, usize), c: Gray8, alpha: u8) -> Gray8 {
+  pub fn mix_pix(&mut self, (x, y): (usize, usize), c: Gray8, beta: u8) -> Gray8 {
     let p = Gray8::from_slice(self.rbuf.get_pixel(x, y));
-    Gray8::from_raw(lerp_u8(p.luma.0, c.luma.0, alpha), alpha)
+    Gray8::from_raw(lerp_u8(p.luma.0, c.luma.0, beta), beta)
   }
   pub fn raw(&self, (x, y): (usize, usize)) -> Gray8 {
     Gray8::from_slice(self.rbuf.get_pixel(x, y))
@@ -235,10 +235,10 @@ impl Pixfmt<Rgb8> {
   /// # Output
   ///   - lerp( p, c, alpha * cover)
   pub fn mix_pix(&mut self, p: Rgb8, c: Rgb8, alpha: u8, cover: u64) -> Rgb8 {
-    let alpha = multiply_u8(alpha, cover as u8);
-    let red = lerp_u8(p.red8(), c.red8(), alpha);
-    let green = lerp_u8(p.green8(), c.green8(), alpha);
-    let blue = lerp_u8(p.blue8(), c.blue8(), alpha);
+    let beta = multiply_u8(alpha, cover as u8);
+    let red = lerp_u8(p.red8(), c.red8(), beta);
+    let green = lerp_u8(p.green8(), c.green8(), beta);
+    let blue = lerp_u8(p.blue8(), c.blue8(), beta);
     Rgb8::from_raw(red, green, blue)
   }
 }
@@ -255,15 +255,15 @@ impl Pixfmt<RgbaPre8> {
   /// # Output
   ///   - prelerp(p, c * cover, alpha * cover)
   pub fn mix_pix(&mut self, p: RgbaPre8, c: Rgba8, alpha: u8, cover: u64) -> RgbaPre8 {
-    let alpha = multiply_u8(alpha, cover as u8);
+    let beta = multiply_u8(alpha, cover as u8);
     let red = multiply_u8(c.red8(), cover as u8);
     let green = multiply_u8(c.green8(), cover as u8);
     let blue = multiply_u8(c.blue8(), cover as u8);
 
-    let red = prelerp_u8(p.red8(), red, alpha);
-    let green = prelerp_u8(p.green8(), green, alpha);
-    let blue = prelerp_u8(p.blue8(), blue, alpha);
-    let alpha = prelerp_u8(p.alpha8(), alpha, alpha);
+    let red = prelerp_u8(p.red8(), red, beta);
+    let green = prelerp_u8(p.green8(), green, beta);
+    let blue = prelerp_u8(p.blue8(), blue, beta);
+    let alpha = prelerp_u8(p.alpha8(), beta, beta);
     RgbaPre8::from_raw(red, green, blue, alpha)
   }
   pub fn drop_alpha(&self) -> Pixfmt<Rgb8> {
