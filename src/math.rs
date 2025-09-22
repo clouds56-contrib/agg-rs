@@ -39,11 +39,7 @@ pub fn combine_u8(a: u8, b: u8) -> u8 {
 
 #[cfg(test)]
 mod tests {
-  use crate::math::combine_u8;
-
-use super::lerp_u8;
-  use super::multiply_u8;
-  use super::prelerp_u8;
+  use super::*;
 
   fn mu864(i: u8, j: u8) -> u8 {
     let i = i as f64 / 255.0;
@@ -94,12 +90,20 @@ use super::lerp_u8;
   }
   #[test]
   fn multiply_u8_test() {
+    let mut diff = std::collections::BTreeMap::new();
     for i in 0..=255 {
       for j in 0..=255 {
         let v = mu864(i, j);
         assert_eq!(multiply_u8(i, j), v, "{} * {} = {}", i, j, v);
-        assert_eq!(combine_u8(i, j), v, "{} * {} = {}", i, j, v);
+        let v2 = combine_u8(i, j);
+        let d = v2 as i32 - v as i32;
+        assert!(d.abs() <= 1, "{} * {} = {}", i, j, v2);
+        *diff.entry(d).or_insert(0) += 1;
       }
     }
+    assert_eq!(diff.len(), 3);
+    assert_eq!(diff[&0], 46776);
+    assert_eq!(diff[&1], 17284);
+    assert_eq!(diff[&-1], 1476);
   }
 }

@@ -10,10 +10,10 @@ use crate::MulOps;
 use crate::Pixel;
 use crate::RealLike;
 use crate::Source;
+use crate::U8;
 use crate::color::Rgba8;
 use crate::math::lerp_u8;
 use crate::math::multiply_u8;
-use crate::U8;
 
 /// Alpha Mask Adaptor
 pub struct PixfmtAlphaMask<T> {

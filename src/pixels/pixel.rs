@@ -1,5 +1,6 @@
 use crate::{
-  BlendPix, Color, Covers, FromColor, FromRaw4, Gray8, IntoRaw2, IntoRaw3, IntoRaw4, Pixfmt, RealLike, Rgb8, Rgba32, Rgba8, RgbaPre8, Source, U8
+  BlendPix, Color, Covers, FromColor, FromRaw4, Gray8, IntoRaw2, IntoRaw3, IntoRaw4, Pixfmt, RealLike, Rgb8, Rgba8,
+  Rgba32, RgbaPre8, Source, U8,
 };
 
 /// Drawing and pixel related routines

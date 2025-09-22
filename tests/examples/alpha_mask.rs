@@ -54,7 +54,11 @@ fn example_alpha_mask() {
       // Render into the gray pixfmt using a gray color (luma,alpha)
       let mut ren_alpha = agg::RenderingScanlineAASolid::new(&mut alpha_base, color);
       agg::render_scanlines(&mut ras, &mut ren_alpha);
-      assert_eq!(alpha_base.pixf.get((cx as _, cy as _)).into_raw(), (e[6] as _, e[5] as _), "at [{i}] ({cx},{cy})");
+      assert_eq!(
+        alpha_base.pixf.get((cx as _, cy as _)).into_raw(),
+        (e[6] as _, e[5] as _),
+        "at [{i}] cx={cx} cy={cy} luma={luma} alpha={alpha}"
+      );
     }
 
     let mut alpha_show = if FLIP_Y {
@@ -70,13 +74,7 @@ fn example_alpha_mask() {
       }
     }
     alpha_show.to_file("tests/tmp/alpha_mask.a.png").unwrap();
-    assert!(
-      agg::ppm::img_diff(
-        "tests/tmp/alpha_mask.a.png",
-        "images/alpha_mask.a.png"
-      )
-      .unwrap()
-    )
+    assert!(agg::ppm::img_diff("tests/tmp/alpha_mask.a.png", "images/alpha_mask.a.png").unwrap())
   }
 
   // Extract the alpha pixfmt back (we move it out of the RenderingBase)
@@ -105,11 +103,5 @@ fn example_alpha_mask() {
   agg::render_all_paths(&mut ras, &mut ren, &t, &colors);
   // Save the resulting RGBA buffer
   mix_base.to_file("tests/tmp/alpha_mask.png").unwrap();
-  assert!(
-    agg::ppm::img_diff(
-      "tests/tmp/alpha_mask.png",
-      "../examples/out/alpha_mask.png"
-    )
-    .unwrap()
-  );
+  assert!(agg::ppm::img_diff("tests/tmp/alpha_mask.png", "images/alpha_mask.png").unwrap());
 }

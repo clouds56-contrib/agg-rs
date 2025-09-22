@@ -303,6 +303,7 @@ fn t26_aa_test() {
   assert!(agg::ppm::img_diff("tests/tmp/aa_test.png", "images/aa_test.png").unwrap());
 }
 
+#[allow(clippy::assign_op_pattern)]
 fn calc_linear_gradient_transform(x1: f64, y1: f64, x2: f64, y2: f64) -> agg::Transform {
   let gradient_d2 = 100.0;
   let dx = x2 - x1;
