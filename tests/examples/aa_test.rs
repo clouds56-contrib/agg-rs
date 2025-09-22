@@ -307,20 +307,19 @@ fn calc_linear_gradient_transform(x1: f64, y1: f64, x2: f64, y2: f64) -> agg::Tr
   let gradient_d2 = 100.0;
   let dx = x2 - x1;
   let dy = y2 - y1;
-  let mut mtx = agg::Transform::new();
   let s = (dx * dx + dy * dy).sqrt() / gradient_d2;
-  mtx = mtx * agg::Transform::new_scale(s, s);
-  mtx = mtx * agg::Transform::new_rotate(dy.atan2(dx));
-  mtx = mtx * agg::Transform::new_translate(x1 + 0.5, y1 + 0.5);
-  mtx.invert();
+  let mut mtx = agg::Transform::new();
+  mtx = mtx * agg::Transform::scaling(s, s);
+  mtx = mtx * agg::Transform::rotation(dy.atan2(dx));
+  mtx = mtx * agg::Transform::translation(x1 + 0.5, y1 + 0.5);
+  mtx = mtx.then_invert();
 
-  // Above is equivalent to this
-  // let mut mtx2 = agg::Transform::new();
-  // mtx2.scale(s,s);
-  // mtx2.rotate(dy.atan2(dx));
-  // mtx2.translate(x1+0.5, y1+0.5);
-  // mtx2.invert();
-  // assert!(mtx == mtx2);
+  let mtx2 = agg::Transform::new()
+    .then_scale(s, s)
+    .then_rotate(dy.atan2(dx))
+    .then_translate(x1 + 0.5, y1 + 0.5)
+    .then_invert();
+  assert!(mtx == mtx2);
 
   mtx
 }

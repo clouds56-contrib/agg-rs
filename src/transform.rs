@@ -6,9 +6,11 @@ use crate::paths::Vertex;
 use crate::VertexSource;
 
 use std::ops::Mul;
+use std::ops::MulAssign;
 
 /// Transformation
 #[derive(Debug, Default, Copy, Clone, PartialEq)]
+/// double sx, shy, shx, sy, tx, ty;
 pub struct Transform {
   pub sx: f64,
   pub sy: f64,
@@ -19,46 +21,69 @@ pub struct Transform {
 }
 
 impl Transform {
-  /// Creates a new Transform
-  pub fn new() -> Self {
+  pub fn affine(sx: f64, shy: f64, shx: f64, sy: f64, tx: f64, ty: f64) -> Self {
     Self {
-      sx: 1.0,
-      sy: 1.0,
-      shx: 0.0,
-      shy: 0.0,
-      tx: 0.0,
-      ty: 0.0,
+      sx,
+      sy,
+      shx,
+      shy,
+      tx,
+      ty,
     }
   }
+  /// Creates a new Transform
+  pub fn new() -> Self {
+    Self::identity()
+  }
+  pub fn identity() -> Self {
+    Self::affine(1.0, 0.0, 0.0, 1.0, 0.0, 0.0)
+  }
+  pub fn rotation(angle: f64) -> Self {
+    let ca = angle.cos();
+    let sa = angle.sin();
+    Self::affine(ca, sa, -sa, ca, 0.0, 0.0)
+  }
+  pub fn scaling(sx: f64, sy: f64) -> Self {
+    Self::affine(sx, 0.0, 0.0, sy, 0.0, 0.0)
+  }
+  pub fn translation(dx: f64, dy: f64) -> Self {
+    Self::affine(1.0, 0.0, 0.0, 1.0, dx, dy)
+  }
+  pub fn skewing(x: f64, y: f64) -> Self {
+    Self::affine(1.0, y.tan(), x.tan(), 1.0, 0.0, 0.0)
+  }
   /// Add a translation to the transform
-  pub fn translate(&mut self, dx: f64, dy: f64) {
+  #[must_use]
+  pub fn then_translate(mut self, dx: f64, dy: f64) -> Self {
     self.tx += dx;
     self.ty += dy;
+    self
   }
   /// Add a scaling to the transform
-  pub fn scale(&mut self, sx: f64, sy: f64) {
+  #[must_use]
+  pub fn then_scale(mut self, sx: f64, sy: f64) -> Self {
     self.sx *= sx;
     self.shx *= sx;
     self.tx *= sx;
     self.sy *= sy;
     self.shy *= sy;
     self.ty *= sy;
+    self
   }
   /// Add a rotation to the transform
   ///
   /// angle is in radians
-  pub fn rotate(&mut self, angle: f64) {
+  #[must_use]
+  pub fn then_rotate(self, angle: f64) -> Self {
     let ca = angle.cos();
     let sa = angle.sin();
-    let t0 = self.sx * ca - self.shy * sa;
-    let t2 = self.shx * ca - self.sy * sa;
-    let t4 = self.tx * ca - self.ty * sa;
-    self.shy = self.sx * sa + self.shy * ca;
-    self.sy = self.shx * sa + self.sy * ca;
-    self.ty = self.tx * sa + self.ty * ca;
-    self.sx = t0;
-    self.shx = t2;
-    self.tx = t4;
+    let sx = self.sx * ca - self.shy * sa;
+    let shx = self.shx * ca - self.sy * sa;
+    let tx = self.tx * ca - self.ty * sa;
+    let shy = self.sx * sa + self.shy * ca;
+    let sy = self.shx * sa + self.sy * ca;
+    let ty = self.tx * sa + self.ty * ca;
+    Self::affine(sx, shy, shx, sy, tx, ty)
   }
 
   /// Perform the transform
@@ -71,19 +96,22 @@ impl Transform {
   fn determinant(&self) -> f64 {
     self.sx * self.sy - self.shy * self.shx
   }
-  pub fn invert(&mut self) {
+  #[must_use]
+  pub fn then_invert(mut self) -> Self {
     let d = 1.0 / self.determinant();
-    let t0 = self.sy * d;
+    let sx = self.sy * d;
     self.sy = self.sx * d;
     self.shy = -self.shy * d;
     self.shx = -self.shx * d;
-    let t4 = -self.tx * t0 - self.ty * self.shx;
+    let tx = -self.tx * sx - self.ty * self.shx;
     self.ty = -self.tx * self.shy - self.ty * self.sy;
 
-    self.sx = t0;
-    self.tx = t4;
+    self.sx = sx;
+    self.tx = tx;
+    self
   }
-  pub fn mul_transform(&self, m: &Transform) -> Self {
+  #[must_use]
+  pub fn then(self, m: Self) -> Self {
     let t0 = self.sx * m.sx + self.shy * m.shx;
     let t2 = self.shx * m.sx + self.sy * m.shx;
     let t4 = self.tx * m.sx + self.ty * m.shx + m.tx;
@@ -93,36 +121,20 @@ impl Transform {
     let sx = t0;
     let shx = t2;
     let tx = t4;
-    Transform {
-      sx,
-      sy,
-      tx,
-      ty,
-      shx,
-      shy,
-    }
-  }
-  pub fn new_scale(sx: f64, sy: f64) -> Transform {
-    let mut t = Self::new();
-    t.scale(sx, sy);
-    t
-  }
-  pub fn new_translate(tx: f64, ty: f64) -> Transform {
-    let mut t = Self::new();
-    t.translate(tx, ty);
-    t
-  }
-  pub fn new_rotate(ang: f64) -> Transform {
-    let mut t = Self::new();
-    t.rotate(ang);
-    t
+    Self::affine(sx, shy, shx, sy, tx, ty)
   }
 }
 
 impl Mul<Transform> for Transform {
   type Output = Transform;
   fn mul(self, rhs: Transform) -> Self {
-    self.mul_transform(&rhs)
+    self.then(rhs)
+  }
+}
+
+impl MulAssign<Transform> for Transform {
+  fn mul_assign(&mut self, rhs: Transform) {
+    *self = *self * rhs;
   }
 }
 
@@ -155,5 +167,35 @@ impl ConvTransform {
       out.push(Vertex::new(x, y, v.cmd));
     }
     out
+  }
+}
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+  #[test]
+  fn test_transform() {
+    let m = Transform::new()
+      .then_translate(10.0, 20.0)
+      .then_scale(2.0, 3.0)
+      .then_rotate(std::f64::consts::FRAC_PI_2);
+    let m2 = Transform::new()
+      * Transform::translation(10.0, 20.0)
+      * Transform::scaling(2.0, 3.0)
+      * Transform::rotation(std::f64::consts::FRAC_PI_2);
+    assert!(m == m2);
+    let mut m2 = Transform::new();
+    m2 *= Transform::translation(10.0, 20.0);
+    m2 *= Transform::scaling(2.0, 3.0);
+    m2 *= Transform::rotation(std::f64::consts::FRAC_PI_2);
+    assert!(m == m2);
+
+    let (x, y) = m.transform(1.0, 1.0);
+    assert!((x + 63.0).abs() < 1e-10);
+    assert!((y - 22.0).abs() < 1e-10);
+    let mi = m.then_invert();
+    let (x2, y2) = mi.transform(x, y);
+    assert!((x2 - 1.0).abs() < 1e-10);
+    assert!((y2 - 1.0).abs() < 1e-10);
   }
 }
