@@ -33,8 +33,6 @@
 //!
 //! ![Output](https://raw.githubusercontent.com/savage13/agg/master/images/outline_aa.png)
 use crate::Color;
-use crate::Cover;
-use crate::CoverOf;
 use crate::FromColor;
 use crate::MAX_HALF_WIDTH;
 use crate::NamedColor;
@@ -60,6 +58,7 @@ use crate::DrawOutline;
 use crate::POLY_SUBPIXEL_SCALE;
 use crate::VertexSource;
 use crate::raster::len_i64;
+use crate::U8;
 
 /// Outline Rasterizer with Anti-Aliasing
 pub struct RasterizerOutlineAA<'a, T>
@@ -578,7 +577,7 @@ where
     F: Fn(i64) -> bool,
   {
     let mut x1 = x1;
-    let mut covers = [Cover::None; MAX_HALF_WIDTH * 2 + 4];
+    let mut covers = [U8::new(0); MAX_HALF_WIDTH * 2 + 4];
     let p0 = 0;
     let mut p1 = 0;
     let mut x = x1 << POLY_SUBPIXEL_SHIFT;
@@ -617,7 +616,7 @@ where
       return;
     }
     let mut xh1 = xh1;
-    let mut covers = [Cover::None; MAX_HALF_WIDTH * 2 + 4];
+    let mut covers = [U8::new(0); MAX_HALF_WIDTH * 2 + 4];
 
     let p0 = 0;
     let mut p1 = 0;
@@ -656,13 +655,13 @@ where
   T: Pixel,
   C: Color,
 {
-  type Cover = CoverOf<T::Color>;
+  type Cover = U8;
   fn cover(&self, d: i64) -> Self::Cover {
     let subpixel_shift = POLY_SUBPIXEL_SHIFT;
     let subpixel_scale = 1 << subpixel_shift;
     let index = d + i64::from(subpixel_scale) * 2;
     assert!(index >= 0);
-    Cover::from(self.profile.profile[index as usize] as u64).into_()
+    U8::new(self.profile.profile[index as usize])
   }
   fn blend_solid_hspan(&mut self, x: i64, y: i64, len: i64, covers: &[Self::Cover]) {
     self.ren.blend_solid_hspan(x, y, len, self.color, covers);

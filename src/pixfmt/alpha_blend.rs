@@ -1,7 +1,7 @@
 use std::marker::PhantomData;
 
 use crate::{
-  math::{lerp_u8, multiply_u8}, Color, CoverOf, FromRaw2, FromRaw3, Gray8, Pixel, Pixfmt, RenderingBase, Rgb8
+  math::{lerp_u8, multiply_u8}, Color, FromRaw2, FromRaw3, Gray8, Pixel, Pixfmt, RealLike, RenderingBase, Rgb8
 };
 
 pub struct PixfmtAlphaBlend<'a, T, C>
@@ -72,32 +72,13 @@ impl Pixel for PixfmtAlphaBlend<'_, Pixfmt<Rgb8>, Gray8> {
   fn bpp() -> usize {
     Pixfmt::<Rgb8>::bpp()
   }
-  fn blend_pix<C: Color>(&mut self, id: (usize, usize), c: C, cover: CoverOf<Self::Color>) {
+  fn blend_pix<C: Color, T: RealLike>(&mut self, id: (usize, usize), c: C, cover: T) {
     // TODO: use BlendPix trait
-    let alpha = multiply_u8(c.alpha8(), cover.get().0);
+    let alpha = multiply_u8(c.alpha8(), (cover.to_f64() * 255.0) as u8);
 
     let c = c.rgb();
     let c0 = self.component(c);
     let p0 = self.mix_pix(id, c0, alpha);
     self.set(id, p0);
-  }
-
-  fn blend_color_vspan<C: Color>(&mut self, x: i64, y: i64, len: i64, colors: &[C], covers: &[CoverOf<Self::Color>], cover: CoverOf<Self::Color>) {
-    assert_eq!(len as usize, colors.len());
-    let (x, y) = (x as usize, y as usize);
-    if !covers.is_empty() {
-      assert_eq!(colors.len(), covers.len());
-      for (i, (&color, &cover)) in colors.iter().zip(covers.iter()).enumerate() {
-        self.copy_or_blend_pix_with_cover((x, y + i), color, cover);
-      }
-    } else if cover.is_full() {
-      for (i, &color) in colors.iter().enumerate() {
-        self.copy_or_blend_pix((x, y + i), color);
-      }
-    } else {
-      for (i, &color) in colors.iter().enumerate() {
-        self.copy_or_blend_pix_with_cover((x, y + i), color, cover);
-      }
-    }
   }
 }

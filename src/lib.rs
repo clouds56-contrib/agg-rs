@@ -235,7 +235,7 @@ pub(crate) trait LineInterp {
 }
 
 pub(crate) trait RenderOutline {
-  type Cover;
+  type Cover: RealLike;
   fn cover(&self, d: i64) -> Self::Cover;
   fn blend_solid_hspan(&mut self, x: i64, y: i64, len: i64, covers: &[Self::Cover]);
   fn blend_solid_vspan(&mut self, x: i64, y: i64, len: i64, covers: &[Self::Cover]);

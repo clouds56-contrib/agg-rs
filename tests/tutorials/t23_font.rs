@@ -19,7 +19,7 @@ fn t23_font() {
     .yalign(agg::YAlign::Center);
   label.draw(&mut ren_base);
 
-  ren_base.blend_hline(50, 57, 50, agg::Rgba8::RED, 255);
+  ren_base.blend_hline(50, 57, 50, agg::Rgba8::RED, 1.0);
 
   ren_base.to_file("tests/tmp/font.png").unwrap();
   assert!(agg::ppm::img_diff("tests/tmp/font.png", "images/font.png").unwrap());

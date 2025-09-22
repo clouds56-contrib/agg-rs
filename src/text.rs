@@ -5,6 +5,7 @@ use crate::base::RenderingBase;
 use crate::color::Rgba8;
 use crate::ft;
 use crate::paths::Vertex;
+use crate::U8;
 
 #[derive(Debug, PartialEq)]
 enum TextStatus {
@@ -208,7 +209,7 @@ where
     let g = font.glyph().bitmap();
     let left = font.glyph().bitmap_left() as i64;
     let top = font.glyph().bitmap_top() as i64;
-    let buf: Vec<_> = g.buffer().iter().map(|&x| x as u64).collect();
+    let buf: Vec<_> = g.buffer().iter().map(|&x| U8::new(x)).collect();
     let rows = g.rows() as i64;
     let pitch = g.pitch().unsigned_abs() as usize;
     let width = g.width() as i64;
@@ -354,7 +355,7 @@ fn draw_text_subpixel<T>(
       let left = g.left() as i64;
       let top = g.top() as i64;
       let bit = g.bitmap();
-      let buf: Vec<_> = bit.buffer().iter().map(|&x| x as u64).collect();
+      let buf: Vec<_> = bit.buffer().iter().map(|&x| U8::new(x)).collect();
       let rows = bit.rows() as i64;
       let width = bit.width() as i64;
       let pitch = bit.pitch().unsigned_abs() as usize;

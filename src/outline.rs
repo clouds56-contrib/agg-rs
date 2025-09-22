@@ -23,7 +23,6 @@
 //! ![Output](https://raw.githubusercontent.com/savage13/agg/master/images/primative.png)
 
 use crate::Color;
-use crate::Cover;
 use crate::FromColor;
 use crate::NamedColor;
 use crate::POLY_SUBPIXEL_SCALE;
@@ -192,7 +191,7 @@ where
     //let cover_size = 1 << cover_shift;
     //let cover_mask = cover_size - 1;
     //let cover_full = cover_mask;
-    let cover = Cover::Full;
+    let cover = T::cover_full();
     let color = self.line_color;
     let mut li = BresehamInterpolator::new(x1, y1, x2, y2);
     if li.len == 0 {

@@ -12,7 +12,7 @@ fn repro_transparent_white_over_black() {
   let white = agg::Rgba8::from_raw(255, 255, 255, alpha);
 
   // Blend full coverage (cover = 255) across first two pixels
-  ren_base.blend_hline(0, 0, 1, white, 255);
+  ren_base.blend_hline(0, 0, 1, white, 1.0);
 
   // Read back pixels and assert expected result
   let p0 = ren_base.pixf.get((0, 0));

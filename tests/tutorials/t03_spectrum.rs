@@ -29,7 +29,7 @@ fn t03_spectrum() {
   let span = wavelength_span(w);
 
   for i in 0..h {
-    pix.blend_color_hspan(0, i as i64, w as i64, &span, &[], 255);
+    pix.blend_color_hspan(0, i as i64, w as i64, &span, 1.0);
   }
   pix.to_file("tests/tmp/t03_spectrum.png").unwrap();
   assert!(agg::ppm::img_diff("tests/tmp/t03_spectrum.png", "images/t03_spectrum.png").unwrap());
