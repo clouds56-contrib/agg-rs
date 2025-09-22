@@ -1,5 +1,6 @@
 use crate::{
-  blend_mix_on_gray, blend_mix_on_rgb, blend_mix_on_rgba_pre, blend_pix_on_rgba, Color, FromColor, FromRaw4, Gray8, IntoRaw2, IntoRaw3, IntoRaw4, Pixfmt, Rgb8, Rgba32, Rgba8, RgbaPre8, Source, U8
+  BlendPix, Color, FromColor, FromRaw4, Gray8, IntoRaw2, IntoRaw3, IntoRaw4, Pixfmt, Rgb8, Rgba8, Rgba32, RgbaPre8,
+  Source,
 };
 
 /// Drawing and pixel related routines
@@ -233,8 +234,8 @@ impl Pixel for Pixfmt<Rgba8> {
   /// # Output
   ///   - lerp(pixel(x,y), color, cover * alpha(color))
   fn blend_pix<C: Color>(&mut self, id: (usize, usize), c: C, cover: u64) {
-    let pix0 = self.get(id); // Rgba8
-    let pix = blend_pix_on_rgba(pix0, c, U8::new(cover as u8));
+    let src = self.get(id); // Rgba8
+    let pix = src.blend_pix(c, cover as u8);
     self.set(id, pix);
   }
 }
@@ -258,8 +259,8 @@ impl Pixel for Pixfmt<Rgb8> {
     255
   }
   fn blend_pix<C: Color>(&mut self, id: (usize, usize), c: C, cover: u64) {
-    let pix0 = self.get(id);
-    let pix = blend_mix_on_rgb(pix0, c, U8::new(cover as u8));
+    let src = self.get(id);
+    let pix = src.blend_pix(c, cover as u8);
     self.set(id, pix);
   }
 }
@@ -292,8 +293,11 @@ impl Pixel for Pixfmt<RgbaPre8> {
   }
   fn blend_pix<C: Color>(&mut self, id: (usize, usize), c: C, cover: u64) {
     let p = self.get(id);
-    let p0 = RgbaPre8 { color: p.color, alpha: p.alpha };
-    let p = blend_mix_on_rgba_pre(p0, c, U8::new(cover as u8));
+    let src = RgbaPre8 {
+      color: p.color,
+      alpha: p.alpha,
+    };
+    let p = src.blend_pix(c, cover as u8);
     self.set(id, p);
   }
 }
@@ -321,16 +325,12 @@ impl Pixel for Pixfmt<Rgba32> {
     4 * 4
   }
   fn cover_mask() -> u64 {
-    unimplemented!("no cover mask")
+    255
   }
-  fn blend_pix<C: Color>(&mut self, _id: (usize, usize), _c: C, _cover: u64) {
-    unimplemented!("no blending");
-    /*
-    let alpha = multiply_u8(c.alpha8(), cover as u8);
-    let pix0 = self.get(id); // Rgba8
-    let pix  = self.mix_pix(&pix0, &Rgba8::from(c), alpha);
-    self.set(id, &pix);
-     */
+  fn blend_pix<C: Color>(&mut self, id: (usize, usize), c: C, cover: u64) {
+    let src = self.get(id);
+    let p = src.blend_pix(c, cover as f32 / 255.);
+    self.set(id, p);
   }
 }
 
@@ -354,7 +354,7 @@ impl Pixel for Pixfmt<Gray8> {
   }
   fn blend_pix<C: Color>(&mut self, id: (usize, usize), c: C, cover: u64) {
     let p = self.get(id);
-    let p = blend_mix_on_gray(p, c, U8::new(cover as u8));
+    let p = p.blend_pix(c, cover as u8);
     self.set(id, p);
   }
 }

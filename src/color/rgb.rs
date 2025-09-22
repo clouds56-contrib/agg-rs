@@ -284,6 +284,7 @@ impl<T: ColorValue> NamedColor for Srgba<T> {
 }
 
 impl<T: ColorValue> Color for Rgba<T> {
+  type Component = T;
   fn red_<T2: ColorValue>(&self) -> T2 {
     self.red.as_color_()
   }
@@ -301,6 +302,7 @@ impl<T: ColorValue> Color for Rgba<T> {
   }
 }
 impl<T: ColorValue> Color for Rgb<T> {
+  type Component = T;
   fn red_<T2: ColorValue>(&self) -> T2 {
     self.red.as_color_()
   }
@@ -321,6 +323,7 @@ impl<T: ColorValue> Color for RgbaPre<T>
 where
   Rgb<T>: Premultiply<Scalar = T>,
 {
+  type Component = T;
   fn red_<T2: ColorValue>(&self) -> T2 {
     self.red.as_color_()
   }
@@ -338,6 +341,7 @@ where
   }
 }
 impl<T: ColorValue> Color for Srgba<T> {
+  type Component = T;
   fn red_<T2: ColorValue>(&self) -> T2 {
     palette::encoding::Srgb::into_linear(self.red.to_f64()).as_color_()
   }
@@ -355,6 +359,7 @@ impl<T: ColorValue> Color for Srgba<T> {
   }
 }
 impl<T: ColorValue> Color for Gray<T> {
+  type Component = T;
   fn red_<T2: ColorValue>(&self) -> T2 {
     self.luma.as_color_()
   }

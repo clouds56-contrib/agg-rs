@@ -1,7 +1,4 @@
-
-
 use crate::{Color, ColorValue, Gray, RealLike, Rgb, Rgba, RgbaPre};
-
 
 /// TODO: do memory layout optimization for this enum
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -29,9 +26,35 @@ impl<T: RealLike> Cover<T> {
       Cover::Mask(v)
     }
   }
-
 }
 
+pub trait BlendPix: Color {
+  fn blend_pix<C: Color, T: Into<Self::Component>>(self, c: C, cover: T) -> Self;
+}
+
+impl<T: ColorValue> BlendPix for Rgba<T> {
+  fn blend_pix<C: Color, U: Into<Self::Component>>(self, c: C, cover: U) -> Self {
+    blend_pix_on_rgba(self, c, cover.into())
+  }
+}
+
+impl<T: ColorValue> BlendPix for Rgb<T> {
+  fn blend_pix<C: Color, U: Into<Self::Component>>(self, c: C, cover: U) -> Self {
+    blend_pix_on_rgb(self, c, cover.into())
+  }
+}
+
+impl<T: ColorValue> BlendPix for RgbaPre<T> {
+  fn blend_pix<C: Color, U: Into<Self::Component>>(self, c: C, cover: U) -> Self {
+    blend_pix_on_rgba_pre(self, c, cover.into())
+  }
+}
+
+impl<T: ColorValue> BlendPix for Gray<T> {
+  fn blend_pix<C: Color, U: Into<Self::Component>>(self, c: C, cover: U) -> Self {
+    blend_pix_on_gray(self, c, cover.into())
+  }
+}
 
 pub fn blend_pix_on_rgba<T, C>(src: Rgba<T>, dst: C, cover: T) -> Rgba<T>
 where
@@ -47,8 +70,7 @@ where
   Rgba::new(red, green, blue, alpha)
 }
 
-
-pub fn blend_mix_on_rgb<T, C>(src: Rgb<T>, dst: C, cover: T) -> Rgb<T>
+pub fn blend_pix_on_rgb<T, C>(src: Rgb<T>, dst: C, cover: T) -> Rgb<T>
 where
   T: ColorValue,
   C: Color,
@@ -61,8 +83,7 @@ where
   Rgb::new(red, green, blue)
 }
 
-
-pub fn blend_mix_on_rgba_pre<T, C>(src: RgbaPre<T>, dst: C, cover: T) -> RgbaPre<T>
+pub fn blend_pix_on_rgba_pre<T, C>(src: RgbaPre<T>, dst: C, cover: T) -> RgbaPre<T>
 where
   T: ColorValue,
   C: Color,
@@ -83,7 +104,7 @@ where
   }
 }
 
-pub fn blend_mix_on_gray<T, C>(src: Gray<T>, dst: C, cover: T) -> Gray<T>
+pub fn blend_pix_on_gray<T, C>(src: Gray<T>, dst: C, cover: T) -> Gray<T>
 where
   T: ColorValue,
   C: Color,
