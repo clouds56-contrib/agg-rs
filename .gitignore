@@ -2,3 +2,12 @@
 **/*.rs.bk
 Cargo.lock
 tests/tmp/*.png
+
+# Coverage reports
+coverage.info
+lcov.info
+/coverage-html
+*.profraw
+*.profdata
+/target/coverage
+/target/test-coverage

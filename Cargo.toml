@@ -9,6 +9,13 @@ homepage = "https://github.com/savage13/agg"
 license = "BSD-2-Clause"
 description = "High-quality 2D graphics engine based on Anti-grain Geometry"
 
+# Coverage configuration (when running with cargo-llvm-cov)
+[package.metadata.coverage]
+# Exclude specific files from coverage
+exclude = [
+    "src/lib.rs",  # Only contains module declarations
+]
+
 [dependencies]
 freetype-rs = { version = "0.38.0", features = ["bundled"] }
 image = { version = "0.25.8", default-features = false, features = ["png", "gif", "jpeg", "bmp", "tga"] }

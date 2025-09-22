@@ -2,6 +2,7 @@ agg
 ===
 
 [![Documentation](https://docs.rs/agg/badge.svg)](https://docs.rs/agg)
+[![Codecov](https://codecov.io/gh/clouds56-contrib/agg-rs/branch/master/graph/badge.svg)](https://codecov.io/gh/clouds56-contrib/agg-rs)
 
 A Rust port of [Anti-Grain Geometry](http://www.antigrain.com/)
 
@@ -60,6 +61,37 @@ ren_base.to_file("tests/tmp/little_black_triangle.png").unwrap();
 Quoting the original C++ library:
 
 > **Anti-Grain Geometry** is not a solid graphic library and it's not very easy to use. I consider **AGG** as a **"tool to create other tools"**. It means that there's no **"Graphics"** object or something like that, instead, **AGG** consists of a number of loosely coupled algorithms that can be used together or separately. All of them have well defined interfaces and absolute minimum of implicit or explicit dependencies.
+
+## Code Coverage
+
+This project uses Rust's built-in code coverage capabilities through `cargo-llvm-cov`. 
+
+### Generating Coverage Reports Locally
+
+1. Install the required tools:
+   ```bash
+   cargo install cargo-llvm-cov
+   rustup component add llvm-tools-preview
+   ```
+
+2. Generate coverage reports:
+   ```bash
+   # Generate HTML coverage report
+   ./scripts/coverage.sh
+
+   # Generate and open HTML report in browser
+   ./scripts/coverage.sh --open
+
+   # Generate LCOV format for external tools
+   ./scripts/coverage.sh --format lcov
+
+   # Generate text summary
+   ./scripts/coverage.sh --format text
+   ```
+
+### Coverage in CI/CD
+
+Code coverage is automatically generated and uploaded to [Codecov](https://codecov.io/gh/clouds56-contrib/agg-rs) on every push and pull request. The coverage reports help maintain code quality and identify areas that need more testing.
 
 ## License
 
