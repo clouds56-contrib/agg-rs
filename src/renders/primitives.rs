@@ -1,13 +1,12 @@
 use crate::Color;
 use crate::FromColor;
 use crate::NamedColor;
-use crate::Subpixel;
 use crate::POLY_SUBPIXEL_SCALE;
 use crate::Pixel;
 use crate::RenderingBase;
+use crate::Subpixel;
 use crate::color::Rgba8;
 use crate::renders::BresehamInterpolator;
-
 
 /// Primative Renderer
 #[derive(Debug)]

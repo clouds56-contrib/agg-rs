@@ -22,9 +22,9 @@
 //!
 //! ![Output](https://raw.githubusercontent.com/savage13/agg/master/images/primative.png)
 
-use crate::RendererPrimatives;
 use crate::POLY_SUBPIXEL_SHIFT;
 use crate::Pixel;
+use crate::RendererPrimatives;
 use crate::VertexSource;
 use crate::paths::PathCommand;
 

@@ -1,6 +1,5 @@
 use crate::{LineInterpolator, Transform};
 
-
 pub trait GradientCalculation {
   fn calculate(&self, x: i64, y: i64, d2: i64) -> i64;
 }

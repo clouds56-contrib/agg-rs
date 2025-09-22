@@ -138,9 +138,9 @@ pub mod basic;
 pub mod clip;
 pub mod color;
 pub mod pixels;
-pub mod utils;
 pub mod rasters;
 pub mod renders;
+pub mod utils;
 
 pub(crate) mod cell;
 pub mod math;
