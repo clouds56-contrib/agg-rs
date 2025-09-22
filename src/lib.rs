@@ -235,9 +235,10 @@ pub(crate) trait LineInterp {
 }
 
 pub(crate) trait RenderOutline {
-  fn cover(&self, d: i64) -> u64;
-  fn blend_solid_hspan(&mut self, x: i64, y: i64, len: i64, covers: &[u64]);
-  fn blend_solid_vspan(&mut self, x: i64, y: i64, len: i64, covers: &[u64]);
+  type Cover;
+  fn cover(&self, d: i64) -> Self::Cover;
+  fn blend_solid_hspan(&mut self, x: i64, y: i64, len: i64, covers: &[Self::Cover]);
+  fn blend_solid_vspan(&mut self, x: i64, y: i64, len: i64, covers: &[Self::Cover]);
 }
 /// Functions for Drawing Outlines
 //pub trait DrawOutline: Lines + AccurateJoins + SetColor {}

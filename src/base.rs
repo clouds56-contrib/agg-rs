@@ -1,7 +1,6 @@
 //! Rendering Base
 
-use crate::Color;
-use crate::Pixel;
+use crate::{Color, CoverOf, Pixel};
 use std::cmp::max;
 use std::cmp::min;
 
@@ -37,7 +36,7 @@ where
     (0, w - 1, 0, h - 1)
   }
   /// Blend a color along y-row from x1 to x2
-  pub fn blend_hline<C: Color>(&mut self, x1: i64, y: i64, x2: i64, c: C, cover: u64) {
+  pub fn blend_hline<C: Color>(&mut self, x1: i64, y: i64, x2: i64, c: C, cover: CoverOf<T::Color>) {
     let (xmin, xmax, ymin, ymax) = self.limits();
     let (x1, x2) = if x2 > x1 { (x1, x2) } else { (x2, x1) };
     if y > ymax || y < ymin || x1 > xmax || x2 < xmin {
@@ -48,7 +47,7 @@ where
     self.pixf.blend_hline(x1, y, x2 - x1 + 1, c, cover);
   }
   /// Blend a color from (x,y) with variable covers
-  pub fn blend_solid_hspan<C: Color>(&mut self, x: i64, y: i64, len: i64, c: C, covers: &[u64]) {
+  pub fn blend_solid_hspan<C: Color>(&mut self, x: i64, y: i64, len: i64, c: C, covers: &[CoverOf<T::Color>]) {
     let (xmin, xmax, ymin, ymax) = self.limits();
     if y > ymax || y < ymin {
       return;
@@ -73,7 +72,7 @@ where
     self.pixf.blend_solid_hspan(x, y, len, c, covers_win);
   }
   /// Blend a color from (x,y) with variable covers
-  pub fn blend_solid_vspan<C: Color>(&mut self, x: i64, y: i64, len: i64, c: C, covers: &[u64]) {
+  pub fn blend_solid_vspan<C: Color>(&mut self, x: i64, y: i64, len: i64, c: C, covers: &[CoverOf<T::Color>]) {
     let (xmin, xmax, ymin, ymax) = self.limits();
     if x > xmax || x < xmin {
       return;
@@ -98,7 +97,7 @@ where
     self.pixf.blend_solid_vspan(x, y, len, c, covers_win);
   }
 
-  pub fn blend_color_vspan<C: Color>(&mut self, x: i64, y: i64, len: i64, colors: &[C], covers: &[u64], cover: u64) {
+  pub fn blend_color_vspan<C: Color>(&mut self, x: i64, y: i64, len: i64, colors: &[C], covers: &[CoverOf<T::Color>], cover: CoverOf<T::Color>) {
     let (xmin, xmax, ymin, ymax) = self.limits();
     if x > xmax || x < xmin {
       return;
@@ -126,7 +125,7 @@ where
     let colors_win = &colors[off as usize..(off + len) as usize];
     self.pixf.blend_color_vspan(x, y, len, colors_win, covers_win, cover);
   }
-  pub fn blend_color_hspan<C: Color>(&mut self, x: i64, y: i64, len: i64, colors: &[C], covers: &[u64], cover: u64) {
+  pub fn blend_color_hspan<C: Color>(&mut self, x: i64, y: i64, len: i64, colors: &[C], covers: &[CoverOf<T::Color>], cover: CoverOf<T::Color>) {
     let (xmin, xmax, ymin, ymax) = self.limits();
     if y > ymax || y < ymin {
       return;

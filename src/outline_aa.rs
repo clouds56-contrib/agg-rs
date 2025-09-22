@@ -33,6 +33,8 @@
 //!
 //! ![Output](https://raw.githubusercontent.com/savage13/agg/master/images/outline_aa.png)
 use crate::Color;
+use crate::Cover;
+use crate::CoverOf;
 use crate::FromColor;
 use crate::MAX_HALF_WIDTH;
 use crate::NamedColor;
@@ -576,7 +578,7 @@ where
     F: Fn(i64) -> bool,
   {
     let mut x1 = x1;
-    let mut covers = [0u64; MAX_HALF_WIDTH * 2 + 4];
+    let mut covers = [Cover::None; MAX_HALF_WIDTH * 2 + 4];
     let p0 = 0;
     let mut p1 = 0;
     let mut x = x1 << POLY_SUBPIXEL_SHIFT;
@@ -592,7 +594,6 @@ where
     let dy = y - yc1;
     loop {
       let d = ((dx * dx + dy * dy) as f64).sqrt() as i64;
-      covers[p1] = 0;
       if cmp(di.dist) && d <= w {
         covers[p1] = self.cover(d);
       }
@@ -616,7 +617,7 @@ where
       return;
     }
     let mut xh1 = xh1;
-    let mut covers = [0u64; MAX_HALF_WIDTH * 2 + 4];
+    let mut covers = [Cover::None; MAX_HALF_WIDTH * 2 + 4];
 
     let p0 = 0;
     let mut p1 = 0;
@@ -633,7 +634,6 @@ where
     let dy = y - yc;
     loop {
       let d = ((dx * dx + dy * dy) as f64).sqrt() as i64;
-      covers[p1] = 0;
       if di.dist1 <= 0 && di.dist2 > 0 && d <= w {
         covers[p1] = self.cover(d);
       }
@@ -656,17 +656,18 @@ where
   T: Pixel,
   C: Color,
 {
-  fn cover(&self, d: i64) -> u64 {
+  type Cover = CoverOf<T::Color>;
+  fn cover(&self, d: i64) -> Self::Cover {
     let subpixel_shift = POLY_SUBPIXEL_SHIFT;
     let subpixel_scale = 1 << subpixel_shift;
     let index = d + i64::from(subpixel_scale) * 2;
     assert!(index >= 0);
-    u64::from(self.profile.profile[index as usize])
+    Cover::from(self.profile.profile[index as usize] as u64).into_()
   }
-  fn blend_solid_hspan(&mut self, x: i64, y: i64, len: i64, covers: &[u64]) {
+  fn blend_solid_hspan(&mut self, x: i64, y: i64, len: i64, covers: &[Self::Cover]) {
     self.ren.blend_solid_hspan(x, y, len, self.color, covers);
   }
-  fn blend_solid_vspan(&mut self, x: i64, y: i64, len: i64, covers: &[u64]) {
+  fn blend_solid_vspan(&mut self, x: i64, y: i64, len: i64, covers: &[Self::Cover]) {
     self.ren.blend_solid_vspan(x, y, len, self.color, covers);
   }
 }

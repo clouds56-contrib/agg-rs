@@ -2,6 +2,8 @@
 
 //use std::collections::HashMap;
 
+use crate::Cover;
+
 /// Contigious area of data
 #[derive(Debug, Default)]
 pub(crate) struct Span {
@@ -10,7 +12,7 @@ pub(crate) struct Span {
   /// Length of span
   pub len: i64,
   /// Cover values with len values
-  pub covers: Vec<u64>,
+  pub covers: Vec<Cover<u64>>,
 }
 
 /// Unpacked Scanline

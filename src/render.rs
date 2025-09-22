@@ -1,5 +1,6 @@
 //! Renderer
 
+use crate::Cover;
 use crate::FromColor;
 use crate::FromRaw4;
 use crate::MAX_HALF_WIDTH;
@@ -235,9 +236,8 @@ impl<G: GradientCalculation, C: Clone> Gradient for SpanGradient<G, C> {
 
 /// Render a single Scanline (y-row) without Anti-Aliasing (Binary?)
 fn render_scanline_bin_solid<T: Pixel, C: Color>(sl: &ScanlineU8, ren: &mut RenderingBase<T>, color: C) {
-  let cover_full = 255;
   for span in &sl.spans {
-    ren.blend_hline(span.x, sl.y, span.x - 1 + span.len.abs(), color, cover_full);
+    ren.blend_hline(span.x, sl.y, span.x - 1 + span.len.abs(), color, Cover::Full);
   }
 }
 
@@ -265,7 +265,7 @@ where
   for span in &sl.spans {
     let x = span.x;
     let mut len = span.len;
-    let covers = &span.covers;
+    let covers = span.covers.iter().map(|i| i.into_()).collect::<Vec<_>>();
     if len < 0 {
       len = -len;
     }
@@ -274,7 +274,7 @@ where
     //dbg!(len);
     let colors = span_gen.generate(x, y, len as usize);
     //dbg!(&colors);
-    ren.blend_color_hspan(x, y, len, &colors, if span.len < 0 { &[] } else { covers }, covers[0]);
+    ren.blend_color_hspan(x, y, len, &colors, if span.len < 0 { &[] } else { &covers }, covers[0]);
   }
 }
 
@@ -852,10 +852,10 @@ where
     self.pattern.pixel(x, y)
   }
   fn blend_color_hspan(&mut self, x: i64, y: i64, len: i64, colors: &[Rgba8]) {
-    self.ren.blend_color_hspan(x, y, len, colors, &[], 255);
+    self.ren.blend_color_hspan(x, y, len, colors, &[], Cover::Full);
   }
   fn blend_color_vspan(&mut self, x: i64, y: i64, len: i64, colors: &[Rgba8]) {
-    self.ren.blend_color_vspan(x, y, len, colors, &[], 255);
+    self.ren.blend_color_vspan(x, y, len, colors, &[], Cover::Full);
   }
   fn line3_no_clip(&mut self, lp: &LineParameters, sx: i64, sy: i64, ex: i64, ey: i64) {
     if lp.len > LINE_MAX_LENGTH {

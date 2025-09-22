@@ -8,15 +8,35 @@ pub enum Cover<T> {
   Full,
 }
 
-impl<T: RealLike> Cover<T> {
-  pub fn to_f64(self) -> f64 {
-    match self {
-      Cover::None => 0.0,
-      Cover::Mask(v) => v.to_f64(),
-      Cover::Full => 1.0,
+pub type CoverOf<C> = Cover<<C as Color>::Component>;
+
+impl From<u64> for Cover<u64> {
+  fn from(v: u64) -> Self {
+    if v == 0 {
+      Cover::None
+    } else if v >= Self::FULL {
+      Cover::Full
+    } else {
+      Cover::Mask(v)
     }
   }
+}
 
+impl Cover<u64> {
+  const BITS: usize = 8;
+  const NONE: u64 = 0;
+  const FULL: u64 = (1 << Self::BITS) - 1;
+
+  pub fn into_<T: RealLike>(self) -> Cover<T> {
+    match self {
+      Cover::None => Cover::None,
+      Cover::Mask(v) => Cover::Mask(T::from_f64(v as f64 / Self::FULL as f64)),
+      Cover::Full => Cover::Full,
+    }
+  }
+}
+
+impl<T: RealLike> Cover<T> {
   pub fn new(v: T) -> Self {
     if v == T::ZERO {
       Cover::None
@@ -26,33 +46,58 @@ impl<T: RealLike> Cover<T> {
       Cover::Mask(v)
     }
   }
+
+  pub fn from_raw(v: T::Raw) -> Self {
+    Self::new(v.into())
+  }
+
+  pub fn to_f64(self) -> f64 {
+    self.get().to_f64()
+  }
+
+  pub fn get(self) -> T {
+    match self {
+      Cover::None => T::ZERO,
+      Cover::Mask(v) => v,
+      Cover::Full => T::ONE,
+    }
+  }
+
+
+  pub fn is_full(&self) -> bool {
+    *self == Cover::Full
+  }
+
+  pub fn is_none(&self) -> bool {
+    *self == Cover::None
+  }
 }
 
 pub trait BlendPix: Color {
-  fn blend_pix<C: Color, T: Into<Self::Component>>(self, c: C, cover: T) -> Self;
+  fn blend_pix<C: Color>(self, c: C, cover: Cover<Self::Component>) -> Self;
 }
 
 impl<T: ColorValue> BlendPix for Rgba<T> {
-  fn blend_pix<C: Color, U: Into<Self::Component>>(self, c: C, cover: U) -> Self {
-    blend_pix_on_rgba(self, c, cover.into())
+  fn blend_pix<C: Color>(self, c: C, cover: Cover<Self::Component>) -> Self {
+    blend_pix_on_rgba(self, c, cover.get())
   }
 }
 
 impl<T: ColorValue> BlendPix for Rgb<T> {
-  fn blend_pix<C: Color, U: Into<Self::Component>>(self, c: C, cover: U) -> Self {
-    blend_pix_on_rgb(self, c, cover.into())
+  fn blend_pix<C: Color>(self, c: C, cover: Cover<Self::Component>) -> Self {
+    blend_pix_on_rgb(self, c, cover.get())
   }
 }
 
 impl<T: ColorValue> BlendPix for RgbaPre<T> {
-  fn blend_pix<C: Color, U: Into<Self::Component>>(self, c: C, cover: U) -> Self {
-    blend_pix_on_rgba_pre(self, c, cover.into())
+  fn blend_pix<C: Color>(self, c: C, cover: Cover<Self::Component>) -> Self {
+    blend_pix_on_rgba_pre(self, c, cover.get())
   }
 }
 
 impl<T: ColorValue> BlendPix for Gray<T> {
-  fn blend_pix<C: Color, U: Into<Self::Component>>(self, c: C, cover: U) -> Self {
-    blend_pix_on_gray(self, c, cover.into())
+  fn blend_pix<C: Color>(self, c: C, cover: Cover<Self::Component>) -> Self {
+    blend_pix_on_gray(self, c, cover.get())
   }
 }
 

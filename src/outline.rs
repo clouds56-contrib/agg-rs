@@ -23,6 +23,7 @@
 //! ![Output](https://raw.githubusercontent.com/savage13/agg/master/images/primative.png)
 
 use crate::Color;
+use crate::Cover;
 use crate::FromColor;
 use crate::NamedColor;
 use crate::POLY_SUBPIXEL_SCALE;
@@ -191,7 +192,7 @@ where
     //let cover_size = 1 << cover_shift;
     //let cover_mask = cover_size - 1;
     //let cover_full = cover_mask;
-    let mask = T::cover_mask();
+    let cover = Cover::Full;
     let color = self.line_color;
     let mut li = BresehamInterpolator::new(x1, y1, x2, y2);
     if li.len == 0 {
@@ -200,12 +201,12 @@ where
     if li.ver {
       for _ in 0..li.len {
         //self.base.pixf.set((li.x2 as usize, li.y1 as usize), color);
-        self.base.blend_hline(li.x2, li.y1, li.x2, color, mask);
+        self.base.blend_hline(li.x2, li.y1, li.x2, color, cover);
         li.vstep();
       }
     } else {
       for _ in 0..li.len {
-        self.base.blend_hline(li.x1, li.y2, li.x1, color, mask);
+        self.base.blend_hline(li.x1, li.y2, li.x1, color, cover);
         li.hstep();
       }
     }

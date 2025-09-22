@@ -14,7 +14,8 @@ pub use pixel::*;
 
 #[cfg(test)]
 mod tests {
-  use crate::FromRaw3;
+  use crate::Cover;
+use crate::FromRaw3;
   use crate::FromRaw4;
   use crate::NamedColor;
   use crate::Pixel;
@@ -124,39 +125,39 @@ mod tests {
 
     let (alpha, beta, cover) = (255, 255, 255); // Copy Pixel
     pix.copy_pixel(0, 0, Rgba8::from_raw(0, 0, 0, alpha));
-    pix.copy_or_blend_pix_with_cover((0, 0), Rgba8::from_raw(255, 255, 255, beta), cover);
+    pix.copy_or_blend_pix_with_cover((0, 0), Rgba8::from_raw(255, 255, 255, beta), Cover::from_raw(cover));
     assert_eq!(pix.get((0, 0)), white);
 
     let (alpha, beta, cover) = (255, 255, 0); // Do Nothing, No Coverage
     pix.copy_pixel(0, 0, Rgba8::from_raw(0, 0, 0, alpha));
-    pix.copy_or_blend_pix_with_cover((0, 0), Rgba8::from_raw(255, 255, 255, beta), cover);
+    pix.copy_or_blend_pix_with_cover((0, 0), Rgba8::from_raw(255, 255, 255, beta), Cover::from_raw(cover));
     assert_eq!(pix.get((0, 0)), black);
 
     let (alpha, beta, cover) = (255, 0, 255); // Do Nothing, Transparent
     pix.copy_pixel(0, 0, Rgba8::from_raw(0, 0, 0, alpha));
-    pix.copy_or_blend_pix_with_cover((0, 0), Rgba8::from_raw(255, 255, 255, beta), cover);
+    pix.copy_or_blend_pix_with_cover((0, 0), Rgba8::from_raw(255, 255, 255, beta), Cover::from_raw(cover));
     assert_eq!(pix.get((0, 0)), black);
 
     let (alpha, beta, cover) = (255, 255, 128); // Partial Coverage, Blend
     pix.copy_pixel(0, 0, Rgba8::from_raw(0, 0, 0, alpha));
-    pix.copy_or_blend_pix_with_cover((0, 0), Rgba8::from_raw(255, 255, 255, beta), cover);
+    pix.copy_or_blend_pix_with_cover((0, 0), Rgba8::from_raw(255, 255, 255, beta), Cover::from_raw(cover));
     assert_eq!(pix.get((0, 0)), Rgb8::from_raw(128, 128, 128));
 
     let (alpha, beta, cover) = (255, 128, 255); // Full Coverage, Alpha Color
     pix.copy_pixel(0, 0, Rgba8::from_raw(0, 0, 0, alpha));
-    pix.copy_or_blend_pix_with_cover((0, 0), Rgba8::from_raw(255, 255, 255, beta), cover);
+    pix.copy_or_blend_pix_with_cover((0, 0), Rgba8::from_raw(255, 255, 255, beta), Cover::from_raw(cover));
     assert_eq!(pix.get((0, 0)), Rgb8::from_raw(128, 128, 128));
 
     let (alpha, beta, cover) = (128, 128, 255); // Partial Coverage, Blend
     pix.copy_pixel(0, 0, Rgba8::from_raw(255, 255, 255, alpha));
     assert_eq!(pix.get((0, 0)), Rgb8::from_raw(255, 255, 255)); // Alpha channel is ignored
-    pix.copy_or_blend_pix_with_cover((0, 0), Rgba8::from_raw(0, 0, 0, beta), cover);
+    pix.copy_or_blend_pix_with_cover((0, 0), Rgba8::from_raw(0, 0, 0, beta), Cover::from_raw(cover));
     assert_eq!(pix.get((0, 0)), Rgb8::from_raw(127, 127, 127));
 
     let (alpha, beta, cover) = (128, 128, 128); // Partial Coverage, Blend
     pix.copy_pixel(0, 0, Rgba8::from_raw(255, 255, 255, alpha));
     assert_eq!(pix.get((0, 0)), Rgb8::from_raw(255, 255, 255)); // Alpha channel is ignored
-    pix.copy_or_blend_pix_with_cover((0, 0), Rgba8::from_raw(0, 0, 0, beta), cover);
+    pix.copy_or_blend_pix_with_cover((0, 0), Rgba8::from_raw(0, 0, 0, beta), Cover::from_raw(cover));
     assert_eq!(pix.get((0, 0)), Rgb8::from_raw(191, 191, 191));
   }
 
@@ -171,39 +172,39 @@ mod tests {
 
     let (alpha, beta, cover) = (255, 255, 255); // Copy Pixel
     pix.copy_pixel(0, 0, Rgba8::from_raw(0, 0, 0, alpha));
-    pix.copy_or_blend_pix_with_cover((0, 0), Rgba8::from_raw(255, 255, 255, beta), cover);
+    pix.copy_or_blend_pix_with_cover((0, 0), Rgba8::from_raw(255, 255, 255, beta), Cover::from_raw(cover));
     assert_eq!(pix.get((0, 0)), white);
 
     let (alpha, beta, cover) = (255, 255, 0); // Do Nothing, No Coverage
     pix.copy_pixel(0, 0, Rgba8::from_raw(0, 0, 0, alpha));
-    pix.copy_or_blend_pix_with_cover((0, 0), Rgba8::from_raw(255, 255, 255, beta), cover);
+    pix.copy_or_blend_pix_with_cover((0, 0), Rgba8::from_raw(255, 255, 255, beta), Cover::from_raw(cover));
     assert_eq!(pix.get((0, 0)), black);
 
     let (alpha, beta, cover) = (255, 0, 255); // Do Nothing, Transparent
     pix.copy_pixel(0, 0, Rgba8::from_raw(0, 0, 0, alpha));
-    pix.copy_or_blend_pix_with_cover((0, 0), Rgba8::from_raw(255, 255, 255, beta), cover);
+    pix.copy_or_blend_pix_with_cover((0, 0), Rgba8::from_raw(255, 255, 255, beta), Cover::from_raw(cover));
     assert_eq!(pix.get((0, 0)), black);
 
     let (alpha, beta, cover) = (255, 255, 128); // Partial Coverage, Blend
     pix.copy_pixel(0, 0, Rgba8::from_raw(0, 0, 0, alpha));
-    pix.copy_or_blend_pix_with_cover((0, 0), Rgba8::from_raw(255, 255, 255, beta), cover);
+    pix.copy_or_blend_pix_with_cover((0, 0), Rgba8::from_raw(255, 255, 255, beta), Cover::from_raw(cover));
     assert_eq!(pix.get((0, 0)), Rgba8::from_raw(128, 128, 128, 255));
 
     let (alpha, beta, cover) = (255, 128, 255); // Full Coverage, Alpha Color
     pix.copy_pixel(0, 0, Rgba8::from_raw(0, 0, 0, alpha));
-    pix.copy_or_blend_pix_with_cover((0, 0), Rgba8::from_raw(255, 255, 255, beta), cover);
+    pix.copy_or_blend_pix_with_cover((0, 0), Rgba8::from_raw(255, 255, 255, beta), Cover::from_raw(cover));
     assert_eq!(pix.get((0, 0)), Rgba8::from_raw(128, 128, 128, 255));
 
     let (alpha, beta, cover) = (128, 128, 255); // Partial Coverage, Blend
     pix.copy_pixel(0, 0, Rgba8::from_raw(255, 255, 255, alpha));
     assert_eq!(pix.get((0, 0)), Rgba8::from_raw(255, 255, 255, 128));
-    pix.copy_or_blend_pix_with_cover((0, 0), Rgba8::from_raw(0, 0, 0, beta), cover);
+    pix.copy_or_blend_pix_with_cover((0, 0), Rgba8::from_raw(0, 0, 0, beta), Cover::from_raw(cover));
     assert_eq!(pix.get((0, 0)), Rgba8::from_raw(127, 127, 127, 192));
 
     let (alpha, beta, cover) = (128, 128, 128); // Partial Coverage, Blend
     pix.copy_pixel(0, 0, Rgba8::from_raw(255, 255, 255, alpha));
     assert_eq!(pix.get((0, 0)), Rgba8::from_raw(255, 255, 255, 128)); // Alpha channel is ignored
-    pix.copy_or_blend_pix_with_cover((0, 0), Rgba8::from_raw(0, 0, 0, beta), cover);
+    pix.copy_or_blend_pix_with_cover((0, 0), Rgba8::from_raw(0, 0, 0, beta), Cover::from_raw(cover));
     assert_eq!(pix.get((0, 0)), Rgba8::from_raw(191, 191, 191, 160));
   }
 
@@ -218,39 +219,39 @@ mod tests {
 
     let (alpha, beta, cover) = (255, 255, 255); // Copy Pixel
     pix.copy_pixel(0, 0, Rgba8::from_raw(0, 0, 0, alpha));
-    pix.copy_or_blend_pix_with_cover((0, 0), Rgba8::from_raw(255, 255, 255, beta), cover);
+    pix.copy_or_blend_pix_with_cover((0, 0), Rgba8::from_raw(255, 255, 255, beta), Cover::from_raw(cover));
     assert_eq!(pix.get((0, 0)), white);
 
     let (alpha, beta, cover) = (255, 255, 0); // Do Nothing, No Coverage
     pix.copy_pixel(0, 0, Rgba8::from_raw(0, 0, 0, alpha));
-    pix.copy_or_blend_pix_with_cover((0, 0), Rgba8::from_raw(255, 255, 255, beta), cover);
+    pix.copy_or_blend_pix_with_cover((0, 0), Rgba8::from_raw(255, 255, 255, beta), Cover::from_raw(cover));
     assert_eq!(pix.get((0, 0)), black);
 
     let (alpha, beta, cover) = (255, 0, 255); // Do Nothing, Transparent
     pix.copy_pixel(0, 0, Rgba8::from_raw(0, 0, 0, alpha));
-    pix.copy_or_blend_pix_with_cover((0, 0), Rgba8::from_raw(255, 255, 255, beta), cover);
+    pix.copy_or_blend_pix_with_cover((0, 0), Rgba8::from_raw(255, 255, 255, beta), Cover::from_raw(cover));
     assert_eq!(pix.get((0, 0)), black);
 
     let (alpha, beta, cover) = (255, 255, 128); // Partial Coverage, Blend
     pix.copy_pixel(0, 0, Rgba8::from_raw(0, 0, 0, alpha));
-    pix.copy_or_blend_pix_with_cover((0, 0), Rgba8::from_raw(255, 255, 255, beta), cover);
+    pix.copy_or_blend_pix_with_cover((0, 0), Rgba8::from_raw(255, 255, 255, beta), Cover::from_raw(cover));
     assert_eq!(pix.get((0, 0)), Rgba8::from_raw(128, 128, 128, 255));
 
     let (alpha, beta, cover) = (255, 128, 255); // Full Coverage, Alpha Color
     pix.copy_pixel(0, 0, Rgba8::from_raw(0, 0, 0, alpha));
-    pix.copy_or_blend_pix_with_cover((0, 0), Rgba8::from_raw(255, 255, 255, beta), cover);
+    pix.copy_or_blend_pix_with_cover((0, 0), Rgba8::from_raw(255, 255, 255, beta), Cover::from_raw(cover));
     assert_eq!(pix.get((0, 0)), Rgba8::from_raw(255, 255, 255, 255));
 
     let (alpha, beta, cover) = (128, 128, 255); // Partial Coverage, Blend
     pix.copy_pixel(0, 0, Rgba8::from_raw(255, 255, 255, alpha));
     assert_eq!(pix.get((0, 0)), Rgba8::from_raw(255, 255, 255, 128));
-    pix.copy_or_blend_pix_with_cover((0, 0), Rgba8::from_raw(0, 0, 0, beta), cover);
+    pix.copy_or_blend_pix_with_cover((0, 0), Rgba8::from_raw(0, 0, 0, beta), Cover::from_raw(cover));
     assert_eq!(pix.get((0, 0)), Rgba8::from_raw(127, 127, 127, 192));
 
     let (alpha, beta, cover) = (128, 128, 128); // Partial Coverage, Blend
     pix.copy_pixel(0, 0, Rgba8::from_raw(255, 255, 255, alpha));
     assert_eq!(pix.get((0, 0)), Rgba8::from_raw(255, 255, 255, 128)); // Alpha channel is ignored
-    pix.copy_or_blend_pix_with_cover((0, 0), Rgba8::from_raw(0, 0, 0, beta), cover);
+    pix.copy_or_blend_pix_with_cover((0, 0), Rgba8::from_raw(0, 0, 0, beta), Cover::from_raw(cover));
     assert_eq!(pix.get((0, 0)), Rgba8::from_raw(191, 191, 191, 160));
   }
 
