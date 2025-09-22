@@ -3,7 +3,7 @@ use agg::prelude::*;
 use std::fs;
 
 fn parse_lion(arrange_orientations: bool) -> (Vec<agg::Path>, Vec<agg::Rgba8>) {
-  let txt = fs::read_to_string("tests/lion.txt").unwrap();
+  let txt = fs::read_to_string("tests/assets/lion.txt").unwrap();
   let mut paths = vec![];
   let mut colors = vec![];
   let mut path = agg::Path::new();

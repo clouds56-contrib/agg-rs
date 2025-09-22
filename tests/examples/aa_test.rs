@@ -1,8 +1,4 @@
-mod assets;
-
 use agg::{math::lerp_u8, prelude::*};
-
-use crate::assets::start_logger;
 
 fn path_from_slice(pts: &[f64]) -> agg::Path {
   assert!(pts.len().is_multiple_of(2));
@@ -48,9 +44,6 @@ fn dash_line<T: Pixel, C: Color + FromColor>(
 
 #[test]
 fn t26_aa_test() {
-  start_logger("trace").ok();
-  let (mut images, mut output) = assets::find_assets().unwrap();
-
   let (width, height) = (480, 350);
   let pix = agg::Pixfmt::<agg::Rgb8>::create(width, height);
   let mut ren_base = agg::RenderingBase::new(pix);
@@ -305,12 +298,9 @@ fn t26_aa_test() {
     agg::render_scanlines(&mut ras, &mut ren_grad);
   }
 
-  output.push("aa_test.png");
-  // let mut images = images.parent().unwrap().parent().unwrap().join("examples/out");
-  images.push("aa_test.png");
-  // println!("Output: {:?} Images: {:?}", output, images);
-  ren_base.to_file(&output).unwrap();
-  assert!(agg::ppm::img_diff(output, images).unwrap());
+  // Save the image to a file
+  ren_base.to_file("tests/tmp/aa_test.png").unwrap();
+  assert!(agg::ppm::img_diff("tests/tmp/aa_test.png", "images/aa_test.png").unwrap());
 }
 
 fn calc_linear_gradient_transform(x1: f64, y1: f64, x2: f64, y2: f64) -> agg::Transform {
