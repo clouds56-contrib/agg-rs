@@ -64,32 +64,7 @@ Quoting the original C++ library:
 
 ## Code Coverage
 
-This project uses Rust's built-in code coverage capabilities through `cargo-llvm-cov`. 
-
-### Generating Coverage Reports Locally
-
-1. Install the required tools:
-   ```bash
-   cargo install cargo-llvm-cov
-   rustup component add llvm-tools-preview
-   ```
-
-2. Generate coverage reports:
-   ```bash
-   # Generate HTML coverage report
-   ./scripts/coverage.sh
-
-   # Generate and open HTML report in browser
-   ./scripts/coverage.sh --open
-
-   # Generate LCOV format for external tools
-   ./scripts/coverage.sh --format lcov
-
-   # Generate text summary
-   ./scripts/coverage.sh --format text
-   ```
-
-### Coverage in CI/CD
+This project uses Rust's built-in code coverage capabilities through `cargo-llvm-cov`.
 
 Code coverage is automatically generated and uploaded to [Codecov](https://codecov.io/gh/clouds56-contrib/agg-rs) on every push and pull request. The coverage reports help maintain code quality and identify areas that need more testing.
 

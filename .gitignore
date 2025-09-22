@@ -11,3 +11,4 @@ lcov.info
 *.profdata
 /target/coverage
 /target/test-coverage
+/*.png
