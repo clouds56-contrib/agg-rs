@@ -75,11 +75,12 @@ where
   //   new   = c
   //   old   = p[j]
   fn blend_pix<C: Color, U: RealLike>(&mut self, id: (usize, usize), c: C, _cover: U) {
-    let (x, y) = id;
-    let pix = &mut self.rgb.get((x, y));
-    let cover = self.alpha.get((x, y)).luma;
-    let pix = blend_pix(pix, &c, cover);
-    self.rgb.set((x, y), pix);
+    // let (x, y) = id;
+    // let pix = &mut self.rgb.get((x, y));
+    let cover = self.alpha.get(id).luma;
+    self.rgb.blend_pix(id, c, cover);
+    // let pix = blend_pix(pix, &c, cover);
+    // self.rgb.set((x, y), pix);
   }
 }
 /// Blend foreground and background pixels with an cover value

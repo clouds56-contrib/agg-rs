@@ -60,7 +60,7 @@ pub fn parse_lion(arrange_orientations: bool) -> (Vec<agg::Path>, Vec<agg::Rgba8
 
 // Helper that recenters paths to the middle of a w x h pixel image and
 // returns a Vec of ConvTransform wrappers ready for rendering.
-pub fn transform_paths(paths: Vec<agg::Path>, w: f64, h: f64) -> Vec<agg::ConvTransform> {
+pub fn transform_paths(paths: Vec<agg::Path>, w: f64, h: f64, rotate: f64) -> Vec<agg::ConvTransform> {
   if paths.is_empty() {
     return Vec::new();
   }
@@ -75,8 +75,10 @@ pub fn transform_paths(paths: Vec<agg::Path>, w: f64, h: f64) -> Vec<agg::ConvTr
   //eprintln!("dx,dy: {:?}", r);
   let g_base_dx = (r.x2() - r.x1()) / 2.0;
   let g_base_dy = (r.y2() - r.y1()) / 2.0;
+  assert!(g_base_dx == 119.0 && g_base_dy == 188.5);
   let mtx = agg::Transform::new()
     .then_translate(-g_base_dx, -g_base_dy)
+    .then_rotate(rotate)
     .then_translate(w / 2.0, h / 2.0);
   //mtx.translate(0.0, 0.0);
   let t: Vec<_> = paths.into_iter().map(|p| agg::ConvTransform::new(p, mtx)).collect();

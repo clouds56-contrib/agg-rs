@@ -38,6 +38,19 @@ where
     }
   }
 
+  /// Create new Pixel Format of `width` x `height``
+  ///
+  /// Allocates memory of `width * height * bpp`
+  pub fn create_flipped(width: usize, height: usize) -> Self {
+    if width == 0 || height == 0 {
+      panic!("Cannot create pixfmt with 0 width or height");
+    }
+    Self {
+      rbuf: RenderingBuffer::new(width, height, Self::bpp()).flipped(),
+      phantom: PhantomData,
+    }
+  }
+
   pub fn into_rendering_base(self) -> crate::RenderingBase<Self>
   where
     Self: Pixel,

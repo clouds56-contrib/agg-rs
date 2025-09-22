@@ -18,7 +18,7 @@ mod tests {
 
     let mut ras = agg::RasterizerScanline::new();
 
-    let t = transform_paths(paths, w as f64, h as f64);
+    let t = transform_paths(paths, w as f64, h as f64, 0.0);
 
     agg::render_all_paths(&mut ras, &mut ren, &t, &colors);
 
@@ -41,7 +41,7 @@ mod tests {
 
     let mut ras = agg::RasterizerScanline::new();
 
-    let t = transform_paths(paths, w as f64, h as f64);
+    let t = transform_paths(paths, w as f64, h as f64, 0.0);
 
     agg::render_all_paths(&mut ras, &mut ren, &t, &colors);
 
@@ -63,7 +63,7 @@ mod tests {
 
     let mut ras = agg::RasterizerScanline::new();
 
-    let t = transform_paths(paths, w as f64, h as f64);
+    let t = transform_paths(paths, w as f64, h as f64, 0.0);
 
     agg::render_all_paths(&mut ras, &mut ren, &t, &colors);
 
@@ -87,7 +87,7 @@ mod tests {
     let mut ras = agg::RasterizerScanline::new();
 
     let colors = colors.into_iter().map(|c| c.srgba8()).collect::<Vec<_>>();
-    let t = transform_paths(paths, w as f64, h as f64);
+    let t = transform_paths(paths, w as f64, h as f64, 0.0);
 
     agg::render_all_paths(&mut ras, &mut ren, &t, &colors);
 
@@ -111,7 +111,7 @@ mod tests {
     let mut ras = agg::RasterizerScanline::new();
 
     let colors = colors.into_iter().map(|c| c.srgba8()).collect::<Vec<_>>();
-    let t = transform_paths(paths, w as f64, h as f64);
+    let t = transform_paths(paths, w as f64, h as f64, 0.0);
 
     let mut stroke: Vec<_> = t.into_iter().map(agg::Stroke::new).collect();
     stroke.iter_mut().for_each(|p| p.width(1.0));
@@ -135,7 +135,7 @@ mod tests {
     let mut ras = agg::RasterizerScanline::new();
 
     let colors = colors.into_iter().map(|c| c.srgba8()).collect::<Vec<_>>();
-    let t = transform_paths(paths, w as f64, h as f64);
+    let t = transform_paths(paths, w as f64, h as f64, 0.0);
 
     let mut stroke: Vec<_> = t.into_iter().map(agg::Stroke::new).collect();
     stroke.iter_mut().for_each(|p| p.width(7.0));
