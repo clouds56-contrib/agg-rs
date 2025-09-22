@@ -7,7 +7,6 @@ use crate::POLY_SUBPIXEL_SHIFT;
 use crate::Pixel;
 use crate::RenderOutline;
 use crate::RenderingBase;
-use crate::clip::Rectangle;
 use crate::color::Rgba8;
 use crate::line_interp::DistanceInterpolator00;
 use crate::line_interp::DistanceInterpolator0;
@@ -15,6 +14,7 @@ use crate::line_interp::LineParameters;
 use crate::rasters::len_i64_xy;
 use crate::renders::LINE_MAX_LENGTH;
 use crate::renders::clip_line_segment;
+use crate::sources::Rectangle;
 
 use crate::DrawOutline;
 use crate::POLY_SUBPIXEL_SCALE;

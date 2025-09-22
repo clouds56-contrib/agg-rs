@@ -134,24 +134,18 @@ extern crate log;
 #[doc(hidden)]
 pub use freetype as ft;
 
-pub mod basic;
-pub mod clip;
 pub mod color;
 pub mod pixels;
 pub mod rasters;
 pub mod renders;
+pub mod scanlines;
+pub mod sources;
 pub mod utils;
 
-pub(crate) mod cell;
 pub mod math;
-pub(crate) mod scan;
 
 pub mod gallery;
 
-#[doc(hidden)]
-pub use crate::basic::*;
-#[doc(hidden)]
-pub use crate::clip::*;
 #[doc(hidden)]
 pub use crate::color::*;
 #[doc(hidden)]
@@ -160,6 +154,8 @@ pub use crate::pixels::*;
 pub use crate::rasters::*;
 #[doc(hidden)]
 pub use crate::renders::*;
+#[doc(hidden)]
+pub use crate::sources::*;
 
 const POLY_SUBPIXEL_SHIFT: i64 = 8;
 const POLY_SUBPIXEL_SCALE: i64 = 1 << POLY_SUBPIXEL_SHIFT;
@@ -167,25 +163,6 @@ const POLY_SUBPIXEL_MASK: i64 = POLY_SUBPIXEL_SCALE - 1;
 const POLY_MR_SUBPIXEL_SHIFT: i64 = 4;
 const MAX_HALF_WIDTH: usize = 64;
 
-/// Source of vertex points
-pub trait VertexSource {
-  /// Rewind the vertex source (unused)
-  fn rewind(&self) {}
-  /// Get values from the source
-  ///
-  /// This could be turned into an iterator
-  fn xconvert(&self) -> Vec<Vertex<f64>>;
-}
-
-/// Render scanlines to Image
-pub trait Render {
-  /// Render a single scanlines to the image
-  fn render(&mut self, data: &RenderData);
-  /// Set the Color of the Renderer
-  fn color<C: Color>(&mut self, color: C);
-  /// Prepare the Renderer
-  fn prepare(&self) {}
-}
 /*
 /// Rasterize lines, path, and other things to scanlines
 pub trait Rasterize {

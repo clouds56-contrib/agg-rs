@@ -11,7 +11,7 @@ use crate::POLY_SUBPIXEL_SCALE;
 use crate::POLY_SUBPIXEL_SHIFT;
 use crate::RenderingBase;
 use crate::color::Rgba8;
-use crate::scan::ScanlineU8;
+use crate::scanlines::ScanlineU8;
 
 use crate::RasterizerScanline;
 use crate::clip::Rectangle;
