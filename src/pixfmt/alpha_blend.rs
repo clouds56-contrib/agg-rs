@@ -1,7 +1,8 @@
 use std::marker::PhantomData;
 
 use crate::{
-  math::{lerp_u8, multiply_u8}, Color, FromRaw2, FromRaw3, Gray8, Pixel, Pixfmt, RealLike, RenderingBase, Rgb8
+  Color, FromRaw2, FromRaw3, Gray8, Pixel, Pixfmt, RealLike, RenderingBase, Rgb8,
+  math::{lerp_u8, multiply_u8},
 };
 
 pub struct PixfmtAlphaBlend<'a, T, C>

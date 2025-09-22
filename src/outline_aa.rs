@@ -56,9 +56,9 @@ use crate::stroke::LineJoin;
 
 use crate::DrawOutline;
 use crate::POLY_SUBPIXEL_SCALE;
+use crate::U8;
 use crate::VertexSource;
 use crate::raster::len_i64;
-use crate::U8;
 
 /// Outline Rasterizer with Anti-Aliasing
 pub struct RasterizerOutlineAA<'a, T>

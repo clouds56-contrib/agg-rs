@@ -6,38 +6,26 @@ pub trait BlendPix: Color {
 
 impl<T: ColorValue> BlendPix for Rgba<T> {
   fn blend_pix<C: Color, U: RealLike>(self, c: C, cover: U) -> Self {
-    blend_pix_on_rgba(self, c, convert_real_like(cover))
+    blend_pix_on_rgba(self, c, cover.as_())
   }
 }
 
 impl<T: ColorValue> BlendPix for Rgb<T> {
   fn blend_pix<C: Color, U: RealLike>(self, c: C, cover: U) -> Self {
-    blend_pix_on_rgb(self, c, convert_real_like(cover))
+    blend_pix_on_rgb(self, c, cover.as_())
   }
 }
 
 impl<T: ColorValue> BlendPix for RgbaPre<T> {
   fn blend_pix<C: Color, U: RealLike>(self, c: C, cover: U) -> Self {
-    blend_pix_on_rgba_pre(self, c, convert_real_like(cover))
+    blend_pix_on_rgba_pre(self, c, cover.as_())
   }
 }
 
 impl<T: ColorValue> BlendPix for Gray<T> {
   fn blend_pix<C: Color, U: RealLike>(self, c: C, cover: U) -> Self {
-    blend_pix_on_gray(self, c, convert_real_like(cover))
+    blend_pix_on_gray(self, c, cover.as_())
   }
-}
-
-fn convert_real_like<T, U>(v: T) -> U
-where
-  T: RealLike,
-  U: RealLike,
-{
-  if std::any::TypeId::of::<T>() == std::any::TypeId::of::<U>() {
-    // This is safe because we just checked the type
-    return unsafe { std::mem::transmute_copy(&v) };
-  }
-  U::from_f64(v.to_f64())
 }
 
 pub fn blend_pix_on_rgba<T, C>(src: Rgba<T>, dst: C, cover: T) -> Rgba<T>

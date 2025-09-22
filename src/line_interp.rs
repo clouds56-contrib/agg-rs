@@ -3,12 +3,12 @@ use crate::render::LineInterpolatorImage;
 //use crate::render::RendererPrimatives;
 
 use crate::DistanceInterpolator;
-use crate::RealLike;
 use crate::MAX_HALF_WIDTH;
 use crate::POLY_MR_SUBPIXEL_SHIFT;
 use crate::POLY_SUBPIXEL_MASK;
 use crate::POLY_SUBPIXEL_SCALE;
 use crate::POLY_SUBPIXEL_SHIFT;
+use crate::RealLike;
 use crate::RenderOutline;
 use crate::U8;
 

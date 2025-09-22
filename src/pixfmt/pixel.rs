@@ -1,5 +1,6 @@
 use crate::{
-  BlendPix, Color, Covers, FromColor, FromRaw4, Gray8, IntoRaw2, IntoRaw3, IntoRaw4, Pixfmt, RealLike, Rgb8, Rgba32, Rgba8, RgbaPre8, Source
+  BlendPix, Color, Covers, FromColor, FromRaw4, Gray8, IntoRaw2, IntoRaw3, IntoRaw4, Pixfmt, RealLike, Rgb8, Rgba8,
+  Rgba32, RgbaPre8, Source,
 };
 
 /// Drawing and pixel related routines
@@ -55,7 +56,7 @@ pub trait Pixel {
   /// If `color` [`is_transparent`] nothing is done
   ///
   /// ```
-  /// use agg::prelude::*;
+  /// use agg::{U8, prelude::*};
   ///
   /// let mut pix = Pixfmt::<Rgb8>::create(1, 1);
   /// let black = Rgb8::BLACK;
@@ -65,19 +66,19 @@ pub trait Pixel {
   ///
   /// let (alpha, cover) = (255, 255); // Copy Pixel
   /// let color = Rgba8::from_raw(255, 255, 255, alpha);
-  /// pix.copy_or_blend_pix_with_cover((0, 0), color, cover);
+  /// pix.copy_or_blend_pix_with_cover((0, 0), color, U8::new(cover));
   /// assert_eq!(pix.get((0, 0)), white);
   ///
   /// let (alpha, cover) = (255, 128); // Partial Coverage, Blend
   /// let color = Rgba8::from_raw(255, 255, 255, alpha);
   /// pix.copy_pixel(0, 0, black);
-  /// pix.copy_or_blend_pix_with_cover((0, 0), color, cover);
+  /// pix.copy_or_blend_pix_with_cover((0, 0), color, U8::new(cover));
   /// assert_eq!(pix.get((0, 0)), Rgb8::from_raw(128, 128, 128));
   ///
   /// let (alpha, cover) = (128, 255); // Partial Coverage, Blend
   /// let color = Rgba8::from_raw(255, 255, 255, alpha);
   /// pix.copy_pixel(0, 0, black);
-  /// pix.copy_or_blend_pix_with_cover((0, 0), color, cover);
+  /// pix.copy_or_blend_pix_with_cover((0, 0), color, U8::new(cover));
   /// assert_eq!(pix.get((0, 0)), Rgb8::from_raw(128, 128, 128));
   /// ```
   ///
@@ -110,12 +111,17 @@ pub trait Pixel {
   }
   /// Blend a single `color` from (`x`,`y`) to (`x+len-1`,`y`) with collection
   ///   of `covers`
-  fn blend_solid_hspan<'a, C: Color,T: RealLike, Co: Into<Covers<'a, T>>>(&mut self, x: i64, y: i64, len: i64, color: C, covers: Co) {
+  fn blend_solid_hspan<'a, C, T, Co>(&mut self, x: i64, y: i64, len: i64, color: C, covers: Co)
+  where
+    C: Color,
+    T: RealLike,
+    Co: Into<Covers<'a, T>>,
+  {
     let (x, y) = (x as usize, y as usize);
     let covers: Covers<'_, T> = covers.into();
     assert!(covers.check_len(len as usize));
     for (i, cover) in covers.into_iter().take(len as usize).enumerate() {
-      self.copy_or_blend_pix_with_cover((x, y + i), color, cover);
+      self.copy_or_blend_pix_with_cover((x + i, y), color, cover);
     }
   }
   /// Copy or Blend a single `color` from (`x`,`y`) to (`x`,`y+len-1`)
@@ -137,7 +143,12 @@ pub trait Pixel {
   }
   /// Blend a single `color` from (`x`,`y`) to (`x`,`y+len-1`) with collection
   ///   of `covers`
-  fn blend_solid_vspan<'a, C: Color, T: RealLike, Co: Into<Covers<'a, T>>>(&mut self, x: i64, y: i64, len: i64, color: C, covers: Co) {
+  fn blend_solid_vspan<'a, C, T, Co>(&mut self, x: i64, y: i64, len: i64, color: C, covers: Co)
+  where
+    C: Color,
+    T: RealLike,
+    Co: Into<Covers<'a, T>>,
+  {
     let (x, y) = (x as usize, y as usize);
     let covers: Covers<'_, T> = covers.into();
     assert!(covers.check_len(len as usize));
@@ -149,7 +160,12 @@ pub trait Pixel {
   ///   either a collection of `covers` or a single `cover`
   ///
   /// A collection of `covers` takes precedance over a single `cover`
-  fn blend_color_hspan<'a, C: Color,T: RealLike, Co: Into<Covers<'a, T>>>(&mut self, x: i64, y: i64, len: i64, colors: &[C], covers: Co) {
+  fn blend_color_hspan<'a, C, T, Co>(&mut self, x: i64, y: i64, len: i64, colors: &[C], covers: Co)
+  where
+    C: Color,
+    T: RealLike,
+    Co: Into<Covers<'a, T>>,
+  {
     assert_eq!(len as usize, colors.len());
     let (x, y) = (x as usize, y as usize);
     let covers: Covers<'a, T> = covers.into();
@@ -163,7 +179,12 @@ pub trait Pixel {
   ///   either a collection of `covers` or a single `cover`
   ///
   /// A collection of `covers` takes precedance over a single `cover`
-  fn blend_color_vspan<'a, C: Color, T: RealLike, Co: Into<Covers<'a, T>>>(&mut self, x: i64, y: i64, len: i64, colors: &[C], covers: Co) {
+  fn blend_color_vspan<'a, C, T, Co>(&mut self, x: i64, y: i64, len: i64, colors: &[C], covers: Co)
+  where
+    C: Color,
+    T: RealLike,
+    Co: Into<Covers<'a, T>>,
+  {
     assert_eq!(len as usize, colors.len());
     let (x, y) = (x as usize, y as usize);
     let covers: Covers<'_, T> = covers.into();

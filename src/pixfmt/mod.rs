@@ -3,15 +3,15 @@
 pub mod _pixfmt;
 pub mod alpha_blend;
 pub mod blend_pix;
-pub mod cover;
 pub mod buffer;
+pub mod cover;
 pub mod pixel;
 
 pub use _pixfmt::*;
 pub use alpha_blend::*;
 pub use blend_pix::*;
-pub use cover::*;
 pub use buffer::*;
+pub use cover::*;
 pub use pixel::*;
 
 #[cfg(test)]
@@ -27,7 +27,7 @@ mod tests {
   use crate::RgbaPre8;
   use crate::Source;
   use crate::Srgba8;
-use crate::U8;
+  use crate::U8;
   #[test]
   fn pixfmt_test() {
     let mut p = Pixfmt::<Rgb8>::create(10, 10);

@@ -1,11 +1,11 @@
 use crate::NamedColor;
 use crate::Pixel;
+use crate::U8;
 use crate::VertexSource;
 use crate::base::RenderingBase;
 use crate::color::Rgba8;
 use crate::ft;
 use crate::paths::Vertex;
-use crate::U8;
 
 #[derive(Debug, PartialEq)]
 enum TextStatus {
