@@ -300,7 +300,7 @@ fn t26_aa_test() {
 
   // Save the image to a file
   ren_base.to_file("tests/tmp/aa_test.png").unwrap();
-  assert!(agg::ppm::img_diff("tests/tmp/aa_test.png", "images/aa_test.png").unwrap());
+  assert!(agg::utils::img_diff("tests/tmp/aa_test.png", "images/aa_test.png").unwrap());
 }
 
 #[allow(clippy::assign_op_pattern)]

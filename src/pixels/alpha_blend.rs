@@ -55,7 +55,7 @@ impl Pixel for PixfmtAlphaBlend<'_, Pixfmt<Rgb8>, Gray8> {
     self.ren.pixf.as_bytes()
   }
   fn to_file<P: AsRef<std::path::Path>>(&self, filename: P) -> Result<(), std::io::Error> {
-    crate::ppm::write_file(self.as_bytes(), self.width(), self.height(), filename)
+    crate::utils::write_file(self.as_bytes(), self.width(), self.height(), filename)
   }
   fn _set(&mut self, id: (usize, usize), n: usize, c: Self::Color) {
     let c = c.rgb8();

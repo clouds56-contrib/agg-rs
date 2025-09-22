@@ -194,7 +194,7 @@ where
   }
 
   pub fn from_file<P: AsRef<std::path::Path>>(filename: P) -> Result<Self, image::ImageError> {
-    let (buf, w, h) = crate::ppm::read_file(filename)?;
+    let (buf, w, h) = crate::utils::read_file(filename)?;
     Ok(Self {
       rbuf: RenderingBuffer::from_buf(buf, w, h, 3),
       phantom: PhantomData,

@@ -51,7 +51,7 @@ fn rasterizers() {
     agg::render_scanlines(&mut ras, &mut ren_bin);
   }
   ren_base.to_file("tests/tmp/rasterizers.png").unwrap();
-  assert!(agg::ppm::img_diff("tests/tmp/rasterizers.png", "images/rasterizers.png").unwrap());
+  assert!(agg::utils::img_diff("tests/tmp/rasterizers.png", "images/rasterizers.png").unwrap());
 }
 
 #[test]
@@ -102,5 +102,5 @@ fn rasterizers_gamma() {
     agg::render_scanlines(&mut ras, &mut ren_bin);
   }
   ren_base.to_file("tests/tmp/rasterizers_gamma.png").unwrap();
-  assert!(agg::ppm::img_diff("tests/tmp/rasterizers_gamma.png", "images/rasterizers_gamma.png").unwrap());
+  assert!(agg::utils::img_diff("tests/tmp/rasterizers_gamma.png", "images/rasterizers_gamma.png").unwrap());
 }

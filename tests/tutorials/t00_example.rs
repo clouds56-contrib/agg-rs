@@ -43,7 +43,7 @@ fn t00_example() {
 
   // Save the image to a file
   ren_base.to_file("tests/tmp/t00_example.png").unwrap();
-  assert!(agg::ppm::img_diff("tests/tmp/t00_example.png", "images/t00_example.png").unwrap());
+  assert!(agg::utils::img_diff("tests/tmp/t00_example.png", "images/t00_example.png").unwrap());
 }
 
 #[test]
@@ -60,7 +60,7 @@ fn t00_example_red() {
 
   ren.to_file("tests/tmp/t00_example_red.png").unwrap();
 
-  assert!(agg::ppm::img_diff("tests/tmp/t00_example_red.png", "images/t00_example_red.png").unwrap());
+  assert!(agg::utils::img_diff("tests/tmp/t00_example_red.png", "images/t00_example_red.png").unwrap());
 }
 
 #[test]
@@ -78,7 +78,7 @@ fn t00_example_red_clip_box() {
   ren.to_file("tests/tmp/t00_example_red_clip_box.png").unwrap();
 
   assert!(
-    agg::ppm::img_diff(
+    agg::utils::img_diff(
       "tests/tmp/t00_example_red_clip_box.png",
       "images/t00_example_red_clip_box.png"
     )
@@ -102,7 +102,7 @@ fn t00_example_aliased() {
 
   ren.to_file("tests/tmp/t00_example_aliased.png").unwrap();
 
-  assert!(agg::ppm::img_diff("tests/tmp/t00_example_aliased.png", "images/t00_example_aliased.png").unwrap());
+  assert!(agg::utils::img_diff("tests/tmp/t00_example_aliased.png", "images/t00_example_aliased.png").unwrap());
 }
 
 #[test]
@@ -121,7 +121,7 @@ fn t00_example_path_stroke_clip() {
 
   ren_base.to_file("tests/tmp/t00_example_path_stroke_clip.png").unwrap();
   assert!(
-    agg::ppm::img_diff(
+    agg::utils::img_diff(
       "tests/tmp/t00_example_path_stroke_clip.png",
       "images/t00_example_path_stroke_clip.png"
     )
@@ -145,7 +145,7 @@ fn t00_example_path_stroke() {
 
   ren_base.to_file("tests/tmp/t00_example_path_stroke.png").unwrap();
   assert!(
-    agg::ppm::img_diff(
+    agg::utils::img_diff(
       "tests/tmp/t00_example_path_stroke.png",
       "images/t00_example_path_stroke.png"
     )

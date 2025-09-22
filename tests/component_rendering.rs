@@ -37,7 +37,7 @@ fn draw(alpha: u8, filename: &str) {
   }
 
   ren_base.to_file(format!("tests/tmp/{}", filename)).unwrap();
-  assert!(agg::ppm::img_diff(format!("tests/tmp/{}", filename), format!("images/{}", filename)).unwrap());
+  assert!(agg::utils::img_diff(format!("tests/tmp/{}", filename), format!("images/{}", filename)).unwrap());
 }
 
 #[test]

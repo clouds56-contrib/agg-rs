@@ -1,6 +1,6 @@
-use crate::render::LineInterpolator;
-use crate::render::LineInterpolatorImage;
-//use crate::render::RendererPrimatives;
+use crate::renders::LineInterpolator;
+use crate::renders::LineInterpolatorImage;
+//use crate::renders::RendererPrimatives;
 
 use crate::DistanceInterpolator;
 use crate::MAX_HALF_WIDTH;

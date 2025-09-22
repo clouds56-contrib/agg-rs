@@ -134,20 +134,13 @@ extern crate log;
 #[doc(hidden)]
 pub use freetype as ft;
 
-pub mod base;
+pub mod basic;
 pub mod clip;
 pub mod color;
-pub mod line_interp;
-pub mod outline;
-pub mod outline_aa;
-pub mod paths;
 pub mod pixels;
-pub mod ppm;
-pub mod raster;
-pub mod render;
-pub mod stroke;
-pub mod text;
-pub mod transform;
+pub mod utils;
+pub mod rasters;
+pub mod renders;
 
 pub(crate) mod cell;
 pub mod math;
@@ -156,31 +149,17 @@ pub(crate) mod scan;
 pub mod gallery;
 
 #[doc(hidden)]
-pub use crate::base::*;
+pub use crate::basic::*;
 #[doc(hidden)]
 pub use crate::clip::*;
 #[doc(hidden)]
 pub use crate::color::*;
 #[doc(hidden)]
-pub use crate::line_interp::*;
-#[doc(hidden)]
-pub use crate::outline::*;
-#[doc(hidden)]
-pub use crate::outline_aa::*;
-#[doc(hidden)]
-pub use crate::paths::*;
-#[doc(hidden)]
 pub use crate::pixels::*;
 #[doc(hidden)]
-pub use crate::raster::*;
+pub use crate::rasters::*;
 #[doc(hidden)]
-pub use crate::render::*;
-#[doc(hidden)]
-pub use crate::stroke::*;
-#[doc(hidden)]
-pub use crate::text::*;
-#[doc(hidden)]
-pub use crate::transform::*;
+pub use crate::renders::*;
 
 const POLY_SUBPIXEL_SHIFT: i64 = 8;
 const POLY_SUBPIXEL_SCALE: i64 = 1 << POLY_SUBPIXEL_SHIFT;

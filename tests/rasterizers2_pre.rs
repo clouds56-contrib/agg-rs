@@ -258,7 +258,7 @@ fn rasterizers2_pre() {
     .drop_alpha()
     .to_file("tests/tmp/rasterizers2_pre.png")
     .unwrap();
-  assert!(agg::ppm::img_diff("tests/tmp/rasterizers2_pre.png", "images/rasterizers2_pre.png",).unwrap());
+  assert!(agg::utils::img_diff("tests/tmp/rasterizers2_pre.png", "images/rasterizers2_pre.png",).unwrap());
 }
 
 fn text<T, C>(
