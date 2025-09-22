@@ -14,6 +14,8 @@ pub trait FromColor {
 /// Access Color properties and compoents
 pub trait Color: std::fmt::Debug + Copy + 'static {
   type Component: ColorValue;
+  fn bpp() -> usize;
+
   /// Get red value
   fn red_<T: ColorValue>(&self) -> T;
   /// Get green value

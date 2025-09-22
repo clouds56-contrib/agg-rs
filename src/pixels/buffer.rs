@@ -31,7 +31,7 @@ impl RenderingBuffer {
   }
   /// Set the flip-flag, which causes the row order to be reversed
   /// This just set the flag, does not re-arrange the data
-  pub fn fliped(mut self) -> Self {
+  pub fn flipped(mut self) -> Self {
     self.flip = !self.flip;
     self
   }
@@ -195,7 +195,7 @@ mod tests {
     assert_eq!(offset.len(), 3 * 5 * 4 - 20);
     assert_eq!(offset[0..4], [127, 200, 98, 255]);
 
-    let buf = buf.fliped();
+    let buf = buf.flipped();
     assert!(buf.flip);
     assert_eq!(buf.width, 3);
     assert_eq!(buf.height, 5);

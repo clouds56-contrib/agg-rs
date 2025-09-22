@@ -1,6 +1,6 @@
 use crate::{
   luminance,
-  math::{lerp_u8, multiply_u8, prelerp_u8},
+  math::{combine_u8, lerp_u8, multiply_u8, prelerp_u8},
 };
 
 use palette::{
@@ -181,6 +181,9 @@ pub trait RealLike:
   const ZERO: Self;
   const ONE: Self;
   const _MAX: f64;
+  fn byte_size() -> usize {
+    std::mem::size_of::<Self>()
+  }
   fn to_f64(self) -> f64;
   fn as_<T: RealLike>(self) -> T {
     if std::any::TypeId::of::<Self>() == std::any::TypeId::of::<T>() {
@@ -209,6 +212,10 @@ pub trait MulOps:
   /// Multiply two color values, clamping the result to [0, 1]
   fn mul(self, rhs: Self) -> Self {
     Self::from_f64(self.to_f64() * rhs.to_f64())
+  }
+
+  fn fast_mul(self, rhs: Self) -> Self {
+    <Self as MulOps>::mul(self, rhs)
   }
 
   fn div(self, rhs: Self) -> Self {
@@ -251,6 +258,9 @@ pub trait MulOps:
 impl MulOps for U8 {
   fn mul(self, rhs: Self) -> Self {
     Self(multiply_u8(self.0, rhs.0))
+  }
+  fn fast_mul(self, rhs: Self) -> Self {
+    Self(combine_u8(self.0, rhs.0))
   }
   fn lerp(p: Self, q: Self, a: Self) -> Self {
     Self(lerp_u8(p.0, q.0, a.0))

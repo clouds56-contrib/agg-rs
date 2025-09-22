@@ -35,6 +35,7 @@ fn t03_spectrum() {
   assert!(agg::ppm::img_diff("tests/tmp/t03_spectrum.png", "images/t03_spectrum.png").unwrap());
 }
 
+/// https://agg.sourceforge.net/antigrain.com/doc/basic_renderers/basic_renderers.agdoc.html#toc0008
 fn draw_alpha(color: Rgb8, filename: &str) {
   let (w, h) = (320, 200);
 
@@ -47,11 +48,11 @@ fn draw_alpha(color: Rgb8, filename: &str) {
     alpha.copy_hline(0, i, w, agg::Gray8::from_raw(v, 255));
   }
 
-  let mut mix = agg::AlphaMaskAdaptor::new(pix, alpha);
+  let mut mix = agg::PixfmtAlphaMask::new(pix, alpha);
 
   let span = wavelength_span(w);
-  for i in 0..h {
-    mix.blend_color_hspan(0, i, w, &span, 0);
+  for i in 0..h as i64 {
+    mix.blend_color_hspan(0, i, w as i64, &span, 1.);
   }
   mix.rgb.to_file(format!("tests/tmp/{}.png", filename)).unwrap();
   assert!(

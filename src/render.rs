@@ -17,7 +17,7 @@ use crate::clip::Rectangle;
 use crate::clip::{BOTTOM, INSIDE, LEFT, RIGHT, TOP};
 use crate::line_interp::LineParameters;
 use crate::line_interp::line_mr;
-use crate::pixfmt::Pixfmt;
+use crate::pixels::Pixfmt;
 use crate::raster::RasterizerScanline;
 use crate::raster::len_i64_xy;
 
@@ -293,6 +293,11 @@ impl Default for RenderData {
 impl RenderData {
   pub fn new() -> Self {
     Self { sl: ScanlineU8::new() }
+  }
+
+  /// Access the internal scanline for rendering helpers inside the crate.
+  pub(crate) fn scanline(&self) -> &ScanlineU8 {
+    &self.sl
   }
 }
 

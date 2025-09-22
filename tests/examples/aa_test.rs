@@ -1,8 +1,4 @@
-mod assets;
-
 use agg::{math::lerp_u8, prelude::*};
-
-use crate::assets::start_logger;
 
 fn path_from_slice(pts: &[f64]) -> agg::Path {
   assert!(pts.len().is_multiple_of(2));
@@ -48,9 +44,6 @@ fn dash_line<T: Pixel, C: Color + FromColor>(
 
 #[test]
 fn t26_aa_test() {
-  start_logger("trace").ok();
-  let (mut images, mut output) = assets::find_assets().unwrap();
-
   let (width, height) = (480, 350);
   let pix = agg::Pixfmt::<agg::Rgb8>::create(width, height);
   let mut ren_base = agg::RenderingBase::new(pix);
@@ -305,32 +298,29 @@ fn t26_aa_test() {
     agg::render_scanlines(&mut ras, &mut ren_grad);
   }
 
-  output.push("aa_test.png");
-  // let mut images = images.parent().unwrap().parent().unwrap().join("examples/out");
-  images.push("aa_test.png");
-  // println!("Output: {:?} Images: {:?}", output, images);
-  ren_base.to_file(&output).unwrap();
-  assert!(agg::ppm::img_diff(output, images).unwrap());
+  // Save the image to a file
+  ren_base.to_file("tests/tmp/aa_test.png").unwrap();
+  assert!(agg::ppm::img_diff("tests/tmp/aa_test.png", "images/aa_test.png").unwrap());
 }
 
+#[allow(clippy::assign_op_pattern)]
 fn calc_linear_gradient_transform(x1: f64, y1: f64, x2: f64, y2: f64) -> agg::Transform {
   let gradient_d2 = 100.0;
   let dx = x2 - x1;
   let dy = y2 - y1;
-  let mut mtx = agg::Transform::new();
   let s = (dx * dx + dy * dy).sqrt() / gradient_d2;
-  mtx = mtx * agg::Transform::new_scale(s, s);
-  mtx = mtx * agg::Transform::new_rotate(dy.atan2(dx));
-  mtx = mtx * agg::Transform::new_translate(x1 + 0.5, y1 + 0.5);
-  mtx.invert();
+  let mut mtx = agg::Transform::new();
+  mtx = mtx * agg::Transform::scaling(s, s);
+  mtx = mtx * agg::Transform::rotation(dy.atan2(dx));
+  mtx = mtx * agg::Transform::translation(x1 + 0.5, y1 + 0.5);
+  mtx = mtx.then_invert();
 
-  // Above is equivalent to this
-  // let mut mtx2 = agg::Transform::new();
-  // mtx2.scale(s,s);
-  // mtx2.rotate(dy.atan2(dx));
-  // mtx2.translate(x1+0.5, y1+0.5);
-  // mtx2.invert();
-  // assert!(mtx == mtx2);
+  let mtx2 = agg::Transform::new()
+    .then_scale(s, s)
+    .then_rotate(dy.atan2(dx))
+    .then_translate(x1 + 0.5, y1 + 0.5)
+    .then_invert();
+  assert!(mtx == mtx2);
 
   mtx
 }

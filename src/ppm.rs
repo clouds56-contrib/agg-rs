@@ -42,6 +42,7 @@ pub fn img_diff<P: AsRef<Path>>(f1: P, f2: P) -> Result<bool, image::ImageError>
       info!("pixel {} ({},{}): left={:?} right={:?}", pixel, cx, cy, a1, a2);
     }
     error!("files differ at {} pixels", pixel_diffs.len());
+    print!("error: files differ at {} pixels", pixel_diffs.len());
   }
   Ok(flag)
 }
