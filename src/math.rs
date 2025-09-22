@@ -1,13 +1,14 @@
+const BASE_SHIFT: u8 = u8::BITS as u8;
+const BASE_MSB: u8 = 1 << (BASE_SHIFT - 1);
+
 /// Interpolate a value between two end points using fixed point math
 ///
 /// See agg_color_rgba.h:454 of agg version 2.4
 pub fn lerp_u8(p: u8, q: u8, a: u8) -> u8 {
-  let base_shift = 8;
-  let base_msb = 1 << (base_shift - 1);
   let v = if p > q { 1 } else { 0 };
   let (q, p, a) = (i32::from(q), i32::from(p), i32::from(a));
-  let t0: i32 = (q - p) * a + base_msb - v; // Signed multiplication
-  let t1: i32 = ((t0 >> base_shift) + t0) >> base_shift;
+  let t0: i32 = (q - p) * a + BASE_MSB as i32 - v; // Signed multiplication
+  let t1: i32 = ((t0 >> BASE_SHIFT) + t0) >> BASE_SHIFT;
   (p + t1) as u8
 }
 
@@ -15,7 +16,7 @@ pub fn lerp_u8(p: u8, q: u8, a: u8) -> u8 {
 ///
 /// p + q - (p*a)
 pub fn prelerp_u8(p: u8, q: u8, a: u8) -> u8 {
-  ((p as i32) + (q as i32) - multiply_u8(p, a) as i32).clamp(0, 255) as u8
+  ((p as i32) + (q as i32) - multiply_u8(p, a) as i32).clamp(0, u8::MAX as i32) as u8
 }
 
 /// Multiply two u8 values using fixed point math
@@ -26,16 +27,21 @@ pub fn prelerp_u8(p: u8, q: u8, a: u8) -> u8 {
 /// http://x86asm.net/articles/fixed-point-arithmetic-and-tricks/
 /// Still not sure where the value is added and shifted multiple times
 pub fn multiply_u8(a: u8, b: u8) -> u8 {
-  let base_shift = 8;
-  let base_msb = 1 << (base_shift - 1);
-  let t = a as u32 * b as u32 + base_msb;
-  let tt = ((t >> base_shift) + t) >> base_shift;
+  let t = a as u32 * b as u32 + BASE_MSB as u32;
+  let tt = ((t >> BASE_SHIFT) + t) >> BASE_SHIFT;
   tt as u8
+}
+
+pub fn combine_u8(a: u8, b: u8) -> u8 {
+  let t = u8::MAX as u16 + (a as u16 * b as u16);
+  (t >> 8).clamp(0, u8::MAX as u16) as u8
 }
 
 #[cfg(test)]
 mod tests {
-  use super::lerp_u8;
+  use crate::math::combine_u8;
+
+use super::lerp_u8;
   use super::multiply_u8;
   use super::prelerp_u8;
 
@@ -92,6 +98,7 @@ mod tests {
       for j in 0..=255 {
         let v = mu864(i, j);
         assert_eq!(multiply_u8(i, j), v, "{} * {} = {}", i, j, v);
+        assert_eq!(combine_u8(i, j), v, "{} * {} = {}", i, j, v);
       }
     }
   }

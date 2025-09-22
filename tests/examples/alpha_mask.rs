@@ -80,8 +80,7 @@ fn example_alpha_mask() {
   }
 
   // Extract the alpha pixfmt back (we move it out of the RenderingBase)
-  let mut alpha_pix = alpha_base.pixf;
-  // alpha_pix.fill(agg::Gray8::from_raw(255, 255));
+  let alpha_pix = alpha_base.pixf;
 
   // 2) Create an RGBA pixfmt for the final image and an AlphaMaskAdaptor
   let mut rgb_pix = if FLIP_Y {
@@ -98,6 +97,7 @@ fn example_alpha_mask() {
   // Use the public AlphaMaskRenderer implemented in the alphamask module.
   // let mut ren = agg::AlphaMaskRenderer::new(&mut mix, agg::Rgba8::from_raw(255, 0, 0, 255));
   let (paths, colors) = parse_lion(true);
+  let colors = colors.into_iter().map(|c| c.srgba8()).collect::<Vec<_>>();
   let t = transform_paths(paths, w as f64, h as f64, std::f64::consts::PI);
 
   let mut ren = agg::RenderingScanlineAASolid::new_black(&mut mix_base);

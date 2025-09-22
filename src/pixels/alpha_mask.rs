@@ -6,6 +6,7 @@ use crate::pixels::Pixfmt;
 
 use crate::Color;
 use crate::FromRaw4;
+use crate::MulOps;
 use crate::Pixel;
 use crate::RealLike;
 use crate::Source;
@@ -74,10 +75,21 @@ where
   //   alpha = alpha
   //   new   = c
   //   old   = p[j]
-  fn blend_pix<C: Color, U: RealLike>(&mut self, id: (usize, usize), c: C, _cover: U) {
+  fn blend_pix<C: Color, U: RealLike>(&mut self, id: (usize, usize), c: C, cover: U) {
+    // goes from agg::scanline_u8_am<agg::alpha_mask_gray8>
+    // scanline_u8_am::finalize() => m_alpha_mask->combine_hspan(span->x, base_type::y(), span->covers, span->len);
+    // alpha_mask_gray8 = alpha_mask_u8<1, 0>
+    // alpha_mask_u8::combine_hspan(*covers) => *covers++ = (cover_full + (*covers) * (*pixels)) >> cover_shift # cover_full=255, cover_shift=8
+    // alpha_mask_u8::combine_pixel(val) => (cover_full + val * pixel(x, y)) >> cover_shift # cover_full=255, cover_shift=8
+
+    // goes from agg::pixfmt_amask_adaptor<pixfmt, agg::amask_no_clip_gray8>
+    // pixfmt_amask_adaptor::blend_pixel(cover) => m_pixf->blend_pixel(x, y, c, m_mask->combine_pixel(x, y, cover))
+    // amask_no_clip_gray8 = amask_no_clip_u8<1, 0>
+    // amask_no_clip_gray8::combine_pixel(cover) => (cover_full + cover * pixel(x, y)) >> cover_shift # cover_full=255, cover_shift=8
+
     // let (x, y) = id;
     // let pix = &mut self.rgb.get((x, y));
-    let cover = self.alpha.get(id).luma;
+    let cover = self.alpha.get(id).luma.fast_mul(cover.as_());
     self.rgb.blend_pix(id, c, cover);
     // let pix = blend_pix(pix, &c, cover);
     // self.rgb.set((x, y), pix);
