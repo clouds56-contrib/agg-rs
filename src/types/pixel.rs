@@ -234,7 +234,13 @@ mod test {
       assert_eq!(rounded as i32 % 2, 0, "{} round {} -> {rounded}", name, i);
 
       let (ipart, frac) = (v.ipart(), v.frac().to_f64());
-      assert_eq!(ipart, i.floor() as Position, "{} ipart {} -> ({ipart}, {frac})", name, i);
+      assert_eq!(
+        ipart,
+        i.floor() as Position,
+        "{} ipart {} -> ({ipart}, {frac})",
+        name,
+        i
+      );
       assert!(ipart as f64 <= i, "{} ipart {} -> ({ipart}, {frac})", name, i);
       assert_approx_eq!(frac, i.rem_euclid(1.0), eps);
       assert!((0.0..1.0).contains(&frac), "{} frac {} -> ({ipart}, {frac})", name, i);

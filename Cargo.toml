@@ -13,7 +13,8 @@ description = "High-quality 2D graphics engine based on Anti-grain Geometry"
 [package.metadata.coverage]
 # Exclude specific files from coverage
 exclude = [
-    "src/lib.rs",  # Only contains module declarations
+  "src/lib.rs",  # Only contains module declarations
+  "sources/mod.rs",  # Only contains module declarations
 ]
 
 [dependencies]
