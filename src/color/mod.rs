@@ -7,6 +7,8 @@ pub use color_value::*;
 pub use rgb::*;
 pub use traits::*;
 
+use crate::U8;
+
 pub trait FromColor {
   fn from_color<C: Color>(c: C) -> Self;
 }
@@ -108,6 +110,8 @@ pub trait Color: std::fmt::Debug + Copy + 'static {
 
 #[cfg(test)]
 mod tests {
+  use crate::U16;
+
   use super::*;
 
   #[test]

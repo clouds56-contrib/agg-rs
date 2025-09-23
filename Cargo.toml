@@ -13,14 +13,17 @@ description = "High-quality 2D graphics engine based on Anti-grain Geometry"
 [package.metadata.coverage]
 # Exclude specific files from coverage
 exclude = [
-    "src/lib.rs",  # Only contains module declarations
+  "src/lib.rs",  # Only contains module declarations
+  "sources/mod.rs",  # Only contains module declarations
 ]
 
 [dependencies]
+fixed = "1.29.0"
 freetype-rs = { version = "0.38.0", features = ["bundled"] }
 image = { version = "0.25.8", default-features = false, features = ["png", "gif", "jpeg", "bmp", "tga"] }
 log = "0.4.28"
 palette = "0.7.6"
 
 [dev-dependencies]
+assert_approx_eq = "1.1.0"
 flexi_logger = "0.31.2"
