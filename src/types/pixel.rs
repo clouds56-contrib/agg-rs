@@ -127,7 +127,6 @@ pub mod types {
   pub type I64F64 = IFixed<i128, 64>;
 }
 
-
 #[cfg(test)]
 mod test {
   use assert_approx_eq::assert_approx_eq;
@@ -158,7 +157,9 @@ mod test {
     };
     assert!(eps < 0.01, "{} eps {}", name, eps);
     for i in test_list {
-      if i < 0.0 && !T::IS_SIGNED { continue; }
+      if i < 0.0 && !T::IS_SIGNED {
+        continue;
+      }
       let v = T::from_f64(i);
       assert_approx_eq!(v.to_f64(), i, eps);
       let rounded = v.round().to_f64();
@@ -170,7 +171,7 @@ mod test {
       assert_eq!(ipart, i.floor() as i64, "{} ipart {} -> ({ipart}, {frac})", name, i);
       assert!(ipart as f64 <= i, "{} ipart {} -> ({ipart}, {frac})", name, i);
       assert_approx_eq!(frac, i.rem_euclid(1.0), eps);
-      assert!(frac >= 0.0 && frac < 1.0, "{} frac {} -> ({ipart}, {frac})", name, i);
+      assert!((0.0..1.0).contains(&frac), "{} frac {} -> ({ipart}, {frac})", name, i);
       assert_approx_eq!(frac + ipart as f64, i, eps);
     }
   }

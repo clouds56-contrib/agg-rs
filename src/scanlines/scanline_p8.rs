@@ -46,10 +46,10 @@ impl SpanCovers {
         // Convert to slice if we need to append multiple distinct entries
         let mut vec = Vec::with_capacity(count + 1);
         vec.push(*v);
-        vec.extend(std::iter::repeat(cover).take(count));
+        vec.extend(std::iter::repeat_n(cover, count));
         *self = SpanCovers::Slice(vec);
       }
-      SpanCovers::Slice(v) => v.extend(std::iter::repeat(cover).take(count)),
+      SpanCovers::Slice(v) => v.extend(std::iter::repeat_n(cover, count)),
     }
   }
   fn extend_from_slice(&mut self, slice: &[U8]) {
@@ -123,21 +123,25 @@ impl ScanlineP8 {
           v.push(cov);
         } else if let SpanCovers::Single(prev) = &mut last.covers {
           // Convert single to slice with previous + new
-            let prev_cov = *prev;
-            *last = PackedSpan {
-              x: last.x,
-              len: last.len + 1,
-              covers: SpanCovers::Slice(vec![prev_cov, cov]),
-            };
-            self.cover_ptr += 1; // we logically consumed one more cover
-            self.last_x = x;
-            return;
+          let prev_cov = *prev;
+          *last = PackedSpan {
+            x: last.x,
+            len: last.len + 1,
+            covers: SpanCovers::Slice(vec![prev_cov, cov]),
+          };
+          self.cover_ptr += 1; // we logically consumed one more cover
+          self.last_x = x;
+          return;
         }
         last.len += 1;
       }
     } else {
       // New span
-      self.spans.push(PackedSpan { x, len: 1, covers: SpanCovers::Slice(vec![cov]) });
+      self.spans.push(PackedSpan {
+        x,
+        len: 1,
+        covers: SpanCovers::Slice(vec![cov]),
+      });
     }
     self.cover_ptr += 1;
     self.last_x = x;
@@ -161,7 +165,11 @@ impl ScanlineP8 {
         last.len += len_i;
       }
     } else {
-      self.spans.push(PackedSpan { x, len: len_i, covers: SpanCovers::Slice(covers.to_vec()) });
+      self.spans.push(PackedSpan {
+        x,
+        len: len_i,
+        covers: SpanCovers::Slice(covers.to_vec()),
+      });
     }
     self.cover_ptr += len as usize;
     self.last_x = x + len_i - 1;
@@ -171,19 +179,24 @@ impl ScanlineP8 {
   pub fn add_span(&mut self, x: i32, len: u32, cover: u64) {
     let cov = U8::new(cover as _);
     let len_i = len as i32;
-    if x == self.last_x + 1 {
-      if let Some(last) = self.spans.last_mut() {
-        if last.len < 0 { // solid span
-          if last.covers.first() == cov { // same cover, extend
-            last.len -= len_i; // remember negative length
-            self.last_x = x + len_i - 1;
-            return;
-          }
-        }
+    if x == self.last_x + 1
+      && let Some(last) = self.spans.last_mut()
+      && last.len < 0
+    {
+      // solid span
+      if last.covers.first() == cov {
+        // same cover, extend
+        last.len -= len_i; // remember negative length
+        self.last_x = x + len_i - 1;
+        return;
       }
     }
     // New solid span
-    self.spans.push(PackedSpan { x, len: -len_i, covers: SpanCovers::Single(cov) });
+    self.spans.push(PackedSpan {
+      x,
+      len: -len_i,
+      covers: SpanCovers::Single(cov),
+    });
     self.last_x = x + len_i - 1;
   }
 
@@ -197,9 +210,15 @@ impl ScanlineP8 {
     self.spans.clear();
   }
 
-  pub fn y(&self) -> i32 { self.y }
-  pub fn num_spans(&self) -> usize { self.spans.len() }
-  pub fn spans(&self) -> &[PackedSpan] { &self.spans }
+  pub fn y(&self) -> i32 {
+    self.y
+  }
+  pub fn num_spans(&self) -> usize {
+    self.spans.len()
+  }
+  pub fn spans(&self) -> &[PackedSpan] {
+    &self.spans
+  }
 
   fn ensure_cover_capacity(&mut self, add: usize) {
     let need = self.cover_ptr + add;
