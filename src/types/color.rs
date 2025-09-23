@@ -5,6 +5,11 @@ use palette::{
 
 use crate::math::{combine_u8, lerp_u8, multiply_u8, prelerp_u8};
 
+/// Unit Fixed Point, unlike typical fixed point, this is always in `0.0..=1.0`
+/// (for [`fixed::FixedU8<fixed::types::extra::U4>`](fixed::FixedU8), `0.0..1.0` or more precisely `0.0..=255.0/256.0`).
+/// The underlying type is typically an integer type, e.g. u8, u16.
+///
+/// The value is interpreted as `value / T::MAX`, where [`T::MAX`](u8::MAX) is the maximum value of the underlying type.
 #[derive(Copy, Clone, Debug, PartialEq, Hash, PartialOrd, Ord, Eq)]
 pub struct UFixed<T>(pub T);
 
@@ -187,8 +192,9 @@ macro_rules! impl_num {
       type Raw = $ty;
       const ZERO: Self = Self(0);
       const ONE: Self = Self($ty::MAX);
-      const _MAX: f64 = Self::ONE.0 as f64;
-      fn to_f64(self) -> f64 { f64::from(self.0) / Self::_MAX }
+      const RAW_MAX: Self::Raw = $ty::MAX;
+      const RAW_MAX_F64: f64 = Self::RAW_MAX as f64;
+      fn to_f64(self) -> f64 { f64::from(self.0) / Self::RAW_MAX_F64 }
     }
   };
   ($ty:ident $($ty2:ident)+) => {
@@ -203,7 +209,8 @@ macro_rules! impl_float {
       type Raw = $ty;
       const ZERO: Self = 0.0;
       const ONE: Self = 1.0;
-      const _MAX: f64 = 1.0;
+      const RAW_MAX: Self = 1.0;
+      const RAW_MAX_F64: f64 = Self::RAW_MAX as f64;
       fn to_f64(self) -> f64 { f64::from(self) }
     }
   };
@@ -219,7 +226,8 @@ pub trait RealLike:
   type Raw;
   const ZERO: Self;
   const ONE: Self;
-  const _MAX: f64;
+  const RAW_MAX: Self::Raw;
+  const RAW_MAX_F64: f64;
   fn byte_size() -> usize {
     std::mem::size_of::<Self>()
   }
