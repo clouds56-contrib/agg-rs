@@ -141,6 +141,7 @@ pub mod rasters;
 pub mod renders;
 pub mod scanlines;
 pub mod sources;
+pub mod types;
 pub mod utils;
 
 pub mod math;
@@ -161,6 +162,8 @@ pub use crate::renders::*;
 pub use crate::scanlines::*;
 #[doc(hidden)]
 pub use crate::sources::*;
+#[doc(hidden)]
+pub use crate::types::*;
 
 const POLY_SUBPIXEL_SHIFT: i64 = 8;
 const POLY_SUBPIXEL_SCALE: i64 = 1 << POLY_SUBPIXEL_SHIFT;
