@@ -1,6 +1,40 @@
 use fixed::traits::Fixed;
 
-pub trait PixelLike: Sized + PartialEq + std::fmt::Debug + Copy + 'static {
+pub type Position = i32;
+
+pub trait Arithmetics:
+  std::ops::Add<Output = Self>
+  + std::ops::Sub<Output = Self>
+  // + std::ops::Mul<Output = Self>
+  // + std::ops::Div<Output = Self>
+  + std::ops::AddAssign
+  + std::ops::SubAssign
+  // + std::ops::MulAssign
+  // + std::ops::DivAssign
+  + Copy
+  + PartialOrd
+  + PartialEq
+  + 'static
+{
+}
+
+impl<T> Arithmetics for T where
+  T: std::ops::Add<Output = Self>
+    + std::ops::Sub<Output = Self>
+    // + std::ops::Mul<Output = Self>
+    // + std::ops::Div<Output = Self>
+    + std::ops::AddAssign
+    + std::ops::SubAssign
+    // + std::ops::MulAssign
+    // + std::ops::DivAssign
+    + Copy
+    + PartialOrd
+    + PartialEq
+    + 'static
+{
+}
+
+pub trait PixelLike: Sized + PartialEq + std::fmt::Debug + Arithmetics + Copy + 'static {
   /// BITS in the underlying representation
   /// if BITS is 0, the type is floating point
   const BITS: usize = 0;
@@ -11,8 +45,8 @@ pub trait PixelLike: Sized + PartialEq + std::fmt::Debug + Copy + 'static {
   fn from_f64(x: f64) -> Self;
   fn to_f64(self) -> f64;
 
-  fn ipart(self) -> i64 {
-    self.to_f64().floor() as i64
+  fn ipart(self) -> Position {
+    self.to_f64().floor() as Position
   }
   fn round(self) -> Self {
     Self::from_f64(self.to_f64().round_ties_even())
@@ -34,7 +68,7 @@ macro_rules! impl_pixel_like_float {
         fn from_f64(x: f64) -> Self { x as _ }
         fn to_f64(self) -> f64 { self as f64 }
 
-        fn ipart(self) -> i64 { self.floor() as i64 }
+        fn ipart(self) -> Position { self.floor() as _ }
         fn round(self) -> Self { self.round_ties_even() }
         fn frac(self) -> Self { self.rem_euclid(1.0) }
       }
@@ -61,7 +95,7 @@ macro_rules! impl_pixel_like_fixed {
         }
         fn to_f64(self) -> f64 { self.to_num() }
 
-        fn ipart(self) -> i64 { self.int().to_num::<fixed::types::I64F0>().to_bits() }
+        fn ipart(self) -> Position { self.int().to_num::<fixed::types::I64F0>().to_bits() as _ }
         fn round(self) -> Self {
           <Self as fixed::traits::Fixed>::saturating_round_ties_even(self)
         }
@@ -100,7 +134,7 @@ macro_rules! impl_pixel_like_ifixed {
         }
         fn to_f64(self) -> f64 { self.0 as f64 / Self::ONE.0 as f64 }
 
-        fn ipart(self) -> i64 { (self.0 >> SHIFT) as _ }
+        fn ipart(self) -> Position { (self.0 >> SHIFT) as _ }
         fn round(self) -> Self {
           let half = 1 << (SHIFT - 1);
           if (self.0 & Self::FRAC_MASK) == half {
@@ -110,6 +144,38 @@ macro_rules! impl_pixel_like_ifixed {
         }
         fn frac(self) -> Self {
           Self(self.0 & Self::FRAC_MASK)
+        }
+      }
+
+      impl<const SHIFT: usize> Default for IFixed<$ty, SHIFT> {
+        fn default() -> Self {
+          Self::ZERO
+        }
+      }
+
+      impl<const SHIFT: usize> std::ops::Add for IFixed<$ty, SHIFT> {
+        type Output = Self;
+        fn add(self, rhs: Self) -> Self::Output {
+          Self(self.0 + rhs.0)
+        }
+      }
+
+      impl<const SHIFT: usize> std::ops::Sub for IFixed<$ty, SHIFT> {
+        type Output = Self;
+        fn sub(self, rhs: Self) -> Self::Output {
+          Self(self.0 - rhs.0)
+        }
+      }
+
+      impl<const SHIFT: usize> std::ops::AddAssign for IFixed<$ty, SHIFT> {
+        fn add_assign(&mut self, rhs: Self) {
+          self.0 += rhs.0;
+        }
+      }
+
+      impl<const SHIFT: usize> std::ops::SubAssign for IFixed<$ty, SHIFT> {
+        fn sub_assign(&mut self, rhs: Self) {
+          self.0 -= rhs.0;
         }
       }
     )+
@@ -168,7 +234,7 @@ mod test {
       assert_eq!(rounded as i32 % 2, 0, "{} round {} -> {rounded}", name, i);
 
       let (ipart, frac) = (v.ipart(), v.frac().to_f64());
-      assert_eq!(ipart, i.floor() as i64, "{} ipart {} -> ({ipart}, {frac})", name, i);
+      assert_eq!(ipart, i.floor() as Position, "{} ipart {} -> ({ipart}, {frac})", name, i);
       assert!(ipart as f64 <= i, "{} ipart {} -> ({ipart}, {frac})", name, i);
       assert_approx_eq!(frac, i.rem_euclid(1.0), eps);
       assert!((0.0..1.0).contains(&frac), "{} frac {} -> ({ipart}, {frac})", name, i);
