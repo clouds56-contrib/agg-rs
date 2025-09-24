@@ -1,5 +1,7 @@
 //! Rasterizer
 
+use crate::PixelLike;
+use crate::Position;
 use crate::POLY_SUBPIXEL_SCALE;
 use crate::POLY_SUBPIXEL_SHIFT;
 //use crate::POLY_SUBPIXEL_MASK;
@@ -49,11 +51,11 @@ pub enum PathStatus {
 
 /// Rasterizer Anti-Alias using Scanline
 #[derive(Debug)]
-pub struct RasterizerScanline {
+pub struct RasterizerScanline<Area> {
   /// Clipping Region
   pub(crate) clipper: Clip,
   /// Collection of Rasterizing Cells
-  outline: RasterizerCell,
+  outline: RasterizerCell<Area>,
   /// Status of Path
   pub(crate) status: PathStatus,
   /// Current x position
@@ -61,20 +63,37 @@ pub struct RasterizerScanline {
   /// Current y position
   pub(crate) y0: i64,
   /// Current y row being worked on, for output
-  scan_y: i64,
+  scan_y: Position,
   /// Filling Rule for Polygons
   filling_rule: FillingRule,
   /// Gamma Corection Values
   gamma: Vec<u64>,
 }
 
-impl Default for RasterizerScanline {
+impl<Area> Default for RasterizerScanline<Area> {
   fn default() -> Self {
     Self::new()
   }
 }
 
-impl RasterizerScanline {
+impl<Area> RasterizerScanline<Area> {
+
+  /// Create a new RasterizerScanline
+  pub fn new() -> Self {
+    Self {
+      clipper: Clip::new(),
+      status: PathStatus::Initial,
+      outline: RasterizerCell::new(),
+      x0: 0,
+      y0: 0,
+      scan_y: 0,
+      filling_rule: FillingRule::NonZero,
+      gamma: (0..256).collect(),
+    }
+  }
+}
+
+impl<Area: PixelLike> RasterizerScanline<Area> {
   /// Reset Rasterizer
   ///
   /// Reset the RasterizerCell and set PathStatus to Initial
@@ -134,7 +153,7 @@ impl RasterizerScanline {
       let mut num_cells = self.outline.scanline_num_cells(self.scan_y);
       let cells = self.outline.scanline_cells(self.scan_y);
 
-      let mut cover = 0;
+      let mut cover = Area::ZERO;
 
       let mut iter = cells.iter();
 
@@ -155,15 +174,15 @@ impl RasterizerScanline {
             cover += cur_cell.cover;
             num_cells -= 1;
           }
-          if area != 0 {
-            let alpha = self.calculate_alpha((cover << (POLY_SUBPIXEL_SHIFT + 1)) - area);
+          if area != Area::ZERO {
+            let alpha = self.calculate_alpha(cover * 2 - area);
             if alpha > 0 {
               sl.add_cell(x, alpha);
             }
             x += 1;
           }
           if num_cells > 0 && cur_cell.x > x {
-            let alpha = self.calculate_alpha(cover << (POLY_SUBPIXEL_SHIFT + 1));
+            let alpha = self.calculate_alpha(cover);
             if alpha > 0 {
               sl.add_span(x, cur_cell.x - x, alpha);
             }
@@ -188,19 +207,6 @@ impl RasterizerScanline {
     self.outline.max_x
   }
 
-  /// Create a new RasterizerScanline
-  pub fn new() -> Self {
-    Self {
-      clipper: Clip::new(),
-      status: PathStatus::Initial,
-      outline: RasterizerCell::new(),
-      x0: 0,
-      y0: 0,
-      scan_y: 0,
-      filling_rule: FillingRule::NonZero,
-      gamma: (0..256).collect(),
-    }
-  }
   /// Set the gamma function
   ///
   /// Values are set as:

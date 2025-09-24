@@ -2,7 +2,7 @@
 
 //use std::collections::HashMap;
 
-use crate::U8;
+use crate::{Position, U8};
 
 /// Contigious area of data
 #[derive(Debug, Default)]
@@ -77,7 +77,7 @@ impl ScanlineU8 {
   /// If the x value is 1 greater than the last value, the length of that
   /// span is increased and the cover value appended
   /// Otherwise, not a new span is created
-  pub fn add_span(&mut self, x: i64, len: i64, cover: u64) {
+  pub fn add_span(&mut self, x: Position, len: Position, cover: u64) {
     let x = x - self.min_x;
     let cover = U8::new(cover as _);
     //self.covers.insert( x, cover );
