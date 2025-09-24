@@ -9,7 +9,7 @@
 //! rules, holes, etc.). For safety and to avoid intermediate overflows we use
 //! wide integer types in the rasterization code; the crate-level constants
 //! `POLY_SUBPIXEL_SHIFT` and `POLY_SUBPIXEL_SCALE` control the subpixel grid
-//! (the repository defaults are `POLY_SUBPIXEL_SHIFT = 8`, `S = 256`).
+//! (the repository defaults are `POLY_SUBPIXEL_SHIFT = 8`, `POLY_SUBPIXEL_SCALE = 256`).
 //!
 //! What `cover` and `area` mean
 //! -----------------------------

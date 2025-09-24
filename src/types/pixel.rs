@@ -37,13 +37,32 @@ impl<T> Arithmetics for T where
 pub trait PixelLike: Sized + PartialEq + std::fmt::Debug + Arithmetics + Copy + 'static {
   /// BITS in the underlying representation
   /// if BITS is 0, the type is floating point
+  type Raw;
   const BITS: usize = 0;
   const IS_SIGNED: bool;
   const SHIFT: usize;
   const ZERO: Self;
   const ONE: Self;
+  const EPSILON: Self;
   fn from_f64(x: f64) -> Self;
   fn to_f64(self) -> f64;
+  fn from_raw(x: Self::Raw) -> Self;
+  fn into_raw(self) -> Self::Raw;
+
+  fn from_pixel<P: PixelLike>(p: P) -> Self {
+    // TODO improve this
+    Self::from_f64(p.to_f64())
+  }
+  fn scale<P: PixelLike>(self, p: P) -> Self {
+    // TODO improve this
+    Self::from_f64(self.to_f64() * p.to_f64())
+  }
+  fn div_mod_floor<P: PixelLike>(self, p: P) -> (Self, Self) {
+    // TODO improve this
+    let a = self.to_f64();
+    let p = p.to_f64();
+    (Self::from_f64(a.div_euclid(p)), Self::from_f64(a.rem_euclid(p)))
+  }
 
   fn ipart(self) -> Position {
     self.to_f64().floor() as Position
@@ -60,13 +79,17 @@ macro_rules! impl_pixel_like_float {
   ($($ty:ty)+) => {
     $(
       impl PixelLike for $ty {
+        type Raw = $ty;
         const BITS: usize = 0;
         const SHIFT: usize = usize::MAX; // not used
         const IS_SIGNED: bool = true;
         const ZERO: Self = 0.0;
         const ONE: Self = 1.0;
+        const EPSILON: Self = <$ty>::EPSILON;
         fn from_f64(x: f64) -> Self { x as _ }
         fn to_f64(self) -> f64 { self as f64 }
+        fn from_raw(x: Self::Raw) -> Self { x }
+        fn into_raw(self) -> Self::Raw { self }
 
         fn ipart(self) -> Position { self.floor() as _ }
         fn round(self) -> Self { self.round_ties_even() }
@@ -83,17 +106,27 @@ macro_rules! impl_pixel_like_fixed {
     $(
       impl<U> PixelLike for fixed::$ty<U>
       where
-        Self: Fixed,
+        Self: fixed::traits::Fixed,
       {
+        type Raw = <Self as fixed::traits::Fixed>::Bits;
         const BITS: usize = <<Self as fixed::traits::Fixed>::Bits as fixed::traits::FixedBits>::BITS as usize;
         const SHIFT: usize = <<Self as fixed::traits::Fixed>::Frac as fixed::types::extra::Unsigned>::USIZE;
         const IS_SIGNED: bool = <Self as fixed::traits::Fixed>::IS_SIGNED;
         const ZERO: Self = fixed::traits::Fixed::ZERO;
         const ONE: Self = fixed::traits::Fixed::TRY_ONE.unwrap();
+        const EPSILON: Self = <Self as fixed::traits::Fixed>::DELTA;
         fn from_f64(x: f64) -> Self {
           <Self as fixed::traits::Fixed>::from_num(x)
         }
-        fn to_f64(self) -> f64 { self.to_num() }
+        fn to_f64(self) -> f64 {
+          <Self as fixed::traits::Fixed>::to_num(self)
+        }
+        fn from_raw(x: Self::Raw) -> Self {
+          <Self as fixed::traits::Fixed>::from_bits(x)
+        }
+        fn into_raw(self) -> Self::Raw {
+          <Self as fixed::traits::Fixed>::to_bits(self)
+        }
 
         fn ipart(self) -> Position { self.int().to_num::<fixed::types::I64F0>().to_bits() as _ }
         fn round(self) -> Self {
@@ -111,10 +144,6 @@ impl_pixel_like_fixed!(FixedI64 FixedU64 FixedI128 FixedU128 FixedI32 FixedU32);
 
 #[derive(Copy, Clone, Debug, PartialEq, Hash, PartialOrd, Ord, Eq)]
 pub struct IFixed<T, const SHIFT: usize>(pub T);
-pub type I64F8 = IFixed<fixed::types::I56F8, 8>;
-pub type I64F16 = IFixed<fixed::types::I48F16, 16>;
-pub type U64F8 = IFixed<fixed::types::U56F8, 8>;
-pub type U64F16 = IFixed<fixed::types::U48F16, 16>;
 
 macro_rules! impl_pixel_like_ifixed {
   ($($ty:ty)+) => {
@@ -124,15 +153,19 @@ macro_rules! impl_pixel_like_ifixed {
       }
 
       impl<const SHIFT: usize> PixelLike for IFixed<$ty, SHIFT> {
+        type Raw = $ty;
         const BITS: usize = <$ty>::BITS as usize;
         const SHIFT: usize = SHIFT;
         const IS_SIGNED: bool = <$ty>::MIN != 0;
         const ZERO: Self = Self(0);
         const ONE: Self = Self(1 << SHIFT);
+        const EPSILON: Self = Self(1);
         fn from_f64(x: f64) -> Self {
           Self((x * Self::ONE.0 as f64) as _)
         }
         fn to_f64(self) -> f64 { self.0 as f64 / Self::ONE.0 as f64 }
+        fn from_raw(x: Self::Raw) -> Self { Self(x) }
+        fn into_raw(self) -> Self::Raw { self.0 }
 
         fn ipart(self) -> Position { (self.0 >> SHIFT) as _ }
         fn round(self) -> Self {
@@ -186,8 +219,10 @@ impl_pixel_like_ifixed!(u64 i64 u128 i128 u32 i32);
 
 pub mod types {
   use super::IFixed;
+  pub type U64F0 = IFixed<u64, 0>;
   pub type U56F8 = IFixed<u64, 8>;
   pub type U48F16 = IFixed<u32, 16>;
+  pub type I64F0 = IFixed<i64, 0>;
   pub type I56F8 = IFixed<i64, 8>;
   pub type I48F16 = IFixed<i32, 16>;
   pub type I64F64 = IFixed<i128, 64>;
@@ -219,7 +254,7 @@ mod test {
     let eps = if T::BITS == 0 {
       1e-6
     } else {
-      1.0 / 2f64.powi(T::SHIFT as _)
+      T::EPSILON.to_f64()
     };
     assert!(eps < 0.01, "{} eps {}", name, eps);
     for i in test_list {
@@ -248,17 +283,32 @@ mod test {
     }
   }
 
+  struct AssertType<T, U>(std::marker::PhantomData<(T, U)>);
+  impl<T> AssertType<T, T> {
+    const OK: bool = true;
+  }
+
   #[test]
   fn test_fixed() {
     use fixed::types::*;
     test_pixel_like!(I56F8 I48F16 U56F8 U48F16);
     test_pixel_like!(I64F64);
+    assert!(AssertType::<<I56F8 as PixelLike>::Raw, i64>::OK);
+    assert!(AssertType::<<I48F16 as PixelLike>::Raw, i64>::OK);
+    assert!(AssertType::<<U56F8 as PixelLike>::Raw, u64>::OK);
+    assert!(AssertType::<<U48F16 as PixelLike>::Raw, u64>::OK);
+    assert!(AssertType::<<I64F64 as PixelLike>::Raw, i128>::OK);
   }
 
   #[test]
   fn test_ifixed() {
     use types::*;
     test_pixel_like!(U56F8 U48F16 I56F8 I48F16 I64F64);
+    assert!(AssertType::<<U56F8 as PixelLike>::Raw, u64>::OK);
+    assert!(AssertType::<<U48F16 as PixelLike>::Raw, u32>::OK);
+    assert!(AssertType::<<I56F8 as PixelLike>::Raw, i64>::OK);
+    assert!(AssertType::<<I48F16 as PixelLike>::Raw, i32>::OK);
+    assert!(AssertType::<<I64F64 as PixelLike>::Raw, i128>::OK);
   }
 
   #[test]
