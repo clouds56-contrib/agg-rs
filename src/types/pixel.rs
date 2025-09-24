@@ -1,40 +1,61 @@
 use fixed::traits::Fixed;
 
-pub type Position = i32;
+pub type Position = i64;
 
 pub trait Arithmetics:
-  std::ops::Add<Output = Self>
+  std::ops::Neg<Output = Self>
+  + std::ops::Add<Output = Self>
   + std::ops::Sub<Output = Self>
-  // + std::ops::Mul<Output = Self>
-  // + std::ops::Div<Output = Self>
+  + std::ops::Mul<Output = Self>
+  + std::ops::Div<Output = Self>
+  + std::ops::Shr<usize, Output = Self>
+  + std::ops::Shl<usize, Output = Self>
   + std::ops::AddAssign
   + std::ops::SubAssign
-  // + std::ops::MulAssign
-  // + std::ops::DivAssign
+  + std::ops::MulAssign
+  + std::ops::DivAssign
+  + std::ops::Shr<usize, Output = Self>
+  + std::ops::Shl<usize, Output = Self>
   + Copy
   + PartialOrd
   + PartialEq
+  // + std::ops::Mul<Position, Output = Self>
+  // + std::ops::Div<Position, Output = Self>
+  + PartialEq<Position>
+  + PartialOrd<Position>
   + 'static
 {
 }
 
 impl<T> Arithmetics for T where
-  T: std::ops::Add<Output = Self>
-    + std::ops::Sub<Output = Self>
-    // + std::ops::Mul<Output = Self>
-    // + std::ops::Div<Output = Self>
-    + std::ops::AddAssign
-    + std::ops::SubAssign
-    // + std::ops::MulAssign
-    // + std::ops::DivAssign
-    + Copy
-    + PartialOrd
-    + PartialEq
-    + 'static
+  Self:
+  std::ops::Neg<Output = Self>
+  + std::ops::Add<Output = Self>
+  + std::ops::Sub<Output = Self>
+  + std::ops::Mul<Output = Self>
+  + std::ops::Div<Output = Self>
+  + std::ops::Shr<usize, Output = Self>
+  + std::ops::Shl<usize, Output = Self>
+  + std::ops::AddAssign
+  + std::ops::SubAssign
+  + std::ops::MulAssign
+  + std::ops::DivAssign
+  + std::ops::Shr<usize, Output = Self>
+  + std::ops::Shl<usize, Output = Self>
+  + Copy
+  + PartialOrd
+  + PartialEq
+  // + std::ops::Mul<Position, Output = Self>
+  // + std::ops::Div<Position, Output = Self>
+  + PartialEq<Position>
+  + PartialOrd<Position>
+  + 'static
 {
 }
 
-pub trait PixelLike: Sized + PartialEq + std::fmt::Debug + Arithmetics + Copy + 'static {
+pub trait IsSigned {}
+
+pub trait FixedLike: Sized + PartialEq + std::fmt::Debug + Copy + 'static {
   /// BITS in the underlying representation
   /// if BITS is 0, the type is floating point
   type Raw;
@@ -49,21 +70,6 @@ pub trait PixelLike: Sized + PartialEq + std::fmt::Debug + Arithmetics + Copy + 
   fn from_raw(x: Self::Raw) -> Self;
   fn into_raw(self) -> Self::Raw;
 
-  fn from_pixel<P: PixelLike>(p: P) -> Self {
-    // TODO improve this
-    Self::from_f64(p.to_f64())
-  }
-  fn scale<P: PixelLike>(self, p: P) -> Self {
-    // TODO improve this
-    Self::from_f64(self.to_f64() * p.to_f64())
-  }
-  fn div_mod_floor<P: PixelLike>(self, p: P) -> (Self, Self) {
-    // TODO improve this
-    let a = self.to_f64();
-    let p = p.to_f64();
-    (Self::from_f64(a.div_euclid(p)), Self::from_f64(a.rem_euclid(p)))
-  }
-
   fn ipart(self) -> Position {
     self.to_f64().floor() as Position
   }
@@ -75,10 +81,27 @@ pub trait PixelLike: Sized + PartialEq + std::fmt::Debug + Arithmetics + Copy + 
   }
 }
 
+pub trait PixelLike: FixedLike + Arithmetics + IsSigned {
+  fn from_fixed<P: FixedLike>(p: P) -> Self {
+    // TODO improve this
+    Self::from_f64(p.to_f64())
+  }
+  fn scale<P: FixedLike>(self, p: P) -> Self {
+    // TODO improve this
+    Self::from_f64(self.to_f64() * p.to_f64())
+  }
+  fn div_mod_floor<P: FixedLike>(self, p: P) -> (Self, Self) {
+    // TODO improve this
+    let a = self.to_f64();
+    let p = p.to_f64();
+    (Self::from_f64(a.div_euclid(p)), Self::from_f64(a.rem_euclid(p)))
+  }
+}
+
 macro_rules! impl_pixel_like_float {
   ($($ty:ty)+) => {
     $(
-      impl PixelLike for $ty {
+      impl FixedLike for $ty {
         type Raw = $ty;
         const BITS: usize = 0;
         const SHIFT: usize = usize::MAX; // not used
@@ -95,6 +118,8 @@ macro_rules! impl_pixel_like_float {
         fn round(self) -> Self { self.round_ties_even() }
         fn frac(self) -> Self { self.rem_euclid(1.0) }
       }
+
+      impl IsSigned for $ty {}
     )+
   };
 }
@@ -104,7 +129,7 @@ impl_pixel_like_float!(f32 f64);
 macro_rules! impl_pixel_like_fixed {
   ($($ty:ident)+) => {
     $(
-      impl<U> PixelLike for fixed::$ty<U>
+      impl<U> FixedLike for fixed::$ty<U>
       where
         Self: fixed::traits::Fixed,
       {
@@ -142,6 +167,13 @@ macro_rules! impl_pixel_like_fixed {
 
 impl_pixel_like_fixed!(FixedI64 FixedU64 FixedI128 FixedU128 FixedI32 FixedU32);
 
+impl<U> IsSigned for fixed::FixedI32<U> where Self: Fixed {}
+impl<U> IsSigned for fixed::FixedI64<U> where Self: Fixed {}
+impl<U> IsSigned for fixed::FixedI128<U> where Self: Fixed {}
+impl<U> PixelLike for fixed::FixedI32<U> where Self: Fixed {}
+impl<U> PixelLike for fixed::FixedI64<U> where Self: Fixed {}
+impl<U> PixelLike for fixed::FixedI128<U> where Self: Fixed {}
+
 #[derive(Copy, Clone, Debug, PartialEq, Hash, PartialOrd, Ord, Eq)]
 pub struct IFixed<T, const SHIFT: usize>(pub T);
 
@@ -152,7 +184,7 @@ macro_rules! impl_pixel_like_ifixed {
         const FRAC_MASK: $ty = (1 << SHIFT) - 1;
       }
 
-      impl<const SHIFT: usize> PixelLike for IFixed<$ty, SHIFT> {
+      impl<const SHIFT: usize> FixedLike for IFixed<$ty, SHIFT> {
         type Raw = $ty;
         const BITS: usize = <$ty>::BITS as usize;
         const SHIFT: usize = SHIFT;
@@ -183,32 +215,6 @@ macro_rules! impl_pixel_like_ifixed {
       impl<const SHIFT: usize> Default for IFixed<$ty, SHIFT> {
         fn default() -> Self {
           Self::ZERO
-        }
-      }
-
-      impl<const SHIFT: usize> std::ops::Add for IFixed<$ty, SHIFT> {
-        type Output = Self;
-        fn add(self, rhs: Self) -> Self::Output {
-          Self(self.0 + rhs.0)
-        }
-      }
-
-      impl<const SHIFT: usize> std::ops::Sub for IFixed<$ty, SHIFT> {
-        type Output = Self;
-        fn sub(self, rhs: Self) -> Self::Output {
-          Self(self.0 - rhs.0)
-        }
-      }
-
-      impl<const SHIFT: usize> std::ops::AddAssign for IFixed<$ty, SHIFT> {
-        fn add_assign(&mut self, rhs: Self) {
-          self.0 += rhs.0;
-        }
-      }
-
-      impl<const SHIFT: usize> std::ops::SubAssign for IFixed<$ty, SHIFT> {
-        fn sub_assign(&mut self, rhs: Self) {
-          self.0 -= rhs.0;
         }
       }
     )+
@@ -242,7 +248,7 @@ mod test {
     };
   }
 
-  fn impl_test_pixel_like<T: PixelLike>(name: &str, zero: T) {
+  fn impl_test_pixel_like<T: FixedLike>(name: &str, zero: T) {
     let test_list = [
       1.5, 2.5, 3.5, 4.5, 2.2, 2.3, 2.4, -1.5, -2.5, -3.5, -4.5, -2.2, -2.3, -2.4,
     ];
@@ -293,22 +299,22 @@ mod test {
     use fixed::types::*;
     test_pixel_like!(I56F8 I48F16 U56F8 U48F16);
     test_pixel_like!(I64F64);
-    assert!(AssertType::<<I56F8 as PixelLike>::Raw, i64>::OK);
-    assert!(AssertType::<<I48F16 as PixelLike>::Raw, i64>::OK);
-    assert!(AssertType::<<U56F8 as PixelLike>::Raw, u64>::OK);
-    assert!(AssertType::<<U48F16 as PixelLike>::Raw, u64>::OK);
-    assert!(AssertType::<<I64F64 as PixelLike>::Raw, i128>::OK);
+    assert!(AssertType::<<I56F8 as FixedLike>::Raw, i64>::OK);
+    assert!(AssertType::<<I48F16 as FixedLike>::Raw, i64>::OK);
+    assert!(AssertType::<<U56F8 as FixedLike>::Raw, u64>::OK);
+    assert!(AssertType::<<U48F16 as FixedLike>::Raw, u64>::OK);
+    assert!(AssertType::<<I64F64 as FixedLike>::Raw, i128>::OK);
   }
 
   #[test]
   fn test_ifixed() {
     use types::*;
     test_pixel_like!(U56F8 U48F16 I56F8 I48F16 I64F64);
-    assert!(AssertType::<<U56F8 as PixelLike>::Raw, u64>::OK);
-    assert!(AssertType::<<U48F16 as PixelLike>::Raw, u32>::OK);
-    assert!(AssertType::<<I56F8 as PixelLike>::Raw, i64>::OK);
-    assert!(AssertType::<<I48F16 as PixelLike>::Raw, i32>::OK);
-    assert!(AssertType::<<I64F64 as PixelLike>::Raw, i128>::OK);
+    assert!(AssertType::<<U56F8 as FixedLike>::Raw, u64>::OK);
+    assert!(AssertType::<<U48F16 as FixedLike>::Raw, u32>::OK);
+    assert!(AssertType::<<I56F8 as FixedLike>::Raw, i64>::OK);
+    assert!(AssertType::<<I48F16 as FixedLike>::Raw, i32>::OK);
+    assert!(AssertType::<<I64F64 as FixedLike>::Raw, i128>::OK);
   }
 
   #[test]

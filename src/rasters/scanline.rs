@@ -1,9 +1,10 @@
 //! Rasterizer
 
+use fixed::types::I48F16;
+use fixed::types::I56F8;
+
 use crate::PixelLike;
 use crate::Position;
-use crate::POLY_SUBPIXEL_SCALE;
-use crate::POLY_SUBPIXEL_SHIFT;
 //use crate::POLY_SUBPIXEL_MASK;
 
 use crate::cell::RasterizerCell;
@@ -15,13 +16,10 @@ use crate::scanlines::ScanlineU8;
 //use crate::Rasterize;
 use crate::VertexSource;
 
-use std::cmp::max;
-use std::cmp::min;
-
 struct RasConvInt {}
 impl RasConvInt {
-  pub fn upscale(v: f64) -> i64 {
-    (v * POLY_SUBPIXEL_SCALE as f64).round() as i64
+  pub fn upscale<P: PixelLike>(v: f64) -> P {
+    P::from_f64(v)
   }
   //pub fn downscale(v: i64) -> i64 {
   //    v
@@ -51,17 +49,17 @@ pub enum PathStatus {
 
 /// Rasterizer Anti-Alias using Scanline
 #[derive(Debug)]
-pub struct RasterizerScanline<Area> {
+pub struct RasterizerScanline<P = I56F8, Area = I48F16> {
   /// Clipping Region
-  pub(crate) clipper: Clip,
+  pub(crate) clipper: Clip<P>,
   /// Collection of Rasterizing Cells
   outline: RasterizerCell<Area>,
   /// Status of Path
   pub(crate) status: PathStatus,
   /// Current x position
-  pub(crate) x0: i64,
+  pub(crate) x0: P,
   /// Current y position
-  pub(crate) y0: i64,
+  pub(crate) y0: P,
   /// Current y row being worked on, for output
   scan_y: Position,
   /// Filling Rule for Polygons
@@ -70,13 +68,13 @@ pub struct RasterizerScanline<Area> {
   gamma: Vec<u64>,
 }
 
-impl<Area> Default for RasterizerScanline<Area> {
+impl<P: PixelLike, Area> Default for RasterizerScanline<P, Area> {
   fn default() -> Self {
     Self::new()
   }
 }
 
-impl<Area> RasterizerScanline<Area> {
+impl<P: PixelLike, Area> RasterizerScanline<P, Area> {
 
   /// Create a new RasterizerScanline
   pub fn new() -> Self {
@@ -84,8 +82,8 @@ impl<Area> RasterizerScanline<Area> {
       clipper: Clip::new(),
       status: PathStatus::Initial,
       outline: RasterizerCell::new(),
-      x0: 0,
-      y0: 0,
+      x0: P::ZERO,
+      y0: P::ZERO,
       scan_y: 0,
       filling_rule: FillingRule::NonZero,
       gamma: (0..256).collect(),
@@ -93,7 +91,7 @@ impl<Area> RasterizerScanline<Area> {
   }
 }
 
-impl<Area: PixelLike> RasterizerScanline<Area> {
+impl<P: PixelLike, Area: PixelLike> RasterizerScanline<P, Area> {
   /// Reset Rasterizer
   ///
   /// Reset the RasterizerCell and set PathStatus to Initial
@@ -175,7 +173,7 @@ impl<Area: PixelLike> RasterizerScanline<Area> {
             num_cells -= 1;
           }
           if area != Area::ZERO {
-            let alpha = self.calculate_alpha(cover * 2 - area);
+            let alpha = self.calculate_alpha((cover << 1) - area);
             if alpha > 0 {
               sl.add_cell(x, alpha);
             }
@@ -199,11 +197,11 @@ impl<Area: PixelLike> RasterizerScanline<Area> {
     true
   }
   /// Return minimum x value from the RasterizerCell
-  pub fn min_x(&self) -> i64 {
+  pub fn min_x(&self) -> Position {
     self.outline.min_x
   }
   /// Return maximum x value from the RasterizerCell
-  pub fn max_x(&self) -> i64 {
+  pub fn max_x(&self) -> Position {
     self.outline.max_x
   }
 
@@ -273,22 +271,21 @@ impl<Area: PixelLike> RasterizerScanline<Area> {
     }
   }
   /// Calculate alpha term based on area
-  fn calculate_alpha(&self, area: i64) -> u64 {
+  fn calculate_alpha(&self, area: Area) -> u64 {
     let aa_shift = 8;
     let aa_scale = 1 << aa_shift;
     let aa_scale2 = aa_scale * 2;
     let aa_mask = aa_scale - 1;
     let aa_mask2 = aa_scale2 - 1;
 
-    let mut cover = area >> (POLY_SUBPIXEL_SHIFT * 2 + 1 - aa_shift);
-    cover = cover.abs();
+    let mut cover = (area << (aa_shift - 1)).to_f64().abs() as u64;
     if self.filling_rule == FillingRule::EvenOdd {
       cover *= aa_mask2;
       if cover > aa_scale {
         cover = aa_scale2 - cover;
       }
     }
-    cover = max(0, min(cover, aa_mask));
+    cover = cover.clamp(0, aa_mask);
     self.gamma[cover as usize]
   }
 }

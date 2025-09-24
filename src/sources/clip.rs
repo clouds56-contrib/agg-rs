@@ -1,11 +1,11 @@
 //! Clipping Region
 
 //use crate::POLY_SUBPIXEL_SCALE;
-use crate::cell::RasterizerCell;
+use crate::{cell::RasterizerCell, PixelLike};
 
 /// Rectangle
 #[derive(Debug, Copy, Clone)]
-pub struct Rectangle<T: std::cmp::PartialOrd + Copy> {
+pub struct Rectangle<T> {
   /// Minimum x value
   x1: T,
   /// Minimum y value
@@ -131,39 +131,40 @@ fn clip_flags<T: std::cmp::PartialOrd>(x: &T, y: &T, x1: &T, y1: &T, x2: &T, y2:
 ///
 /// Clipping for Rasterizers
 #[derive(Debug)]
-pub struct Clip {
+pub struct Clip<P> {
   /// Current x Point
-  x1: i64,
+  x1: P,
   /// Current y Point
-  y1: i64,
+  y1: P,
   /// Rectangle to clip on
-  clip_box: Option<Rectangle<i64>>,
+  clip_box: Option<Rectangle<P>>,
   /// Current clip flag for point (x1,y1)
   clip_flag: u8,
 }
 
-fn mul_div(a: i64, b: i64, c: i64) -> i64 {
-  let (a, b, c) = (a as f64, b as f64, c as f64);
-  (a * b / c).round() as i64
+fn mul_div<P: PixelLike>(a: P, b: P, c: P) -> P {
+  // let (a, b, c) = (a as f64, b as f64, c as f64);
+  // (a * b / c).round() as i64
+  P::from_f64(a.to_f64() * b.to_f64() / c.to_f64())
 }
-impl Default for Clip {
+impl<P: PixelLike> Default for Clip<P> {
   fn default() -> Self {
     Self::new()
   }
 }
 
-impl Clip {
+impl<P: PixelLike> Clip<P> {
   /// Create new Clipping region
   pub fn new() -> Self {
     Self {
-      x1: 0,
-      y1: 0,
+      x1: P::ZERO,
+      y1: P::ZERO,
       clip_box: None,
       clip_flag: INSIDE,
     }
   }
   /// Clip a line along the top and bottom of the regon
-  fn line_clip_y(&self, ras: &mut RasterizerCell, x1: i64, y1: i64, x2: i64, y2: i64, f1: u8, f2: u8) {
+  fn line_clip_y<Area: PixelLike>(&self, ras: &mut RasterizerCell<Area>, x1: P, y1: P, x2: P, y2: P, f1: u8, f2: u8) {
     let b = match self.clip_box {
       None => return,
       Some(ref b) => b,
@@ -202,7 +203,7 @@ impl Clip {
   /// Draw a line from (x1,y1) to (x2,y2) into a RasterizerCell
   ///
   /// Final point (x2,y2) is saved internally as (x1,y1))
-  pub(crate) fn line_to(&mut self, ras: &mut RasterizerCell, x2: i64, y2: i64) {
+  pub(crate) fn line_to<Area: PixelLike>(&mut self, ras: &mut RasterizerCell<Area>, x2: P, y2: P) {
     if let Some(ref b) = self.clip_box {
       let f2 = b.clip_flags(x2, y2);
       // Both points above or below clip box
@@ -274,7 +275,7 @@ impl Clip {
   /// Move to point (x2,y2)
   ///
   /// Point is saved internally as (x1,y1)
-  pub(crate) fn move_to(&mut self, x2: i64, y2: i64) {
+  pub(crate) fn move_to(&mut self, x2: P, y2: P) {
     self.x1 = x2;
     self.y1 = y2;
     if let Some(ref b) = self.clip_box {
@@ -282,7 +283,7 @@ impl Clip {
     }
   }
   /// Define the clipping region
-  pub fn clip_box(&mut self, x1: i64, y1: i64, x2: i64, y2: i64) {
+  pub fn clip_box(&mut self, x1: P, y1: P, x2: P, y2: P) {
     self.clip_box = Some(Rectangle::new(x1, y1, x2, y2));
   }
 }

@@ -1,15 +1,10 @@
 //! Rendering Cells
 
 use crate::PixelLike;
-use crate::POLY_SUBPIXEL_MASK;
-use crate::POLY_SUBPIXEL_SCALE;
-use crate::POLY_SUBPIXEL_SHIFT;
+use crate::Position;
 
 use std::cmp::max;
 use std::cmp::min;
-
-/// this is pixel coord without subpixel bits
-pub type Position = i32;
 
 /// Rendering Cell
 ///
@@ -156,7 +151,7 @@ impl<Area: PixelLike> RasterizerCell<Area> {
     if n == 0 {
       return;
     }
-    if self.cells[n - 1].area == Area::ZERO && self.cells[n - 1].cover == Area::ZERO {
+    if self.cells[n - 1].area == 0 && self.cells[n - 1].cover == 0 {
       self.cells.pop();
     } //else {
     //  self.show_last_cell();
@@ -194,10 +189,10 @@ impl<Area: PixelLike> RasterizerCell<Area> {
     let fx1 = x1.frac();
     let fx2 = x2.frac();
 
-    let dy = Area::ONE.scale(y2 - y1);
+    let dy = Area::from_fixed(y2 - y1);
 
     // Horizontal Line, trivial case. Happens often
-    if dy == PixelLike::ZERO {
+    if dy == 0 {
       // set current cell to end of line
       self.set_curr_cell(ex2, ey);
       return;
@@ -211,7 +206,7 @@ impl<Area: PixelLike> RasterizerCell<Area> {
     }
 
     let rev = x2 < x1;
-    let dx = Area::from_pixel(if rev { x1 - x2 } else { x2 - x1 });
+    let dx = Area::from_fixed(if rev { x1 - x2 } else { x2 - x1 });
 
     // Adjacent Cells on Same Line
     let (delta_y, mut xmod) = dy.scale(if rev { fx1 } else { P::ONE - fx1 }).div_mod_floor(dx);
@@ -226,7 +221,7 @@ impl<Area: PixelLike> RasterizerCell<Area> {
     // if there are more than 2 cells, we need to calculate the lift of line
     let delta_ex = if rev { -1 } else { 1 };
     let mut ex = ex1 + delta_ex;
-    let mut y = Area::from_pixel(y1) + delta_y;
+    let mut y = Area::from_fixed(y1) + delta_y;
     if ex != ex2 {
       xmod -= dx;
 
@@ -247,7 +242,7 @@ impl<Area: PixelLike> RasterizerCell<Area> {
     }
     // write last cell, here ex == ex2
     self.set_curr_cell(ex, ey);
-    let delta_y = Area::from_pixel(y2) - y;
+    let delta_y = Area::from_fixed(y2) - y;
     self.add_to_curr_cell(delta_y, delta_y.scale(if rev { fx2 + P::ONE } else { fx2 }));
   }
 
@@ -257,18 +252,18 @@ impl<Area: PixelLike> RasterizerCell<Area> {
   ///
   /// Input coordinates are at subpixel scale
   pub fn line<P: PixelLike>(&mut self, x1: P, y1: P, x2: P, y2: P) {
-    let dx_limit = P::from_pixel(crate::types::types::I64F0::from_raw(16384));
-    let dx = x2 - x1;
+    let dx_limit = Area::from_fixed(fixed::types::I64F0::from(16384));
+    let dx = Area::from_fixed(x2 - x1);
     // Split long lines in half
     if dx >= dx_limit || dx <= -dx_limit {
-      let cx = (x1 + x2) / 2;
-      let cy = (y1 + y2) / 2;
+      let cx = (x1 + x2) >> 1;
+      let cy = (y1 + y2) >> 1;
       self.line(x1, y1, cx, cy);
       self.line(cx, cy, x2, y2);
       // bug fix: add return here (compared to orignal C++ code)
       return;
     }
-    let dy = y2 - y1;
+    let dy = Area::from_fixed(y2 - y1);
     // Downshift
     let ex1 = x1.ipart();
     let ex2 = x2.ipart();
@@ -286,87 +281,69 @@ impl<Area: PixelLike> RasterizerCell<Area> {
     // Horizontal Line
     if ey1 == ey2 {
       self.render_hline(ey1, x1, fy1, x2, fy2);
-      let n = self.cells.len();
-      if self.cells[n - 1].area == 0 && self.cells[n - 1].cover == 0 {
-        self.cells.pop();
-      }
+      self.pop_last_cell_if_empty();
       return;
     }
 
+    let rev = dy < 0;
     if dx == 0 {
-      let ex = x1 >> POLY_SUBPIXEL_SHIFT;
-      let two_fx = (x1 - (ex << POLY_SUBPIXEL_SHIFT)) << 1;
+      let ex = x1.ipart();
+      let two_fx = x1.frac() << 1;
 
-      let (first, incr) = if dy < 0 { (0, -1) } else { (POLY_SUBPIXEL_SCALE, 1) };
+      let first = if rev { Area::ZERO } else { Area::ONE };
+      let incr = if rev { -1 } else { 1 };
+      // let (first, incr) = if rev { (0, -1) } else { (POLY_SUBPIXEL_SCALE, 1) };
       //let x_from = x1;
-      let delta = first - fy1;
-      {
-        let m_curr_cell = self.cells.last_mut().unwrap();
-        m_curr_cell.cover += delta;
-        m_curr_cell.area += two_fx * delta;
-      }
+      let delta = first - Area::from_fixed(fy1);
+      self.add_to_curr_cell(delta, delta.scale(two_fx));
 
       let mut ey1 = ey1 + incr;
       self.set_curr_cell(ex, ey1);
-      let delta = first + first - POLY_SUBPIXEL_SCALE;
-      let area = two_fx * delta;
+      let delta = first + first - Area::ONE;
+      let area = delta.scale(two_fx);
       while ey1 != ey2 {
-        {
-          let m_curr_cell = self.cells.last_mut().unwrap();
-          m_curr_cell.cover = delta;
-          m_curr_cell.area = area;
-        }
+        self.add_to_curr_cell(delta, area);
         ey1 += incr;
         self.set_curr_cell(ex, ey1);
       }
-      let delta = fy2 - POLY_SUBPIXEL_SCALE + first;
-      {
-        let m_curr_cell = self.cells.last_mut().unwrap();
-        m_curr_cell.cover += delta;
-        m_curr_cell.area += two_fx * delta;
-      }
+      let delta = first + Area::from_fixed(fy2) - Area::ONE;
+      self.add_to_curr_cell(delta, delta.scale(two_fx));
       return;
     }
     // Render Multiple Lines
-    let (p, first, incr, dy) = if dy < 0 {
-      (fy1 * dx, 0, -1, -dy)
+    let dy = if rev { -dy } else { dy };
+    let incr = if rev { -1 } else { 1 };
+    let first = if rev { P::ZERO } else { P::ONE };
+    let p = if rev {
+      Area::from_fixed(dx).scale(fy1)
     } else {
-      ((POLY_SUBPIXEL_SCALE - fy1) * dx, POLY_SUBPIXEL_SCALE, 1, dy)
+      Area::from_fixed(dx).scale(P::ONE - fy1)
     };
-    let mut delta = p / dy;
-    let mut xmod = p % dy;
-    if xmod < 0 {
-      delta -= 1;
-      xmod += dy;
-    }
-    let mut x_from = x1 + delta;
+    let (delta_y, mut xmod) = p.div_mod_floor(dy);
+    let mut x_from = x1 + P::from_fixed(delta_y);
     self.render_hline(ey1, x1, fy1, x_from, first);
     let mut ey1 = ey1 + incr;
-    self.set_curr_cell(x_from >> POLY_SUBPIXEL_SHIFT, ey1);
+    self.set_curr_cell(x_from.ipart(), ey1);
     if ey1 != ey2 {
-      let p = POLY_SUBPIXEL_SCALE * dx;
-      let mut lift = p / dy;
-      let mut rem = p % dy;
-      if rem < 0 {
-        lift -= 1;
-        rem += dy;
-      }
+      let p = Area::from_fixed(dx);
+      let (lift, rem) = p.div_mod_floor(dy);
       xmod -= dy;
       while ey1 != ey2 {
-        delta = lift;
         xmod += rem;
-        if xmod >= 0 {
+        let delta_y = if xmod >= 0 {
           xmod -= dy;
-          delta += 1;
-        }
-        let x_to = x_from + delta;
-        self.render_hline(ey1, x_from, POLY_SUBPIXEL_SCALE - first, x_to, first);
+          lift + Area::EPSILON
+        } else {
+          lift
+        };
+        let x_to = x_from + P::from_fixed(delta_y);
+        self.render_hline(ey1, x_from, P::ONE - first, x_to, first);
         x_from = x_to;
         ey1 += incr;
-        self.set_curr_cell(x_from >> POLY_SUBPIXEL_SHIFT, ey1);
+        self.set_curr_cell(x_from.ipart(), ey1);
       }
     }
-    self.render_hline(ey1, x_from, POLY_SUBPIXEL_SCALE - first, x2, fy2);
+    self.render_hline(ey1, x_from, P::ONE - first, x2, fy2);
     self.pop_last_cell_if_empty();
   }
 }

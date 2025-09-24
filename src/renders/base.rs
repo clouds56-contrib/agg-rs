@@ -1,6 +1,6 @@
 //! Rendering Base
 
-use crate::{Color, Pixel};
+use crate::{Color, Pixel, Position};
 use crate::{Covers, RealLike};
 use std::cmp::max;
 use std::cmp::min;
@@ -31,13 +31,13 @@ where
     self.pixf.fill(color);
   }
   /// Get Image size
-  pub fn limits(&self) -> (i64, i64, i64, i64) {
-    let w = self.pixf.width() as i64;
-    let h = self.pixf.height() as i64;
+  pub fn limits(&self) -> (Position, Position, Position, Position) {
+    let w = self.pixf.width() as Position;
+    let h = self.pixf.height() as Position;
     (0, w - 1, 0, h - 1)
   }
   /// Blend a color along y-row from x1 to x2
-  pub fn blend_hline<C: Color, U: RealLike>(&mut self, x1: i64, y: i64, x2: i64, c: C, cover: U) {
+  pub fn blend_hline<C: Color, U: RealLike>(&mut self, x1: Position, y: Position, x2: Position, c: C, cover: U) {
     let (xmin, xmax, ymin, ymax) = self.limits();
     let (x1, x2) = if x2 > x1 { (x1, x2) } else { (x2, x1) };
     if y > ymax || y < ymin || x1 > xmax || x2 < xmin {
@@ -49,7 +49,7 @@ where
   }
 
   /// Blend a color from (x,y) with variable covers
-  pub fn blend_solid_hspan<C: Color, U: RealLike>(&mut self, x: i64, y: i64, len: i64, c: C, covers: &[U]) {
+  pub fn blend_solid_hspan<C: Color, U: RealLike>(&mut self, x: Position, y: Position, len: Position, c: C, covers: &[U]) {
     let (xmin, xmax, ymin, ymax) = self.limits();
     if y > ymax || y < ymin {
       return;
@@ -75,7 +75,7 @@ where
   }
 
   /// Blend a color from (x,y) with variable covers
-  pub fn blend_solid_vspan<C: Color, U: RealLike>(&mut self, x: i64, y: i64, len: i64, c: C, covers: &[U]) {
+  pub fn blend_solid_vspan<C: Color, U: RealLike>(&mut self, x: Position, y: Position, len: Position, c: C, covers: &[U]) {
     let (xmin, xmax, ymin, ymax) = self.limits();
     if x > xmax || x < xmin {
       return;
@@ -100,7 +100,7 @@ where
     self.pixf.blend_solid_vspan(x, y, len, c, covers_win);
   }
 
-  pub fn blend_color_vspan<'a, C, U, Co>(&mut self, x: i64, y: i64, len: i64, colors: &[C], covers: Co)
+  pub fn blend_color_vspan<'a, C, U, Co>(&mut self, x: Position, y: Position, len: Position, colors: &[C], covers: Co)
   where
     C: Color,
     U: RealLike,

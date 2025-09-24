@@ -22,6 +22,7 @@ fixed = "1.29.0"
 freetype-rs = { version = "0.38.0", features = ["bundled"] }
 image = { version = "0.25.8", default-features = false, features = ["png", "gif", "jpeg", "bmp", "tga"] }
 log = "0.4.28"
+num-traits = "0.2.19"
 palette = "0.7.6"
 
 [dev-dependencies]
