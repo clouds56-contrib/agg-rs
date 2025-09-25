@@ -70,6 +70,10 @@ pub trait FixedLike: Sized + PartialEq + std::fmt::Debug + Copy + 'static {
   fn from_raw(x: Self::Raw) -> Self;
   fn into_raw(self) -> Self::Raw;
 
+  fn from_fixed<P: FixedLike>(p: P) -> Self {
+    Self::from_f64(p.to_f64())
+  }
+
   fn ipart(self) -> Position {
     self.to_f64().floor() as Position
   }
@@ -82,19 +86,18 @@ pub trait FixedLike: Sized + PartialEq + std::fmt::Debug + Copy + 'static {
 }
 
 pub trait PixelLike: FixedLike + Arithmetics + IsSigned {
-  fn from_fixed<P: FixedLike>(p: P) -> Self {
-    // TODO improve this
-    Self::from_f64(p.to_f64())
-  }
   fn scale<P: FixedLike>(self, p: P) -> Self {
     // TODO improve this
     Self::from_f64(self.to_f64() * p.to_f64())
   }
-  fn div_mod_floor<P: FixedLike>(self, p: P) -> (Self, Self) {
+  fn div_mod_floor<P: FixedLike, const TARGET_SHIFT: usize>(self, p: P) -> (Self, Self) {
     // TODO improve this
+    // a = d * scale * (p / scale) + r
+    let scale = 2f64.powi(TARGET_SHIFT as i32);
     let a = self.to_f64();
-    let p = p.to_f64();
-    (Self::from_f64(a.div_euclid(p)), Self::from_f64(a.rem_euclid(p)))
+    let p = p.to_f64() / scale;
+    // warn!("div_mod_floor: a: {:.5}, p: {:.5} => {:.5} {:.5}", a, p, a.div_euclid(p) / scale, a.rem_euclid(p));
+    (Self::from_f64(a.div_euclid(p) / scale), Self::from_f64(a.rem_euclid(p)))
   }
 }
 

@@ -168,6 +168,7 @@ impl<Area: PixelLike> RasterizerCell<Area> {
   /// Current cell is removed if empty (cover and area equal to 0)
   /// New cell is added to cell list
   fn set_curr_cell(&mut self, x: Position, y: Position) {
+    // trace!("SET_CURR_CELL: ({},{})", x, y);
     if self.curr_cell_not_equal(x, y) {
       self.pop_last_cell_if_empty();
       self.cells.push(Cell::at(x, y));
@@ -184,6 +185,7 @@ impl<Area: PixelLike> RasterizerCell<Area> {
   /// Create and update new cells
   /// assuming y1.ipart() == y2.ipart() == ey
   fn render_hline<P: PixelLike>(&mut self, ey: Position, x1: P, y1: P, x2: P, y2: P) {
+    trace!("RENDER_HLINE: y={} from ({:.5},{:.5}) to ({:.5},{:.5})", ey, x1.to_f64(), y1.to_f64(), x2.to_f64(), y2.to_f64());
     let ex1 = x1.ipart();
     let ex2 = x2.ipart();
     let fx1 = x1.frac();
@@ -209,7 +211,7 @@ impl<Area: PixelLike> RasterizerCell<Area> {
     let dx = Area::from_fixed(if rev { x1 - x2 } else { x2 - x1 });
 
     // Adjacent Cells on Same Line
-    let (delta_y, mut xmod) = dy.scale(if rev { fx1 } else { P::ONE - fx1 }).div_mod_floor(dx);
+    let (delta_y, mut xmod) = dy.scale(if rev { fx1 } else { P::ONE - fx1 }).div_mod_floor::<_, 8>(dx);
 
     // write first cell, where
     //   area = (y2 - y1) * (1 - fx1) * (1 + fx1) / (x2 - x1)
@@ -225,7 +227,7 @@ impl<Area: PixelLike> RasterizerCell<Area> {
     if ex != ex2 {
       xmod -= dx;
 
-      let (lift, rem) = dy.div_mod_floor(dx);
+      let (lift, rem) = dy.div_mod_floor::<_, 8>(dx);
       while ex != ex2 {
         self.set_curr_cell(ex, ey);
         xmod += rem;
@@ -252,10 +254,11 @@ impl<Area: PixelLike> RasterizerCell<Area> {
   ///
   /// Input coordinates are at subpixel scale
   pub fn line<P: PixelLike>(&mut self, x1: P, y1: P, x2: P, y2: P) {
-    let dx_limit = Area::from_fixed(fixed::types::I64F0::from(16384));
+    debug!("LINE: ({:.5},{:.5}) to ({:.5},{:.5})", x1.to_f64(), y1.to_f64(), x2.to_f64(), y2.to_f64());
+    const DX_LIMIT: Position = 16384;
     let dx = Area::from_fixed(x2 - x1);
     // Split long lines in half
-    if dx >= dx_limit || dx <= -dx_limit {
+    if dx.ipart().abs() >= DX_LIMIT {
       let cx = (x1 + x2) >> 1;
       let cy = (y1 + y2) >> 1;
       self.line(x1, y1, cx, cy);
@@ -286,6 +289,8 @@ impl<Area: PixelLike> RasterizerCell<Area> {
     }
 
     let rev = dy < 0;
+
+    // Vertical Line
     if dx == 0 {
       let ex = x1.ipart();
       let two_fx = x1.frac() << 1;
@@ -310,33 +315,29 @@ impl<Area: PixelLike> RasterizerCell<Area> {
       self.add_to_curr_cell(delta, delta.scale(two_fx));
       return;
     }
+
     // Render Multiple Lines
     let dy = if rev { -dy } else { dy };
     let incr = if rev { -1 } else { 1 };
     let first = if rev { P::ZERO } else { P::ONE };
-    let p = if rev {
-      Area::from_fixed(dx).scale(fy1)
-    } else {
-      Area::from_fixed(dx).scale(P::ONE - fy1)
-    };
-    let (delta_y, mut xmod) = p.div_mod_floor(dy);
-    let mut x_from = x1 + P::from_fixed(delta_y);
+    let (delta, mut xmod) = dx.scale(if rev { fy1 } else { P::ONE - fy1 }).div_mod_floor::<_, 8>(dy);
+    let mut x_from = x1 + P::from_fixed(delta);
     self.render_hline(ey1, x1, fy1, x_from, first);
     let mut ey1 = ey1 + incr;
     self.set_curr_cell(x_from.ipart(), ey1);
     if ey1 != ey2 {
       let p = Area::from_fixed(dx);
-      let (lift, rem) = p.div_mod_floor(dy);
+      let (lift, rem) = p.div_mod_floor::<_, 8>(dy);
       xmod -= dy;
       while ey1 != ey2 {
         xmod += rem;
-        let delta_y = if xmod >= 0 {
+        let delta = if xmod >= 0 {
           xmod -= dy;
           lift + Area::EPSILON
         } else {
           lift
         };
-        let x_to = x_from + P::from_fixed(delta_y);
+        let x_to = x_from + P::from_fixed(delta);
         self.render_hline(ey1, x_from, P::ONE - first, x_to, first);
         x_from = x_to;
         ey1 += incr;

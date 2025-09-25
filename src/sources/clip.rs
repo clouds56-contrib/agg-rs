@@ -24,7 +24,7 @@ where
   /// Values are sorted before storing
   pub fn new(x1: T, y1: T, x2: T, y2: T) -> Self {
     let (x1, x2) = if x1 > x2 { (x2, x1) } else { (x1, x2) };
-    let (y1, y2) = if y1 > x2 { (y2, y1) } else { (y1, y2) };
+    let (y1, y2) = if y1 > y2 { (y2, y1) } else { (y1, y2) };
     Self { x1, y1, x2, y2 }
   }
   /// Get location of point relative to rectangle
@@ -165,6 +165,7 @@ impl<P: PixelLike> Clip<P> {
   }
   /// Clip a line along the top and bottom of the regon
   fn line_clip_y<Area: PixelLike>(&self, ras: &mut RasterizerCell<Area>, x1: P, y1: P, x2: P, y2: P, f1: u8, f2: u8) {
+    trace!("LINE_CLIP_Y: ({:.5},{:.5})[{f1}] to ({:.5},{:.5})[{f2}]", x1.to_f64(), y1.to_f64(), x2.to_f64(), y2.to_f64());
     let b = match self.clip_box {
       None => return,
       Some(ref b) => b,
@@ -196,7 +197,7 @@ impl<P: PixelLike> Clip<P> {
         tx2 = x1 + mul_div(b.y2 - y1, x2 - x1, y2 - y1);
         ty2 = b.y2;
       }
-      ras.line(tx1, tx2, ty1, ty2);
+      ras.line(tx1, ty1, tx2, ty2);
     }
   }
 
@@ -204,6 +205,7 @@ impl<P: PixelLike> Clip<P> {
   ///
   /// Final point (x2,y2) is saved internally as (x1,y1))
   pub(crate) fn line_to<Area: PixelLike>(&mut self, ras: &mut RasterizerCell<Area>, x2: P, y2: P) {
+    trace!("LINE_TO: ({:.5},{:.5}) to ({:.5},{:.5})", self.x1.to_f64(), self.y1.to_f64(), x2.to_f64(), y2.to_f64());
     if let Some(ref b) = self.clip_box {
       let f2 = b.clip_flags(x2, y2);
       // Both points above or below clip box
@@ -276,6 +278,7 @@ impl<P: PixelLike> Clip<P> {
   ///
   /// Point is saved internally as (x1,y1)
   pub(crate) fn move_to(&mut self, x2: P, y2: P) {
+    trace!("MOVE_TO: ({:.5},{:.5})", x2.to_f64(), y2.to_f64());
     self.x1 = x2;
     self.y1 = y2;
     if let Some(ref b) = self.clip_box {
@@ -284,6 +287,7 @@ impl<P: PixelLike> Clip<P> {
   }
   /// Define the clipping region
   pub fn clip_box(&mut self, x1: P, y1: P, x2: P, y2: P) {
+    debug!("CLIP_BOX: ({:.5},{:.5}) to ({:.5},{:.5})", x1.to_f64(), y1.to_f64(), x2.to_f64(), y2.to_f64());
     self.clip_box = Some(Rectangle::new(x1, y1, x2, y2));
   }
 }
