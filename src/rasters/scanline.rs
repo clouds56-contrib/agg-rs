@@ -148,8 +148,8 @@ impl<P: PixelLike, Area: PixelLike> RasterizerScanline<P, Area> {
         return false;
       }
       sl.reset_spans();
-      let mut num_cells = self.outline.scanline_num_cells(self.scan_y);
       let cells = self.outline.scanline_cells(self.scan_y);
+      let mut num_cells = cells.len();
 
       let mut cover = Area::ZERO;
 
@@ -172,7 +172,7 @@ impl<P: PixelLike, Area: PixelLike> RasterizerScanline<P, Area> {
             cover += cur_cell.cover;
             num_cells -= 1;
           }
-          if area != Area::ZERO {
+          if area != 0 {
             let alpha = self.calculate_alpha((cover << 1) - area);
             if alpha > 0 {
               sl.add_cell(x, alpha);
@@ -180,7 +180,7 @@ impl<P: PixelLike, Area: PixelLike> RasterizerScanline<P, Area> {
             x += 1;
           }
           if num_cells > 0 && cur_cell.x > x {
-            let alpha = self.calculate_alpha(cover);
+            let alpha = self.calculate_alpha(cover << 1);
             if alpha > 0 {
               sl.add_span(x, cur_cell.x - x, alpha);
             }
@@ -280,7 +280,7 @@ impl<P: PixelLike, Area: PixelLike> RasterizerScanline<P, Area> {
 
     let mut cover = (area << (aa_shift - 1)).to_f64().abs() as u64;
     if self.filling_rule == FillingRule::EvenOdd {
-      cover *= aa_mask2;
+      cover &= aa_mask2;
       if cover > aa_scale {
         cover = aa_scale2 - cover;
       }

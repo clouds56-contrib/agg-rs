@@ -117,10 +117,6 @@ impl<Area: PixelLike> RasterizerCell<Area> {
       self.sorted_y[i].sort_by(|a, b| (a.x).cmp(&b.x));
     }
   }
-  /// Return number of cells in a specific y row
-  pub fn scanline_num_cells(&self, y: Position) -> usize {
-    self.sorted_y[y as usize].len()
-  }
   /// Returns the cells of a specific y row
   pub fn scanline_cells(&self, y: Position) -> &[Cell<Area>] {
     &self.sorted_y[y as usize]
@@ -211,19 +207,18 @@ impl<Area: PixelLike> RasterizerCell<Area> {
     let dx = Area::from_fixed(if rev { x1 - x2 } else { x2 - x1 });
 
     // Adjacent Cells on Same Line
-    let (delta_y, mut xmod) = dy.scale(if rev { fx1 } else { P::ONE - fx1 }).div_mod_floor::<_, 8>(dx);
-
+    let (delta, mut xmod) = dy.scale(if rev { fx1 } else { P::ONE - fx1 }).div_mod_floor::<_, 8>(dx);
     // write first cell, where
     //   area = (y2 - y1) * (1 - fx1) * (1 + fx1) / (x2 - x1)
     //   area = (y2 - y1) * fx1 * fx1 / (x1 - x2) if rev
-    self.add_to_curr_cell(delta_y, delta_y.scale(if rev { fx1 } else { fx1 + P::ONE }));
+    self.add_to_curr_cell(delta, delta.scale(if rev { fx1 } else { fx1 + P::ONE }));
 
     // TODO: if range.len() == 0 { return }
 
     // if there are more than 2 cells, we need to calculate the lift of line
     let delta_ex = if rev { -1 } else { 1 };
     let mut ex = ex1 + delta_ex;
-    let mut y = Area::from_fixed(y1) + delta_y;
+    let mut y = Area::from_fixed(y1) + delta;
     if ex != ex2 {
       xmod -= dx;
 
@@ -231,21 +226,21 @@ impl<Area: PixelLike> RasterizerCell<Area> {
       while ex != ex2 {
         self.set_curr_cell(ex, ey);
         xmod += rem;
-        let delta = if xmod >= Area::ZERO {
+        let delta_y = if xmod >= Area::ZERO {
           xmod -= dx;
           lift + Area::EPSILON
         } else {
           lift
         };
-        self.add_to_curr_cell(delta, delta); // delta.scale(P::ONE);
+        self.add_to_curr_cell(delta_y, delta_y); // delta.scale(P::ONE);
         y += delta_y;
         ex += delta_ex;
       }
     }
     // write last cell, here ex == ex2
     self.set_curr_cell(ex, ey);
-    let delta_y = Area::from_fixed(y2) - y;
-    self.add_to_curr_cell(delta_y, delta_y.scale(if rev { fx2 + P::ONE } else { fx2 }));
+    let delta = Area::from_fixed(y2) - y;
+    self.add_to_curr_cell(delta, delta.scale(if rev { fx2 + P::ONE } else { fx2 }));
   }
 
   /// Draw a line from (x1,y1) to (x2,y2)
