@@ -145,7 +145,7 @@ pub struct Clip<P> {
 fn mul_div<P: PixelLike>(a: P, b: P, c: P) -> P {
   // let (a, b, c) = (a as f64, b as f64, c as f64);
   // (a * b / c).round() as i64
-  P::from_f64(a.to_f64() * b.to_f64() / c.to_f64())
+  P::from_f64_nearest(a.to_f64() * b.to_f64() / c.to_f64())
 }
 impl<P: PixelLike> Default for Clip<P> {
   fn default() -> Self {

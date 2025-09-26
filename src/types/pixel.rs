@@ -66,30 +66,45 @@ pub trait FixedLike: Sized + PartialEq + std::fmt::Debug + Copy + 'static {
   const ZERO: Self;
   const ONE: Self;
   const EPSILON: Self;
-  fn from_f64(x: f64) -> Self;
+  fn from_f64_nearest(x: f64) -> Self;
+  /// Rounded is almost nearest, while nearest might use round_ties_even
+  fn from_f64_rounded(x: f64) -> Self {
+    if Self::BITS == 0 || Self::SHIFT == usize::MAX {
+      return Self::from_f64_nearest(x);
+    }
+    let x = (x * (Self::SHIFT as f64).exp2()).round() / (Self::SHIFT as f64).exp2();
+    Self::from_f64_nearest(x)
+  }
+  fn from_f64_floored(x: f64) -> Self {
+    if Self::BITS == 0 || Self::SHIFT == usize::MAX {
+      return Self::from_f64_nearest(x);
+    }
+    let x = (x * (Self::SHIFT as f64).exp2()).floor() / (Self::SHIFT as f64).exp2();
+    Self::from_f64_nearest(x)
+  }
   fn to_f64(self) -> f64;
   fn from_raw(x: Self::Raw) -> Self;
   fn into_raw(self) -> Self::Raw;
 
   fn from_fixed<P: FixedLike>(p: P) -> Self {
-    Self::from_f64(p.to_f64())
+    Self::from_f64_floored(p.to_f64())
   }
 
   fn ipart(self) -> Position {
     self.to_f64().floor() as Position
   }
   fn round(self) -> Self {
-    Self::from_f64(self.to_f64().round_ties_even())
+    Self::from_f64_nearest(self.to_f64().round_ties_even())
   }
   fn frac(self) -> Self {
-    Self::from_f64(self.to_f64().rem_euclid(1.0))
+    Self::from_f64_nearest(self.to_f64().rem_euclid(1.0))
   }
 }
 
 pub trait PixelLike: FixedLike + Arithmetics + IsSigned {
   fn scale<P: FixedLike>(self, p: P) -> Self {
     // TODO improve this
-    Self::from_f64(self.to_f64() * p.to_f64())
+    Self::from_f64_nearest(self.to_f64() * p.to_f64())
   }
   fn to_sub_pixel(self, target_shift: usize) -> i64 {
     let scale = 2f64.powi(target_shift as i32);
@@ -102,9 +117,8 @@ pub trait PixelLike: FixedLike + Arithmetics + IsSigned {
     let scale = 2f64.powi(TARGET_SHIFT as i32);
     let a = self.to_f64() * scale;
     let p = p.to_f64();
-    let d = Self::from_f64(a.div_euclid(p) / scale);
-    let r = Self::from_f64(a.rem_euclid(p) / scale);
-
+    let d = Self::from_f64_nearest(a.div_euclid(p) / scale);
+    let r = Self::from_f64_nearest(a.rem_euclid(p) / scale);
     (d, r)
   }
 }
@@ -120,7 +134,7 @@ macro_rules! impl_pixel_like_float {
         const ZERO: Self = 0.0;
         const ONE: Self = 1.0;
         const EPSILON: Self = <$ty>::EPSILON;
-        fn from_f64(x: f64) -> Self { x as _ }
+        fn from_f64_nearest(x: f64) -> Self { x as _ }
         fn to_f64(self) -> f64 { self as f64 }
         fn from_raw(x: Self::Raw) -> Self { x }
         fn into_raw(self) -> Self::Raw { self }
@@ -151,7 +165,9 @@ macro_rules! impl_pixel_like_fixed {
         const ZERO: Self = fixed::traits::Fixed::ZERO;
         const ONE: Self = fixed::traits::Fixed::TRY_ONE.unwrap();
         const EPSILON: Self = <Self as fixed::traits::Fixed>::DELTA;
-        fn from_f64(x: f64) -> Self {
+        fn from_f64_nearest(x: f64) -> Self {
+          // A floating-point number of type half::f16, half::bf16, f32, f64 or F128.
+          // For this conversion, the method rounds to the nearest, with ties rounding to even.
           <Self as fixed::traits::Fixed>::from_num(x)
         }
         fn to_f64(self) -> f64 {
@@ -203,7 +219,7 @@ macro_rules! impl_pixel_like_ifixed {
         const ZERO: Self = Self(0);
         const ONE: Self = Self(1 << SHIFT);
         const EPSILON: Self = Self(1);
-        fn from_f64(x: f64) -> Self {
+        fn from_f64_nearest(x: f64) -> Self {
           Self((x * Self::ONE.0 as f64) as _)
         }
         fn to_f64(self) -> f64 { self.0 as f64 / Self::ONE.0 as f64 }
@@ -266,8 +282,8 @@ mod test {
     let one = T::ONE;
     assert_eq!(zero.to_f64(), 0.0, "{} to_f64 zero", name);
     assert_eq!(one.to_f64(), 1.0, "{} to_f64 one", name);
-    assert_eq!(T::from_f64(0.0), zero, "{} from_f64 zero", name);
-    assert_eq!(T::from_f64(1.0), one, "{} from_f64 one", name);
+    assert_eq!(T::from_f64_nearest(0.0), zero, "{} from_f64 zero", name);
+    assert_eq!(T::from_f64_nearest(1.0), one, "{} from_f64 one", name);
     let eps = if T::BITS == 0 {
       1e-6
     } else {
@@ -278,7 +294,7 @@ mod test {
       if i < 0.0 && !T::IS_SIGNED {
         continue;
       }
-      let v = T::from_f64(i);
+      let v = T::from_f64_nearest(i);
       assert_approx_eq!(v.to_f64(), i, eps);
       let rounded = v.round().to_f64();
       assert_approx_eq!(rounded, i.round_ties_even(), eps);

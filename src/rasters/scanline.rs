@@ -1,8 +1,10 @@
 //! Rasterizer
 
+use fixed::types::I24F8;
 use fixed::types::I48F16;
 use fixed::types::I56F8;
 
+use crate::FixedLike;
 use crate::PixelLike;
 use crate::Position;
 //use crate::POLY_SUBPIXEL_MASK;
@@ -19,9 +21,7 @@ use crate::VertexSource;
 struct RasConvInt {}
 impl RasConvInt {
   pub fn upscale<P: PixelLike>(v: f64) -> P {
-    let scale = 2f64.powi(P::SHIFT as i32);
-    let v = (v * scale).round() / scale;
-    P::from_f64(v)
+    P::from_f64_rounded(v)
   }
   //pub fn downscale(v: i64) -> i64 {
   //    v
@@ -153,6 +153,8 @@ impl<P: PixelLike, Area: PixelLike> RasterizerScanline<P, Area> {
       let cells = self.outline.scanline_cells(self.scan_y);
       let mut num_cells = cells.len();
 
+      // debug!("y={} cells: [{num_cells}]{:?}", self.scan_y, cells.iter().map(|c| (c.x, c.area.to_f64() * 65536., c.cover.to_f64() * 256.)).collect::<Vec<_>>());
+
       let mut cover = Area::ZERO;
 
       let mut iter = cells.iter();
@@ -279,8 +281,7 @@ impl<P: PixelLike, Area: PixelLike> RasterizerScanline<P, Area> {
     let aa_scale2 = aa_scale * 2;
     let aa_mask = aa_scale - 1;
     let aa_mask2 = aa_scale2 - 1;
-
-    let mut cover = (area << (aa_shift - 1)).to_f64().abs() as u64;
+    let mut cover = I24F8::from_fixed(area >> 1).abs().to_bits() as u64;
     if self.filling_rule == FillingRule::EvenOdd {
       cover &= aa_mask2;
       if cover > aa_scale {
@@ -308,3 +309,25 @@ pub(crate) fn len_i64_xy(x1: i64, y1: i64, x2: i64, y2: i64) -> i64 {
 //     Miter,
 //     MiterAccurate,
 // }
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  use fixed::types::I48F16 as Area;
+  use fixed::types::I56F8 as P;
+
+  #[test]
+  fn test_calculate_alpha() {
+    let ras = RasterizerScanline::<P, Area>::new();
+    let area = Area::from_f64_nearest(-0.2750244140625);
+    let p = I24F8::from_fixed(area);
+    assert_eq!(area.to_bits(), -18024);
+    assert_eq!(area.to_f64() * 256., -70.40625);
+    assert_eq!(<I24F8 as fixed::traits::Fixed>::from_num(area).to_bits(), -71);
+    assert_eq!(p.to_bits(), -71);
+    assert_eq!(p.to_f64(), -0.27734375);
+    assert_eq!(ras.calculate_alpha(Area::from_f64_nearest(0.2750244140625)), 35);
+    assert_eq!(ras.calculate_alpha(Area::from_f64_nearest(-0.2750244140625)), 36);
+  }
+}

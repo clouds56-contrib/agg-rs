@@ -182,7 +182,7 @@ impl<Area: PixelLike> RasterizerCell<Area> {
   /// Create and update new cells
   /// assuming y1.ipart() == y2.ipart() == ey
   fn render_hline<P: PixelLike>(&mut self, ey: Position, x1: P, y1: P, x2: P, y2: P) {
-    trace!("RENDER_HLINE: y={} from ({:.5},{:.5}) to ({:.5},{:.5})", ey, x1.to_f64(), y1.to_f64(), x2.to_f64(), y2.to_f64());
+    trace!("RENDER_HLINE: y={} from {:.5}-{:.5} [{:.5},{:.5}]", ey, x1.to_f64(), x2.to_f64(), y1.to_f64(), y2.to_f64());
     let ex1 = x1.ipart();
     let ex2 = x2.ipart();
     let fx1 = x1.frac();
@@ -250,7 +250,7 @@ impl<Area: PixelLike> RasterizerCell<Area> {
   ///
   /// Input coordinates are at subpixel scale
   pub fn line<P: PixelLike>(&mut self, x1: P, y1: P, x2: P, y2: P) {
-    debug!("LINE: ({:.5},{:.5}) to ({:.5},{:.5})", x1.to_f64(), y1.to_f64(), x2.to_f64(), y2.to_f64());
+    trace!("LINE: ({:.5},{:.5}) to ({:.5},{:.5})", x1.to_f64(), y1.to_f64(), x2.to_f64(), y2.to_f64());
     const DX_LIMIT: Position = 16384;
     let dx = Area::from_fixed(x2 - x1);
     // Split long lines in half
