@@ -2,6 +2,7 @@
 
 use crate::PixelLike;
 use crate::Position;
+use crate::PIXEL_SHIFT;
 
 use std::cmp::max;
 use std::cmp::min;
@@ -207,7 +208,7 @@ impl<Area: PixelLike> RasterizerCell<Area> {
     let dx = Area::from_fixed(if rev { x1 - x2 } else { x2 - x1 });
 
     // Adjacent Cells on Same Line
-    let (delta, mut xmod) = dy.scale(if rev { fx1 } else { P::ONE - fx1 }).div_mod_floor::<_, 8>(dx);
+    let (delta, mut xmod) = dy.scale(if rev { fx1 } else { P::ONE - fx1 }).div_mod_floor::<_, PIXEL_SHIFT>(dx);
     // write first cell, where
     //   area = (y2 - y1) * (1 - fx1) * (1 + fx1) / (x2 - x1)
     //   area = (y2 - y1) * fx1 * fx1 / (x1 - x2) if rev
@@ -220,15 +221,15 @@ impl<Area: PixelLike> RasterizerCell<Area> {
     let mut ex = ex1 + delta_ex;
     let mut y = Area::from_fixed(y1) + delta;
     if ex != ex2 {
-      xmod -= dx;
+      xmod -= dx >> PIXEL_SHIFT;
 
-      let (lift, rem) = dy.div_mod_floor::<_, 8>(dx);
+      let (lift, rem) = dy.div_mod_floor::<_, PIXEL_SHIFT>(dx);
       while ex != ex2 {
         self.set_curr_cell(ex, ey);
         xmod += rem;
-        let delta_y = if xmod >= Area::ZERO {
-          xmod -= dx;
-          lift + Area::EPSILON
+        let delta_y = if xmod >= 0 {
+          xmod -= dx >> PIXEL_SHIFT;
+          lift + (Area::EPSILON << PIXEL_SHIFT)
         } else {
           lift
         };
@@ -315,20 +316,20 @@ impl<Area: PixelLike> RasterizerCell<Area> {
     let dy = if rev { -dy } else { dy };
     let incr = if rev { -1 } else { 1 };
     let first = if rev { P::ZERO } else { P::ONE };
-    let (delta, mut xmod) = dx.scale(if rev { fy1 } else { P::ONE - fy1 }).div_mod_floor::<_, 8>(dy);
+    let (delta, mut xmod) = dx.scale(if rev { fy1 } else { P::ONE - fy1 }).div_mod_floor::<_, PIXEL_SHIFT>(dy);
     let mut x_from = x1 + P::from_fixed(delta);
     self.render_hline(ey1, x1, fy1, x_from, first);
     let mut ey1 = ey1 + incr;
     self.set_curr_cell(x_from.ipart(), ey1);
     if ey1 != ey2 {
       let p = Area::from_fixed(dx);
-      let (lift, rem) = p.div_mod_floor::<_, 8>(dy);
-      xmod -= dy;
+      let (lift, rem) = p.div_mod_floor::<_, PIXEL_SHIFT>(dy);
+      xmod -= dy >> PIXEL_SHIFT;
       while ey1 != ey2 {
         xmod += rem;
         let delta = if xmod >= 0 {
-          xmod -= dy;
-          lift + Area::EPSILON
+          xmod -= dy >> PIXEL_SHIFT;
+          lift + (Area::EPSILON << PIXEL_SHIFT)
         } else {
           lift
         };

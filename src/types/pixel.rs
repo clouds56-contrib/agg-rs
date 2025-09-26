@@ -1,6 +1,7 @@
 use fixed::traits::Fixed;
 
 pub type Position = i64;
+pub const PIXEL_SHIFT: usize = 8;
 
 pub trait Arithmetics:
   std::ops::Neg<Output = Self>
@@ -90,14 +91,21 @@ pub trait PixelLike: FixedLike + Arithmetics + IsSigned {
     // TODO improve this
     Self::from_f64(self.to_f64() * p.to_f64())
   }
+  fn to_sub_pixel(self, target_shift: usize) -> i64 {
+    let scale = 2f64.powi(target_shift as i32);
+    (self.to_f64() * scale).round() as i64
+  }
+
   fn div_mod_floor<P: FixedLike, const TARGET_SHIFT: usize>(self, p: P) -> (Self, Self) {
     // TODO improve this
     // a = d * scale * (p / scale) + r
     let scale = 2f64.powi(TARGET_SHIFT as i32);
-    let a = self.to_f64();
-    let p = p.to_f64() / scale;
-    // warn!("div_mod_floor: a: {:.5}, p: {:.5} => {:.5} {:.5}", a, p, a.div_euclid(p) / scale, a.rem_euclid(p));
-    (Self::from_f64(a.div_euclid(p) / scale), Self::from_f64(a.rem_euclid(p)))
+    let a = self.to_f64() * scale;
+    let p = p.to_f64();
+    let d = Self::from_f64(a.div_euclid(p) / scale);
+    let r = Self::from_f64(a.rem_euclid(p) / scale);
+
+    (d, r)
   }
 }
 

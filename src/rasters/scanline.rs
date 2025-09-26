@@ -19,6 +19,8 @@ use crate::VertexSource;
 struct RasConvInt {}
 impl RasConvInt {
   pub fn upscale<P: PixelLike>(v: f64) -> P {
+    let scale = 2f64.powi(P::SHIFT as i32);
+    let v = (v * scale).round() / scale;
     P::from_f64(v)
   }
   //pub fn downscale(v: i64) -> i64 {
