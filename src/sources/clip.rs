@@ -1,7 +1,7 @@
 //! Clipping Region
 
 //use crate::POLY_SUBPIXEL_SCALE;
-use crate::{cell::RasterizerCell, PixelLike};
+use crate::{PixelLike, cell::RasterizerCell};
 
 /// Rectangle
 #[derive(Debug, Copy, Clone)]

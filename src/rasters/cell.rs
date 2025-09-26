@@ -1,8 +1,8 @@
 //! Rendering Cells
 
+use crate::PIXEL_SHIFT;
 use crate::PixelLike;
 use crate::Position;
-use crate::PIXEL_SHIFT;
 
 use std::cmp::max;
 use std::cmp::min;
@@ -27,7 +27,10 @@ impl<Area> Cell<Area> {
   /// Create a new Cell
   ///
   /// Cover and Area are both 0
-  fn new() -> Self where Area: PixelLike {
+  fn new() -> Self
+  where
+    Area: PixelLike,
+  {
     Cell {
       x: Position::MAX,
       y: Position::MAX,
@@ -36,7 +39,10 @@ impl<Area> Cell<Area> {
     }
   }
   /// Create new cell at position (x,y)
-  pub fn at(x: Position, y: Position) -> Self where Area: PixelLike {
+  pub fn at(x: Position, y: Position) -> Self
+  where
+    Area: PixelLike,
+  {
     let mut c = Cell::new();
     c.x = x;
     c.y = y;
@@ -208,7 +214,9 @@ impl<Area: PixelLike> RasterizerCell<Area> {
     let dx = Area::from_fixed(if rev { x1 - x2 } else { x2 - x1 });
 
     // Adjacent Cells on Same Line
-    let (delta, mut xmod) = dy.scale(if rev { fx1 } else { P::ONE - fx1 }).div_mod_floor::<_, PIXEL_SHIFT>(dx);
+    let (delta, mut xmod) = dy
+      .scale(if rev { fx1 } else { P::ONE - fx1 })
+      .div_mod_floor::<_, PIXEL_SHIFT>(dx);
     // write first cell, where
     //   area = (y2 - y1) * (1 - fx1) * (1 + fx1) / (x2 - x1)
     //   area = (y2 - y1) * fx1 * fx1 / (x1 - x2) if rev
@@ -316,7 +324,9 @@ impl<Area: PixelLike> RasterizerCell<Area> {
     let dy = if rev { -dy } else { dy };
     let incr = if rev { -1 } else { 1 };
     let first = if rev { P::ZERO } else { P::ONE };
-    let (delta, mut xmod) = dx.scale(if rev { fy1 } else { P::ONE - fy1 }).div_mod_floor::<_, PIXEL_SHIFT>(dy);
+    let (delta, mut xmod) = dx
+      .scale(if rev { fy1 } else { P::ONE - fy1 })
+      .div_mod_floor::<_, PIXEL_SHIFT>(dy);
     let mut x_from = x1 + P::from_fixed(delta);
     self.render_hline(ey1, x1, fy1, x_from, first);
     let mut ey1 = ey1 + incr;

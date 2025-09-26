@@ -77,7 +77,6 @@ impl<P: PixelLike, Area> Default for RasterizerScanline<P, Area> {
 }
 
 impl<P: PixelLike, Area> RasterizerScanline<P, Area> {
-
   /// Create a new RasterizerScanline
   pub fn new() -> Self {
     Self {

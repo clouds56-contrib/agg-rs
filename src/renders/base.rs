@@ -49,7 +49,14 @@ where
   }
 
   /// Blend a color from (x,y) with variable covers
-  pub fn blend_solid_hspan<C: Color, U: RealLike>(&mut self, x: Position, y: Position, len: Position, c: C, covers: &[U]) {
+  pub fn blend_solid_hspan<C: Color, U: RealLike>(
+    &mut self,
+    x: Position,
+    y: Position,
+    len: Position,
+    c: C,
+    covers: &[U],
+  ) {
     let (xmin, xmax, ymin, ymax) = self.limits();
     if y > ymax || y < ymin {
       return;
@@ -75,7 +82,14 @@ where
   }
 
   /// Blend a color from (x,y) with variable covers
-  pub fn blend_solid_vspan<C: Color, U: RealLike>(&mut self, x: Position, y: Position, len: Position, c: C, covers: &[U]) {
+  pub fn blend_solid_vspan<C: Color, U: RealLike>(
+    &mut self,
+    x: Position,
+    y: Position,
+    len: Position,
+    c: C,
+    covers: &[U],
+  ) {
     let (xmin, xmax, ymin, ymax) = self.limits();
     if x > xmax || x < xmin {
       return;

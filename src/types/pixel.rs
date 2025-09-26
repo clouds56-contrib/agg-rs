@@ -29,28 +29,27 @@ pub trait Arithmetics:
 }
 
 impl<T> Arithmetics for T where
-  Self:
-  std::ops::Neg<Output = Self>
-  + std::ops::Add<Output = Self>
-  + std::ops::Sub<Output = Self>
-  + std::ops::Mul<Output = Self>
-  + std::ops::Div<Output = Self>
-  + std::ops::Shr<usize, Output = Self>
-  + std::ops::Shl<usize, Output = Self>
-  + std::ops::AddAssign
-  + std::ops::SubAssign
-  + std::ops::MulAssign
-  + std::ops::DivAssign
-  + std::ops::Shr<usize, Output = Self>
-  + std::ops::Shl<usize, Output = Self>
-  + Copy
-  + PartialOrd
-  + PartialEq
-  // + std::ops::Mul<Position, Output = Self>
-  // + std::ops::Div<Position, Output = Self>
-  + PartialEq<Position>
-  + PartialOrd<Position>
-  + 'static
+  Self: std::ops::Neg<Output = Self>
+    + std::ops::Add<Output = Self>
+    + std::ops::Sub<Output = Self>
+    + std::ops::Mul<Output = Self>
+    + std::ops::Div<Output = Self>
+    + std::ops::Shr<usize, Output = Self>
+    + std::ops::Shl<usize, Output = Self>
+    + std::ops::AddAssign
+    + std::ops::SubAssign
+    + std::ops::MulAssign
+    + std::ops::DivAssign
+    + std::ops::Shr<usize, Output = Self>
+    + std::ops::Shl<usize, Output = Self>
+    + Copy
+    + PartialOrd
+    + PartialEq
+    // + std::ops::Mul<Position, Output = Self>
+    // + std::ops::Div<Position, Output = Self>
+    + PartialEq<Position>
+    + PartialOrd<Position>
+    + 'static
 {
 }
 
@@ -280,16 +279,12 @@ mod test {
       1.5, 2.5, 3.5, 4.5, 2.2, 2.3, 2.4, -1.5, -2.5, -3.5, -4.5, -2.2, -2.3, -2.4,
     ];
     let one = T::ONE;
-    assert_eq!(zero.to_f64(), 0.0, "{} to_f64 zero", name);
-    assert_eq!(one.to_f64(), 1.0, "{} to_f64 one", name);
-    assert_eq!(T::from_f64_nearest(0.0), zero, "{} from_f64 zero", name);
-    assert_eq!(T::from_f64_nearest(1.0), one, "{} from_f64 one", name);
-    let eps = if T::BITS == 0 {
-      1e-6
-    } else {
-      T::EPSILON.to_f64()
-    };
-    assert!(eps < 0.01, "{} eps {}", name, eps);
+    assert_eq!(zero.to_f64(), 0.0, "{name} to_f64 zero");
+    assert_eq!(one.to_f64(), 1.0, "{name} to_f64 one");
+    assert_eq!(T::from_f64_nearest(0.0), zero, "{name} from_f64 zero");
+    assert_eq!(T::from_f64_nearest(1.0), one, "{name} from_f64 one");
+    let eps = if T::BITS == 0 { 1e-6 } else { T::EPSILON.to_f64() };
+    assert!(eps < 0.01, "{name} eps {eps}");
     for i in test_list {
       if i < 0.0 && !T::IS_SIGNED {
         continue;
@@ -298,20 +293,14 @@ mod test {
       assert_approx_eq!(v.to_f64(), i, eps);
       let rounded = v.round().to_f64();
       assert_approx_eq!(rounded, i.round_ties_even(), eps);
-      assert!((rounded - i).abs() <= 0.5 + eps, "{} round {} -> {rounded}", name, i);
-      assert_eq!(rounded as i32 % 2, 0, "{} round {} -> {rounded}", name, i);
+      assert!((rounded - i).abs() <= 0.5 + eps, "{name} round {i} -> {rounded}");
+      assert_eq!(rounded as i32 % 2, 0, "{name} round {i} -> {rounded}");
 
       let (ipart, frac) = (v.ipart(), v.frac().to_f64());
-      assert_eq!(
-        ipart,
-        i.floor() as Position,
-        "{} ipart {} -> ({ipart}, {frac})",
-        name,
-        i
-      );
-      assert!(ipart as f64 <= i, "{} ipart {} -> ({ipart}, {frac})", name, i);
+      assert_eq!(ipart, i.floor() as Position, "{name} ipart {i} -> ({ipart}, {frac})");
+      assert!(ipart as f64 <= i, "{name} ipart {i} -> ({ipart}, {frac})");
       assert_approx_eq!(frac, i.rem_euclid(1.0), eps);
-      assert!((0.0..1.0).contains(&frac), "{} frac {} -> ({ipart}, {frac})", name, i);
+      assert!((0.0..1.0).contains(&frac), "{name} frac {i} -> ({ipart}, {frac})");
       assert_approx_eq!(frac + ipart as f64, i, eps);
     }
   }
@@ -322,6 +311,7 @@ mod test {
   }
 
   #[test]
+  #[allow(clippy::assertions_on_constants)]
   fn test_fixed() {
     use fixed::types::*;
     test_pixel_like!(I56F8 I48F16 U56F8 U48F16);
@@ -334,6 +324,7 @@ mod test {
   }
 
   #[test]
+  #[allow(clippy::assertions_on_constants)]
   fn test_ifixed() {
     use types::*;
     test_pixel_like!(U56F8 U48F16 I56F8 I48F16 I64F64);

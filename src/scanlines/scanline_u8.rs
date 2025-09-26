@@ -78,7 +78,7 @@ impl ScanlineU8 {
   /// span is increased and the cover value appended
   /// Otherwise, not a new span is created
   pub fn add_span(&mut self, x: Position, len: Position, cover: u64) {
-    trace!("add_span: x={} len={} cover={}", x, len, cover);
+    trace!("add_span: x={x} len={len} cover={cover}");
     let x = x - self.min_x;
     let cover = U8::new(cover as _);
     //self.covers.insert( x, cover );
@@ -101,7 +101,7 @@ impl ScanlineU8 {
   /// If the cell is 1 beyond the last value, the length is increased and the
   /// cover is append, otherwise a new span is created
   pub fn add_cell(&mut self, x: Position, cover: u64) {
-    trace!("add_cell: x={} cover={}", x, cover);
+    trace!("add_cell: x={x} cover={cover}");
     let x = x - self.min_x;
     let cover = U8::new(cover as _);
     //self.covers.insert( x, cover );

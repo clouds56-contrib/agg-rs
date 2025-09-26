@@ -70,7 +70,7 @@ mod tests {
         for a in 0..=255 {
           let (p, q, a) = (p as u8, q as u8, a as u8);
           let v = lerp_u8_f64(p, q, a);
-          assert_eq!(lerp_u8(p, q, a), v, "lerp({},{},{}) = {}", p, q, a, v);
+          assert_eq!(lerp_u8(p, q, a), v, "lerp({p},{q},{a}) = {v}");
         }
       }
     }
@@ -83,7 +83,7 @@ mod tests {
         for a in 0..=255 {
           let (p, q, a) = (p as u8, q as u8, a as u8);
           let v = prelerp_u8_f64(p, q, a);
-          assert_eq!(prelerp_u8(p, q, a), v, "prelerp({},{},{}) = {}", p, q, a, v);
+          assert_eq!(prelerp_u8(p, q, a), v, "prelerp({p},{q},{a}) = {v}");
         }
       }
     }
@@ -94,10 +94,10 @@ mod tests {
     for i in 0..=255 {
       for j in 0..=255 {
         let v = mu864(i, j);
-        assert_eq!(multiply_u8(i, j), v, "{} * {} = {}", i, j, v);
+        assert_eq!(multiply_u8(i, j), v, "{i} * {j} = {v}");
         let v2 = combine_u8(i, j);
         let d = v2 as i32 - v as i32;
-        assert!(d.abs() <= 1, "{} * {} = {}", i, j, v2);
+        assert!(d.abs() <= 1, "{i} * {j} = {v2}");
         *diff.entry(d).or_insert(0) += 1;
       }
     }

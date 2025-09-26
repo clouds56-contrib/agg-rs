@@ -36,8 +36,8 @@ fn draw(alpha: u8, filename: &str) {
     agg::render_scanlines_aa_solid(&mut ras, &mut rbb, g8);
   }
 
-  ren_base.to_file(format!("tests/tmp/{}", filename)).unwrap();
-  assert!(agg::utils::img_diff(format!("tests/tmp/{}", filename), format!("images/{}", filename)).unwrap());
+  ren_base.to_file(format!("tests/tmp/{filename}")).unwrap();
+  assert!(agg::utils::img_diff(format!("tests/tmp/{filename}"), format!("images/{filename}")).unwrap());
 }
 
 #[test]
