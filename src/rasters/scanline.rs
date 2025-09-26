@@ -280,6 +280,9 @@ impl<P: PixelLike, Area: PixelLike> RasterizerScanline<P, Area> {
     let aa_scale2 = aa_scale * 2;
     let aa_mask = aa_scale - 1;
     let aa_mask2 = aa_scale2 - 1;
+
+    // This would make -71 -> -36 and 71 -> 35
+    // TODO: [BREAKING] improve to make it symmetric
     let mut cover = I24F8::from_fixed(area >> 1).abs().to_bits() as u64;
     if self.filling_rule == FillingRule::EvenOdd {
       cover &= aa_mask2;
