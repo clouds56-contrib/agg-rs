@@ -8,6 +8,7 @@ use crate::Color;
 use crate::FromRaw4;
 use crate::MulOps;
 use crate::Pixel;
+use crate::Position;
 use crate::RealLike;
 use crate::Source;
 use crate::U8;
@@ -41,10 +42,10 @@ where
 {
   type Color = <Pixfmt<T> as Pixel>::Color;
 
-  fn width(&self) -> usize {
+  fn width(&self) -> Position {
     self.rgb.width()
   }
-  fn height(&self) -> usize {
+  fn height(&self) -> Position {
     self.rgb.height()
   }
   fn as_bytes(&self) -> &[u8] {
@@ -53,7 +54,7 @@ where
   fn to_file<P: AsRef<std::path::Path>>(&self, filename: P) -> Result<(), std::io::Error> {
     self.rgb.to_file(filename)
   }
-  fn _set(&mut self, id: (usize, usize), n: usize, c: Self::Color) {
+  fn _set(&mut self, id: (Position, Position), n: Position, c: Self::Color) {
     self.rgb._set(id, n, c);
   }
   fn is_cover_full<U: RealLike>(_cover: &U) -> bool {
@@ -75,7 +76,7 @@ where
   //   alpha = alpha
   //   new   = c
   //   old   = p[j]
-  fn blend_pix<C: Color, U: RealLike>(&mut self, id: (usize, usize), c: C, cover: U) {
+  fn blend_pix<C: Color, U: RealLike>(&mut self, id: (Position, Position), c: C, cover: U) {
     // goes from agg::scanline_u8_am<agg::alpha_mask_gray8>
     // scanline_u8_am::finalize() => m_alpha_mask->combine_hspan(span->x, base_type::y(), span->covers, span->len);
     // alpha_mask_gray8 = alpha_mask_u8<1, 0>

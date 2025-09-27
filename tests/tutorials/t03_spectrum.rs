@@ -26,7 +26,7 @@ fn t03_spectrum() {
   pix.fill(Rgb8::WHITE);
   draw_black_frame(&mut pix);
 
-  let span = wavelength_span(w);
+  let span = wavelength_span(w as usize);
 
   for i in 0..h {
     pix.blend_color_hspan(0, i as i64, w as i64, &span, 1.0);
@@ -50,7 +50,7 @@ fn draw_alpha(color: Rgb8, filename: &str) {
 
   let mut mix = agg::PixfmtAlphaMask::new(pix, alpha);
 
-  let span = wavelength_span(w);
+  let span = wavelength_span(w as usize);
   for i in 0..h as i64 {
     mix.blend_color_hspan(0, i, w as i64, &span, 1.);
   }

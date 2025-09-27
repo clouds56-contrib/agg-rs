@@ -1,4 +1,4 @@
-use crate::{LineInterpolator, Transform};
+use crate::{LineInterpolator, Position, Transform};
 
 pub trait GradientCalculation {
   fn calculate(&self, x: i64, y: i64, d2: i64) -> i64;
@@ -76,7 +76,7 @@ impl Interpolator {
 
 pub trait Gradient {
   type Color;
-  fn generate(&self, x: i64, y: i64, len: usize) -> Vec<Self::Color>;
+  fn generate(&self, x: Position, y: Position, len: usize) -> Vec<Self::Color>;
 }
 
 /// SpanGradient
@@ -149,7 +149,7 @@ impl<G, C: Clone> SpanGradient<G, C> {
 
 impl<G: GradientCalculation, C: Clone> Gradient for SpanGradient<G, C> {
   type Color = C;
-  fn generate(&self, x: i64, y: i64, len: usize) -> Vec<Self::Color> {
+  fn generate(&self, x: Position, y: Position, len: usize) -> Vec<Self::Color> {
     let mut interp = Interpolator::new(self.trans);
 
     let downscale_shift = interp.subpixel_shift() - self.subpixel_shift();

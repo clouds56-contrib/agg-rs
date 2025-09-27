@@ -3,6 +3,7 @@
 use crate::FromColor;
 use crate::FromRaw4;
 use crate::Gradient;
+use crate::Position;
 use crate::MAX_HALF_WIDTH;
 use crate::NamedColor;
 use crate::POLY_MR_SUBPIXEL_SHIFT;
@@ -673,13 +674,13 @@ where
   // fn width(&self) -> f64 {
   //     self.subpixel_width() as f64 / POLY_SUBPIXEL_SCALE as f64
   // }
-  fn pixel(&mut self, x: i64, y: i64) -> Rgba8 {
+  fn pixel(&mut self, x: Position, y: Position) -> Rgba8 {
     self.pattern.pixel(x, y)
   }
-  fn blend_color_hspan(&mut self, x: i64, y: i64, len: i64, colors: &[Rgba8]) {
+  fn blend_color_hspan(&mut self, x: Position, y: Position, len: Position, colors: &[Rgba8]) {
     self.ren.blend_color_hspan(x, y, len, colors, T::cover_full());
   }
-  fn blend_color_vspan(&mut self, x: i64, y: i64, len: i64, colors: &[Rgba8]) {
+  fn blend_color_vspan(&mut self, x: Position, y: Position, len: Position, colors: &[Rgba8]) {
     self.ren.blend_color_vspan(x, y, len, colors, T::cover_full());
   }
   fn line3_no_clip(&mut self, lp: &LineParameters, sx: i64, sy: i64, ex: i64, ey: i64) {
@@ -754,28 +755,28 @@ impl LineImagePattern {
     self.half_height_hr += POLY_SUBPIXEL_SCALE / 2;
 
     self.pix = Pixfmt::<Rgba8>::create(
-      (self.width + self.dilation * 2) as usize,
-      (self.height + self.dilation * 2) as usize,
+      (self.width + self.dilation * 2) as Position,
+      (self.height + self.dilation * 2) as Position,
     );
-    for y in 0..self.height as usize {
-      let x1 = self.dilation as usize;
-      let y1 = y + self.dilation as usize;
-      for x in 0..self.width as usize {
+    for y in 0..self.height as Position {
+      let x1 = self.dilation as Position;
+      let y1 = y + self.dilation as Position;
+      for x in 0..self.width as Position {
         self.pix.set((x1 + x, y1), src.get((x, y)));
       }
     }
     //const color_type* s1;
     //const color_type* s2;
     let none = Rgba8::EMPTY;
-    let dill = self.dilation as usize;
+    let dill = self.dilation as Position;
     for y in 0..dill {
       //s1 = self.buf.row_ptr(self.height + self.dilation - 1) + self.dilation;
       //s2 = self.buf.row_ptr(self.dilation) + self.dilation;
       //let d1 = self.buf.row_ptr(self.dilation + self.height + y) + self.dilation;
       //let d2 = self.buf.row_ptr(self.dilation - y - 1) + self.dilation;
-      let (x1, y1) = (dill, dill + y + self.height as usize);
+      let (x1, y1) = (dill, dill + y + self.height as Position);
       let (x2, y2) = (dill, dill - y - 1);
-      for x in 0..self.width as usize {
+      for x in 0..self.width as Position {
         //*d1++ = color_type(*s1++, 0);
         //*d2++ = color_type(*s2++, 0);
         //*d1++ = color_type::no_color();
@@ -785,9 +786,9 @@ impl LineImagePattern {
       }
     }
     let h = self.height + self.dilation * 2;
-    for y in 0..h as usize {
-      let sx1 = self.dilation as usize;
-      let sx2 = (self.dilation + self.width) as usize;
+    for y in 0..h as Position {
+      let sx1 = self.dilation as Position;
+      let sx2 = (self.dilation + self.width) as Position;
       let dx1 = sx2;
       let dx2 = sx1;
       //s1 = self.buf.row_ptr(y) + self.dilation;
@@ -795,7 +796,7 @@ impl LineImagePattern {
       //d1 = self.buf.row_ptr(y) + self.dilation + self.width;
       //d2 = self.buf.row_ptr(y) + self.dilation;
 
-      for x in 0..self.dilation as usize {
+      for x in 0..self.dilation as Position {
         //*d1++ = *s1++;
         //*--d2 = *--s2;
         self.pix.set((dx1 + x, y), self.pix.get((sx1 + x, y)));
@@ -855,7 +856,7 @@ impl LineImagePatternPow2 {
   pub fn width(&self) -> u64 {
     self.base.height
   }
-  pub fn pixel(&self, x: i64, y: i64) -> Rgba8 {
+  pub fn pixel(&self, x: Position, y: Position) -> Rgba8 {
     self.base.filter.pixel_high_res(
       &self.base.pix,
       (x & self.mask as i64) + self.base.dilation_hr,
@@ -874,14 +875,14 @@ impl PatternFilterBilinear {
   pub fn dilation(&self) -> u64 {
     1
   }
-  pub fn pixel_low_res(&self, pix: &Pixfmt<Rgba8>, x: i64, y: i64) -> Rgba8 {
-    pix.get((x as usize, y as usize))
+  pub fn pixel_low_res(&self, pix: &Pixfmt<Rgba8>, x: Position, y: Position) -> Rgba8 {
+    pix.get((x, y))
   }
   pub fn pixel_high_res(&self, pix: &Pixfmt<Rgba8>, x: i64, y: i64) -> Rgba8 {
     let (mut red, mut green, mut blue, mut alpha) = (0i64, 0i64, 0i64, 0i64);
 
-    let x_lr = (x as usize) >> POLY_SUBPIXEL_SHIFT;
-    let y_lr = (y as usize) >> POLY_SUBPIXEL_SHIFT;
+    let x_lr = (x as Position) >> POLY_SUBPIXEL_SHIFT;
+    let y_lr = (y as Position) >> POLY_SUBPIXEL_SHIFT;
 
     let x = x & POLY_SUBPIXEL_MASK;
     let y = y & POLY_SUBPIXEL_MASK;

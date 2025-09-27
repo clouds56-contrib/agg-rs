@@ -29,7 +29,7 @@ fn draw_stroke(ras: &mut agg::RasterizerScanline) {
 #[test]
 fn t00_example() {
   // Create a blank image 10x10 pixels
-  let pix = agg::Pixfmt::<agg::Rgb8>::create(WIDTH, HEIGHT);
+  let pix = agg::Pixfmt::<agg::Rgb8>::create(WIDTH as _, HEIGHT as _);
   let mut ren_base = agg::RenderingBase::new(pix);
   ren_base.clear(agg::Rgb8::WHITE);
 
@@ -48,7 +48,7 @@ fn t00_example() {
 
 #[test]
 fn t00_example_red() {
-  let pixf = agg::Pixfmt::<agg::Rgb8>::create(WIDTH, HEIGHT);
+  let pixf = agg::Pixfmt::<agg::Rgb8>::create(WIDTH as _, HEIGHT as _);
   let mut ren_base = agg::RenderingBase::new(pixf);
   ren_base.clear(agg::Rgb8::WHITE);
 
@@ -65,7 +65,7 @@ fn t00_example_red() {
 
 #[test]
 fn t00_example_red_clip_box() {
-  let pixf = agg::Pixfmt::<agg::Rgb8>::create(WIDTH, HEIGHT);
+  let pixf = agg::Pixfmt::<agg::Rgb8>::create(WIDTH as _, HEIGHT as _);
   let mut ren_base = agg::RenderingBase::new(pixf);
   ren_base.clear(agg::Rgb8::WHITE);
 
@@ -90,7 +90,7 @@ fn t00_example_red_clip_box() {
 fn t00_example_aliased() {
   flexi_logger::Logger::try_with_env_or_str("debug").unwrap().start().ok();
 
-  let pixf = agg::Pixfmt::<agg::Rgb8>::create(WIDTH, HEIGHT);
+  let pixf = agg::Pixfmt::<agg::Rgb8>::create(WIDTH as _, HEIGHT as _);
   let mut ren_base = agg::RenderingBase::new(pixf);
   ren_base.clear(agg::Rgb8::WHITE);
 
@@ -107,7 +107,7 @@ fn t00_example_aliased() {
 
 #[test]
 fn t00_example_path_stroke_clip() {
-  let pixf = agg::Pixfmt::<agg::Rgb8>::create(WIDTH, HEIGHT);
+  let pixf = agg::Pixfmt::<agg::Rgb8>::create(WIDTH as _, HEIGHT as _);
   let mut ren_base = agg::RenderingBase::new(pixf);
   ren_base.clear(agg::Rgb8::WHITE);
   let mut ren = agg::RenderingScanlineAASolid::new(&mut ren_base, Rgb8::RED);
@@ -131,7 +131,7 @@ fn t00_example_path_stroke_clip() {
 
 #[test]
 fn t00_example_path_stroke() {
-  let pixf = agg::Pixfmt::<agg::Rgb8>::create(WIDTH, HEIGHT);
+  let pixf = agg::Pixfmt::<agg::Rgb8>::create(WIDTH as _, HEIGHT as _);
   let mut ren_base = agg::RenderingBase::new(pixf);
   ren_base.clear(agg::Rgb8::WHITE);
   let mut ren = agg::RenderingScanlineAASolid::new(&mut ren_base, Rgb8::RED);
