@@ -1,12 +1,14 @@
 use crate::Color;
+use crate::FixedLike;
 use crate::FromColor;
 use crate::NamedColor;
+use crate::SubPixel;
 use crate::POLY_SUBPIXEL_SCALE;
 use crate::Pixel;
 use crate::RenderingBase;
 use crate::Subpixel;
 use crate::color::Rgba8;
-use crate::renders::BresehamInterpolator;
+use crate::renders::BresenhamInterpolator;
 
 /// Primative Renderer
 #[derive(Debug)]
@@ -78,7 +80,11 @@ where
     //let cover_full = cover_mask;
     let cover = T::cover_full();
     let color = self.line_color;
-    let mut li = BresehamInterpolator::new(x1, y1, x2, y2);
+    let x1 = SubPixel::from_raw(x1.0);
+    let y1 = SubPixel::from_raw(y1.0);
+    let x2 = SubPixel::from_raw(x2.0);
+    let y2 = SubPixel::from_raw(y2.0);
+    let mut li = BresenhamInterpolator::new(x1, y1, x2, y2);
     if li.len == 0 {
       return;
     }

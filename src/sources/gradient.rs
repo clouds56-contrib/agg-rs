@@ -1,13 +1,15 @@
-use crate::{LineInterpolator, Position, Transform};
+use fixed::types::I28F4;
+
+use crate::{LineInterpolator, PixelLike, Position, SubPixel, Transform};
 
 pub trait GradientCalculation {
-  fn calculate(&self, x: i64, y: i64, d2: i64) -> i64;
+  fn calculate<P: PixelLike>(&self, x: P, y: P, d2: P) -> P;
 }
 
 #[derive(Debug)]
 pub struct GradientX;
 impl GradientCalculation for GradientX {
-  fn calculate(&self, x: i64, _: i64, _: i64) -> i64 {
+  fn calculate<P: PixelLike>(&self, x: P, _: P, _: P) -> P {
     x
   }
 }
@@ -15,62 +17,48 @@ impl GradientCalculation for GradientX {
 #[derive(Debug)]
 pub struct GradientY;
 impl GradientCalculation for GradientY {
-  fn calculate(&self, _: i64, y: i64, _: i64) -> i64 {
+  fn calculate<P: PixelLike>(&self, _: P, y: P, _: P) -> P {
     y
   }
 }
 
 #[derive(Debug)]
-struct Interpolator {
-  li_x: Option<LineInterpolator>,
-  li_y: Option<LineInterpolator>,
+struct Interpolator<P> {
+  li_x: LineInterpolator<P>,
+  li_y: LineInterpolator<P>,
   trans: Transform,
 }
-impl Interpolator {
-  #[inline]
-  pub fn subpixel_shift(&self) -> i64 {
-    8
-  }
-  #[inline]
-  pub fn subpixel_scale(&self) -> i64 {
-    1 << self.subpixel_shift()
-  }
-  pub fn new(trans: Transform) -> Self {
+impl<P: PixelLike> Interpolator<P> {
+  pub fn new(trans: Transform, x: f64, y: f64, len: usize) -> Self {
+    let (tx, ty) = trans.transform(x, y);
+    let x1 = P::from_f64_rounded(tx);
+    let y1 = P::from_f64_rounded(ty);
+
+    let (tx, ty) = trans.transform(x + len as f64, y);
+    let x2 = P::from_f64_rounded(tx);
+    let y2 = P::from_f64_rounded(ty);
+
     Self {
       trans,
-      li_x: None,
-      li_y: None,
+      li_x: LineInterpolator::new(x1, x2, len as i64),
+      li_y: LineInterpolator::new(y1, y2, len as i64),
     }
-  }
-  pub fn begin(&mut self, x: f64, y: f64, len: usize) {
-    let tx = x;
-    let ty = y;
-    let (tx, ty) = self.trans.transform(tx, ty);
-    let x1 = (tx * self.subpixel_scale() as f64).round() as i64;
-    let y1 = (ty * self.subpixel_scale() as f64).round() as i64;
-
-    let tx = x + len as f64;
-    let ty = y;
-    let (tx, ty) = self.trans.transform(tx, ty);
-    let x2 = (tx * self.subpixel_scale() as f64).round() as i64;
-    let y2 = (ty * self.subpixel_scale() as f64).round() as i64;
-    self.li_x = Some(LineInterpolator::new(x1, x2, len as i64));
-    self.li_y = Some(LineInterpolator::new(y1, y2, len as i64));
   }
   pub fn inc(&mut self) {
-    if let Some(ref mut li) = self.li_x {
-      (li).inc();
-    }
-    if let Some(ref mut li) = self.li_y {
-      (li).inc();
-    }
+    self.li_x.inc();
+    self.li_y.inc();
   }
-  pub fn coordinates(&self) -> (i64, i64) {
-    if let (Some(x), Some(y)) = (self.li_x.as_ref(), self.li_y.as_ref()) {
-      (x.y, y.y)
-    } else {
-      panic!("Interpolator not Initialized");
-    }
+  pub fn coordinates(&self) -> (P, P) {
+    (self.li_x.y, self.li_y.y)
+  }
+}
+
+impl<P: PixelLike> Iterator for Interpolator<P> {
+  type Item = (P, P);
+  fn next(&mut self) -> Option<Self::Item> {
+    let result = self.coordinates();
+    self.inc();
+    Some(result)
   }
 }
 
@@ -100,15 +88,15 @@ pub trait Gradient {
 /// - [`Self::color`] should contain at least one entry; otherwise indexing will panic.
 ///   The subpixel shift used by this struct is `4` (see [`Self::subpixel_shift`]).
 #[derive(Debug)]
-pub struct SpanGradient<G, C> {
+pub struct SpanGradient<G, C, P4 = I28F4> {
   /// sub-pixel index of gradient start
   ///
   /// These determine the range used when mapping the computed gradient value to the color stops.
-  d1: i64,
+  d1: P4,
   /// sub-pixel index of gradient end
   ///
   /// These determine the range used when mapping the computed gradient value to the color stops.
-  d2: i64,
+  d2: P4,
   /// generic gradient calculator implementing [`GradientCalculation`].
   gradient: G,
   /// color stop array
@@ -117,7 +105,7 @@ pub struct SpanGradient<G, C> {
   trans: Transform,
 }
 
-impl<G, C: Clone> SpanGradient<G, C> {
+impl<G, C: Clone, P4: PixelLike> SpanGradient<G, C, P4> {
   #[inline]
   pub fn subpixel_shift(&self) -> i64 {
     4
@@ -127,56 +115,45 @@ impl<G, C: Clone> SpanGradient<G, C> {
     1 << self.subpixel_shift()
   }
   pub fn new(trans: Transform, gradient: G, color: &[C], d1: f64, d2: f64) -> Self {
-    let mut s = Self {
-      d1: 0,
-      d2: 1,
+    Self {
+      d1: P4::from_f64_rounded(d1),
+      d2: P4::from_f64_rounded(d2),
       color: color.to_vec(),
       gradient,
       trans,
-    };
-    s.d1(d1);
-    s.d2(d2);
-    s
+    }
   }
   pub fn d1(&mut self, d1: f64) {
-    self.d1 = (d1 * self.subpixel_scale() as f64).round() as i64;
+    self.d1 = P4::from_f64_rounded(d1);
   }
   pub fn d2(&mut self, d2: f64) {
-    self.d2 = (d2 * self.subpixel_scale() as f64).round() as i64;
+    self.d2 = P4::from_f64_rounded(d2);
   }
   pub fn prepare(&mut self) {}
 }
 
-impl<G: GradientCalculation, C: Clone> Gradient for SpanGradient<G, C> {
+impl<G: GradientCalculation, C: Clone, P4: PixelLike> Gradient for SpanGradient<G, C, P4> {
   type Color = C;
   fn generate(&self, x: Position, y: Position, len: usize) -> Vec<Self::Color> {
-    let mut interp = Interpolator::new(self.trans);
 
-    let downscale_shift = interp.subpixel_shift() - self.subpixel_shift();
+    // let downscale_shift = interp.subpixel_shift() - self.subpixel_shift();
 
     let mut dd = self.d2 - self.d1;
     if dd < 1 {
-      dd = 1;
+      dd = P4::ONE;
     }
-    let ncolors = self.color.len() as i64;
+    let ncolors = self.color.len();
 
-    interp.begin(x as f64 + 0.5, y as f64 + 0.5, len);
+    let interp = Interpolator::<SubPixel>::new(self.trans, x as f64 + 0.5, y as f64 + 0.5, len);
 
-    (0..len)
-      .map(|_| {
-        let (x, y) = interp.coordinates();
+    interp.take(len)
+      .map(|(x, y)| {
         let d = self
           .gradient
-          .calculate(x >> downscale_shift, y >> downscale_shift, self.d2);
-        let mut d = ((d - self.d1) * ncolors) / dd;
-        if d < 0 {
-          d = 0;
-        }
-        if d >= ncolors {
-          d = ncolors - 1;
-        }
-        interp.inc();
-        self.color[d as usize].clone()
+          .calculate(P4::from_fixed(x), P4::from_fixed(y), self.d2);
+        let d = ((d - self.d1) * P4::from_f64_nearest(ncolors as f64)) / dd;
+        let d = d.to_sub_pixel() as usize;
+        self.color[d.clamp(0, ncolors - 1)].clone()
       })
       .collect()
   }

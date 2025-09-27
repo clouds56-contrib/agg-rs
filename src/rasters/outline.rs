@@ -29,7 +29,7 @@ use crate::VertexSource;
 use crate::paths::PathCommand;
 
 #[derive(Debug, Copy, Clone, PartialEq, Default)]
-pub(crate) struct Subpixel(i64);
+pub(crate) struct Subpixel(pub i64);
 
 impl Subpixel {
   pub fn value(self) -> i64 {
