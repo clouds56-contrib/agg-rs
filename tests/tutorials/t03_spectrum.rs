@@ -54,14 +54,8 @@ fn draw_alpha(color: Rgb8, filename: &str) {
   for i in 0..h as i64 {
     mix.blend_color_hspan(0, i, w as i64, &span, 1.);
   }
-  mix.rgb.to_file(format!("tests/tmp/{}.png", filename)).unwrap();
-  assert!(
-    agg::utils::img_diff(
-      format!("tests/tmp/{}.png", filename),
-      format!("images/{}.png", filename)
-    )
-    .unwrap()
-  );
+  mix.rgb.to_file(format!("tests/tmp/{filename}.png")).unwrap();
+  assert!(agg::utils::img_diff(format!("tests/tmp/{filename}.png"), format!("images/{filename}.png")).unwrap());
 }
 
 #[test]

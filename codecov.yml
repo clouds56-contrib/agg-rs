@@ -1,0 +1,24 @@
+# Codecov configuration to avoid creating required GitHub status checks
+# This disables Codecov's status reporting for both the repository (project)
+# and for pull-request (patch) uploads. It reduces the chance Codecov appears
+# as a required check in branch protection rules.
+
+status:
+  project:
+    default:
+      # disable project-level status (the commit status on mainline builds)
+      enabled: false
+  patch:
+    default:
+      # disable PR/patch-level status (the status applied to PR commits)
+      enabled: false
+
+# Keep CI passing requirement off (legacy flag; harmless if present)
+codecov:
+  require_ci_to_pass: no
+
+# Optional: keep a minimal coverage reporting policy so Codecov still collects
+# coverage artifacts but won't enforce status checks. Adjust targets as desired.
+coverage:
+  precision: 2
+  round: down

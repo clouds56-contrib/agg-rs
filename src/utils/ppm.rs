@@ -39,7 +39,7 @@ pub fn img_diff<P: AsRef<Path>>(f1: P, f2: P) -> Result<bool, image::ImageError>
       let off = pixel * 3;
       let a1 = (d1[off], d1[off + 1], d1[off + 2]);
       let a2 = (d2[off], d2[off + 1], d2[off + 2]);
-      info!("pixel {} ({},{}): left={:?} right={:?}", pixel, cx, cy, a1, a2);
+      debug!("pixel {pixel} ({cx},{cy}): left={a1:?} right={a2:?}");
     }
     error!("files differ at {} pixels", pixel_diffs.len());
     print!("error: files differ at {} pixels", pixel_diffs.len());

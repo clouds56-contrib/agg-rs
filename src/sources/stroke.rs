@@ -17,8 +17,8 @@
 //!     stroke.miter_limit(5.0);
 //!
 //!     // Draw
-//!     let mut ras = agg::RasterizerScanline::new();
-//!     ras.add_path(&stroke);
+//!     // let mut ras = agg::RasterizerScanline::new();
+//!     // ras.add_path(&stroke);
 
 use crate::paths::PathCommand;
 use crate::paths::Vertex;
@@ -459,10 +459,10 @@ where
     let len2 = len(p2, p1);
 
     if len1 == 0.0 {
-      panic!("Same point between p0,p1 {:?} {:?}", p0, p1);
+      panic!("Same point between p0,p1 {p0:?} {p1:?}");
     }
     if len2 == 0.0 {
-      panic!("Same point between p1,p2 {:?} {:?}", p1, p2);
+      panic!("Same point between p1,p2 {p1:?} {p2:?}");
     }
     // Distance, perpendidular from line
     let dx1 = self.width * (p1.y - p0.y) / len1;

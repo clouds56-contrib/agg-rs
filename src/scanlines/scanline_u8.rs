@@ -2,15 +2,15 @@
 
 //use std::collections::HashMap;
 
-use crate::U8;
+use crate::{Position, U8};
 
 /// Contigious area of data
 #[derive(Debug, Default)]
 pub struct Span {
   /// Starting x position
-  pub x: i64,
+  pub x: Position,
   /// Length of span
-  pub len: i64,
+  pub len: Position,
   /// Cover values with len values
   pub covers: Vec<U8>,
 }
@@ -23,11 +23,11 @@ pub struct ScanlineU8 {
   /// Last x value used
   ///
   /// Used as a state variable
-  last_x: i64,
+  last_x: Position,
   /// Minimum x position
   ///
   /// This value can probably be removed
-  min_x: i64,
+  min_x: Position,
   /// Collection of spans
   pub spans: Vec<Span>,
   // / Collection of covers
@@ -36,10 +36,10 @@ pub struct ScanlineU8 {
   /// Current y value
   ///
   /// State variable
-  pub y: i64,
+  pub y: Position,
 }
 
-const LAST_X: i64 = 0x7FFF_FFF0;
+const LAST_X: Position = 0x7FFF_FFF0;
 
 impl ScanlineU8 {
   /// Create a new empty scanline
@@ -58,14 +58,14 @@ impl ScanlineU8 {
     //self.covers.clear();
   }
   /// Reset values and clear spans, setting min value
-  pub fn reset(&mut self, min_x: i64, _max_x: i64) {
+  pub fn reset(&mut self, min_x: Position, _max_x: Position) {
     self.last_x = LAST_X;
     self.min_x = min_x;
     self.spans.clear();
     //self.covers = HashMap::new()
   }
   /// Set the current row (y) that is to be worked on
-  pub fn finalize(&mut self, y: i64) {
+  pub fn finalize(&mut self, y: Position) {
     self.y = y;
   }
   /// Total number of spans
@@ -77,7 +77,8 @@ impl ScanlineU8 {
   /// If the x value is 1 greater than the last value, the length of that
   /// span is increased and the cover value appended
   /// Otherwise, not a new span is created
-  pub fn add_span(&mut self, x: i64, len: i64, cover: u64) {
+  pub fn add_span(&mut self, x: Position, len: Position, cover: u64) {
+    trace!("add_span: x={x} len={len} cover={cover}");
     let x = x - self.min_x;
     let cover = U8::new(cover as _);
     //self.covers.insert( x, cover );
@@ -99,7 +100,8 @@ impl ScanlineU8 {
   ///
   /// If the cell is 1 beyond the last value, the length is increased and the
   /// cover is append, otherwise a new span is created
-  pub fn add_cell(&mut self, x: i64, cover: u64) {
+  pub fn add_cell(&mut self, x: Position, cover: u64) {
+    trace!("add_cell: x={x} cover={cover}");
     let x = x - self.min_x;
     let cover = U8::new(cover as _);
     //self.covers.insert( x, cover );
