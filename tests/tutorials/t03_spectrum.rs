@@ -29,7 +29,7 @@ fn t03_spectrum() {
   let span = wavelength_span(w as usize);
 
   for i in 0..h {
-    pix.blend_color_hspan(0, i as i64, w as i64, &span, 1.0);
+    pix.blend_color_hspan(0, i, w, &span, 1.0);
   }
   pix.to_file("tests/tmp/t03_spectrum.png").unwrap();
   assert!(agg::utils::img_diff("tests/tmp/t03_spectrum.png", "images/t03_spectrum.png").unwrap());
@@ -51,8 +51,8 @@ fn draw_alpha(color: Rgb8, filename: &str) {
   let mut mix = agg::PixfmtAlphaMask::new(pix, alpha);
 
   let span = wavelength_span(w as usize);
-  for i in 0..h as i64 {
-    mix.blend_color_hspan(0, i, w as i64, &span, 1.);
+  for i in 0..h {
+    mix.blend_color_hspan(0, i, w, &span, 1.);
   }
   mix.rgb.to_file(format!("tests/tmp/{filename}.png")).unwrap();
   assert!(agg::utils::img_diff(format!("tests/tmp/{filename}.png"), format!("images/{filename}.png")).unwrap());

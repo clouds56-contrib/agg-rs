@@ -4,16 +4,16 @@ use crate::FixedLike;
 use crate::FromColor;
 use crate::FromRaw4;
 use crate::Gradient;
-use crate::PixelLike;
-use crate::Position;
-use crate::SubPixel;
 use crate::MAX_HALF_WIDTH;
 use crate::NamedColor;
 use crate::POLY_MR_SUBPIXEL_SHIFT;
 use crate::POLY_SUBPIXEL_MASK;
 use crate::POLY_SUBPIXEL_SCALE;
 use crate::POLY_SUBPIXEL_SHIFT;
+use crate::PixelLike;
+use crate::Position;
 use crate::RenderingBase;
+use crate::SubPixel;
 use crate::color::Rgba8;
 use crate::scanlines::ScanlineU8;
 
@@ -377,7 +377,11 @@ impl<P: PixelLike> LineInterpolator<P> {
     assert!(count >= 0);
     let cnt = P::from_sub_pixel(std::cmp::max(1, count));
     let (lift, rem) = (y2 - y1).div_mod_floor(cnt << P::SHIFT, P::SHIFT);
-    let (lift, rem) = if rem == 0 { (lift - P::EPSILON, cnt) } else { (lift, rem) };
+    let (lift, rem) = if rem == 0 {
+      (lift - P::EPSILON, cnt)
+    } else {
+      (lift, rem)
+    };
 
     Self {
       y: y1,
@@ -736,8 +740,8 @@ impl LineImagePattern {
   {
     self.height = src.height() as u64;
     self.width = src.width() as u64;
-    self.width_hr = src.width() as i64 * POLY_SUBPIXEL_SCALE;
-    self.half_height_hr = src.height() as i64 * POLY_SUBPIXEL_SCALE / 2;
+    self.width_hr = src.width() * POLY_SUBPIXEL_SCALE;
+    self.half_height_hr = src.height() * POLY_SUBPIXEL_SCALE / 2;
     self.offset_y_hr = self.dilation_hr + self.half_height_hr - POLY_SUBPIXEL_SCALE / 2;
     self.half_height_hr += POLY_SUBPIXEL_SCALE / 2;
 

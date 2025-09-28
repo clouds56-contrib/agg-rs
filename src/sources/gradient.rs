@@ -139,7 +139,6 @@ impl<G, C: Clone, P4: PixelLike> SpanGradient<G, C, P4> {
 impl<G: GradientCalculation, C: Clone, P4: PixelLike> Gradient for SpanGradient<G, C, P4> {
   type Color = C;
   fn generate(&self, x: Position, y: Position, len: usize) -> Vec<Self::Color> {
-
     // let downscale_shift = interp.subpixel_shift() - self.subpixel_shift();
 
     let mut dd = self.d2 - self.d1;
@@ -150,11 +149,10 @@ impl<G: GradientCalculation, C: Clone, P4: PixelLike> Gradient for SpanGradient<
 
     let interp = Interpolator::<SubPixel>::new(self.trans, x as f64 + 0.5, y as f64 + 0.5, len);
 
-    interp.take(len)
+    interp
+      .take(len)
       .map(|(x, y)| {
-        let d = self
-          .gradient
-          .calculate(P4::from_fixed(x), P4::from_fixed(y), self.d2);
+        let d = self.gradient.calculate(P4::from_fixed(x), P4::from_fixed(y), self.d2);
         let d = ((d - self.d1) * P4::from_f64_nearest(ncolors as f64)) / dd;
         let d = (d >> P4::SHIFT).to_sub_pixel().clamp(0, ncolors as i64 - 1);
         self.color[d as usize].clone()
@@ -175,7 +173,7 @@ mod tests {
   fn test_interpolator() {
     let mut interp = Interpolator::<SubPixel>::new(Transform::new().then_scale(1.6, 1.0), 0.0, 0.0, 10);
     let coords = interp.by_ref().take(11).collect::<Vec<_>>();
-    let expected = vec![
+    let expected = [
       (0.0, 0.0),
       (1.6, 0.0),
       (3.2, 0.0),
@@ -192,7 +190,7 @@ mod tests {
 
     let mut interp = Interpolator::<SubPixel>::new(Transform::new().then_scale(1.0 / 6.0, 1.0), 0.0, 0.0, 7);
     let coords = interp.by_ref().take(8).collect::<Vec<_>>();
-    let expected = vec![
+    let expected = [
       (0.0, 0.0),
       (1.0 / 6.0, 0.0),
       (2.0 / 6.0, 0.0),
@@ -220,8 +218,14 @@ mod tests {
     let result = grad.generate(0, 0, 7);
     assert_eq!(result, colors);
 
-    let colors = vec![1,2,3,4,5,6,7];
-    let grad = SpanGradient::<_, _>::new(Transform::new().then_scale(1.0 / 6.0, 1.0), GradientX, &colors, 0.0, 6.0);
+    let colors = vec![1, 2, 3, 4, 5, 6, 7];
+    let grad = SpanGradient::<_, _>::new(
+      Transform::new().then_scale(1.0 / 6.0, 1.0),
+      GradientX,
+      &colors,
+      0.0,
+      6.0,
+    );
     let result = grad.generate(0, 0, 7);
     assert_eq!(result, vec![1, 1, 1, 1, 1, 2, 2]);
   }
@@ -260,18 +264,17 @@ mod tests {
       let gradient_colors = (0..256u16).collect::<Vec<_>>();
       let span = SpanGradient::<_, _>::new(gradient_mtx, GradientX, &gradient_colors, 0.0, 100.0);
 
-      let line = Interpolator::<SubPixel>::new(
-        gradient_mtx.then_invert(),
-        -10., 0., 120,
-      );
-      let colors = line.take(121).map(|(x, y)| {
-        let g = span.generate(x.ipart() as Position, y.ipart() as Position, 1);
-        g[0]
-      }).collect::<Vec<_>>();
+      let line = Interpolator::<SubPixel>::new(gradient_mtx.then_invert(), -10., 0., 120);
+      let colors = line
+        .take(121)
+        .map(|(x, y)| {
+          let g = span.generate(x.ipart() as Position, y.ipart() as Position, 1);
+          g[0]
+        })
+        .collect::<Vec<_>>();
       if kk == 0 {
         assert_eq!(colors, vec![0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 6, 6, 10, 14, 14, 19, 19, 23, 27, 27, 31, 32, 36, 40, 40, 44, 44, 49, 53, 53, 57, 57, 61, 66, 66, 70, 70, 74, 78, 78, 83, 83, 87, 91, 91, 95, 96, 100, 104, 104, 108, 108, 113, 117, 117, 121, 121, 125, 130, 130, 134, 134, 138, 142, 142, 147, 147, 151, 155, 155, 159, 160, 164, 168, 168, 172, 172, 177, 181, 181, 185, 185, 189, 194, 194, 198, 198, 202, 206, 206, 211, 211, 215, 219, 219, 223, 224, 228, 232, 232, 236, 236, 241, 245, 245, 249, 249, 253, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255]);
-      } else
-      if kk == 1 {
+      } else if kk == 1 {
         assert_eq!(colors, vec![0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 6, 6, 10, 14, 14, 19, 19, 23, 27, 27, 32, 32, 36, 40, 40, 44, 44, 48, 53, 53, 57, 57, 61, 66, 66, 70, 70, 74, 78, 78, 83, 83, 87, 91, 91, 96, 96, 100, 104, 104, 108, 108, 112, 117, 117, 121, 121, 125, 130, 130, 134, 134, 138, 142, 142, 147, 147, 151, 155, 155, 160, 160, 164, 168, 168, 172, 172, 176, 181, 181, 185, 185, 189, 194, 194, 198, 198, 202, 206, 206, 211, 211, 215, 219, 219, 224, 224, 228, 232, 232, 236, 236, 240, 245, 245, 249, 249, 253, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255]);
       }
     }

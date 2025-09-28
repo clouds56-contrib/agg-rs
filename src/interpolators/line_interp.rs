@@ -4,12 +4,12 @@ use crate::renders::LineInterpolator;
 use crate::DistanceInterpolator;
 use crate::FixedLike;
 use crate::LineParameters;
-use crate::SubPixel;
 use crate::MAX_HALF_WIDTH;
 use crate::POLY_SUBPIXEL_MASK;
 use crate::POLY_SUBPIXEL_SCALE;
 use crate::POLY_SUBPIXEL_SHIFT;
 use crate::RealLike;
+use crate::SubPixel;
 use crate::U8;
 
 /// Line Interpolator AA

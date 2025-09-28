@@ -1,7 +1,8 @@
 use std::marker::PhantomData;
 
 use crate::{
-  Color, FromRaw2, FromRaw3, FromRaw4, Gray8, NamedColor, Pixel, Position, RenderingBuffer, Rgb8, Rgba32, Rgba8, RgbaPre8
+  Color, FromRaw2, FromRaw3, FromRaw4, Gray8, NamedColor, Pixel, Position, RenderingBuffer, Rgb8, Rgba8, Rgba32,
+  RgbaPre8,
 };
 
 /// Pixel Format Wrapper around raw pixel component data
@@ -152,11 +153,7 @@ where
     if y >= height || x >= width || n == 0 {
       return;
     }
-    let n = if x + n >= width {
-      width - x
-    } else {
-      n
-    };
+    let n = if x + n >= width { width - x } else { n };
     for i in 0..n {
       self.set((x + i, y), c);
     }
@@ -187,11 +184,7 @@ where
     if y >= height || x >= width || n == 0 {
       return;
     }
-    let n = if y + n >= height {
-      height - y
-    } else {
-      n
-    };
+    let n = if y + n >= height { height - y } else { n };
     for i in 0..n {
       self.set((x, y + i), c);
     }
@@ -215,7 +208,12 @@ impl Pixfmt<RgbaPre8> {
       .filter(|(i, _)| i % 4 < 3)
       .map(|(_, x)| *x)
       .collect();
-    Pixfmt::<Rgb8>::new(RenderingBuffer::from_buf(buf, self.width() as usize, self.height() as usize, 3))
+    Pixfmt::<Rgb8>::new(RenderingBuffer::from_buf(
+      buf,
+      self.width() as usize,
+      self.height() as usize,
+      3,
+    ))
   }
 }
 

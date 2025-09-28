@@ -1,5 +1,7 @@
 use crate::{
-  DistanceInterpolator, DistanceInterpolator1, DistanceInterpolator2, DistanceInterpolator3, FixedLike, LineInterpolatorAA, LineParameters, RealLike, RenderOutline, MAX_HALF_WIDTH, POLY_SUBPIXEL_MASK, POLY_SUBPIXEL_SHIFT, U8
+  DistanceInterpolator, DistanceInterpolator1, DistanceInterpolator2, DistanceInterpolator3, FixedLike,
+  LineInterpolatorAA, LineParameters, MAX_HALF_WIDTH, POLY_SUBPIXEL_MASK, POLY_SUBPIXEL_SHIFT, RealLike, RenderOutline,
+  U8,
 };
 
 /// Line Interpolator0
