@@ -82,6 +82,13 @@ pub trait FixedLike: Sized + PartialEq + std::fmt::Debug + Copy + 'static {
     let x = (x * (Self::SHIFT as f64).exp2()).floor() / (Self::SHIFT as f64).exp2();
     Self::from_f64_nearest(x)
   }
+  fn from_f64_ceiled(x: f64) -> Self {
+    if Self::BITS == 0 || Self::SHIFT == usize::MAX {
+      return Self::from_f64_nearest(x);
+    }
+    let x = (x * (Self::SHIFT as f64).exp2()).ceil() / (Self::SHIFT as f64).exp2();
+    Self::from_f64_nearest(x)
+  }
   fn to_f64(self) -> f64;
   fn from_raw(x: Self::Raw) -> Self;
   fn into_raw(self) -> Self::Raw;
@@ -344,5 +351,14 @@ mod test {
   #[test]
   fn test_float() {
     test_pixel_like!(f32 f64);
+  }
+
+  #[test]
+  fn test_to_subpixel() {
+    let x = I56F8::from_f64_nearest(1.5);
+    let sp = x.to_sub_pixel();
+    assert_eq!(sp, 384); // 1.5 * 256 = 384
+    let y = I56F8::from_sub_pixel(sp);
+    assert_eq!(x.to_f64(), y.to_f64());
   }
 }

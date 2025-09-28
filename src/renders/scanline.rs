@@ -374,20 +374,16 @@ impl<P: PixelLike> LineInterpolator<P> {
   ///
   /// `xmod`, `rem` and `lift` are adjusted if `xmod` is negative
   pub fn new(y1: P, y2: P, count: Position) -> Self {
-    assert!(count > 0);
+    assert!(count >= 0);
     let cnt = P::from_sub_pixel(std::cmp::max(1, count));
-    let (lift, rem) = (y2 - y1).div_mod_floor(cnt, 0);
-    println!("y1: {y1:?}, y2: {y2:?} lift: {lift:?}, rem: {rem:?}");
+    let (lift, rem) = (y2 - y1).div_mod_floor(cnt << P::SHIFT, P::SHIFT);
     let (lift, rem) = if rem == 0 { (lift - P::EPSILON, cnt) } else { (lift, rem) };
-    println!("y1: {y1:?}, y2: {y2:?} lift: {lift:?}, rem: {rem:?}");
-    let xmod = rem - cnt;
-    println!("xmod: {:?} = {} - {}", xmod.to_sub_pixel(), rem.to_sub_pixel(), cnt.to_sub_pixel());
 
     Self {
       y: y1,
       lift,
       rem,
-      xmod,
+      xmod: rem - cnt,
       count: cnt,
     }
   }
@@ -880,33 +876,33 @@ impl PatternFilterBilinear {
 
     let ptr = pix.get((x_lr, y_lr));
 
-    let weight = (P::ONE - x) * (P::ONE - y);
+    let weight = (P::ONE - x) * ((P::ONE - y) << P::SHIFT);
     red += weight * P::from_f64_nearest(ptr.red8() as f64);
     green += weight * P::from_f64_nearest(ptr.green8() as f64);
     blue += weight * P::from_f64_nearest(ptr.blue8() as f64);
     alpha += weight * P::from_f64_nearest(ptr.alpha8() as f64);
     let ptr = pix.get((x_lr + 1, y_lr));
-    let weight = x * (P::ONE - y);
+    let weight = x * ((P::ONE - y) << P::SHIFT);
     red += weight * P::from_f64_nearest(ptr.red8() as f64);
     green += weight * P::from_f64_nearest(ptr.green8() as f64);
     blue += weight * P::from_f64_nearest(ptr.blue8() as f64);
     alpha += weight * P::from_f64_nearest(ptr.alpha8() as f64);
     let ptr = pix.get((x_lr, y_lr + 1));
-    let weight = (P::ONE - x) * y;
+    let weight = (P::ONE - x) * (y << P::SHIFT);
     red += weight * P::from_f64_nearest(ptr.red8() as f64);
     green += weight * P::from_f64_nearest(ptr.green8() as f64);
     blue += weight * P::from_f64_nearest(ptr.blue8() as f64);
     alpha += weight * P::from_f64_nearest(ptr.alpha8() as f64);
     let ptr = pix.get((x_lr + 1, y_lr + 1));
-    let weight = x * y;
+    let weight = x * (y << P::SHIFT);
     red += weight * P::from_f64_nearest(ptr.red8() as f64);
     green += weight * P::from_f64_nearest(ptr.green8() as f64);
     blue += weight * P::from_f64_nearest(ptr.blue8() as f64);
     alpha += weight * P::from_f64_nearest(ptr.alpha8() as f64);
-    let red = red.ipart() as u8;
-    let green = green.ipart() as u8;
-    let blue = blue.ipart() as u8;
-    let alpha = alpha.ipart() as u8;
+    let red = (red >> P::SHIFT).ipart() as u8;
+    let green = (green >> P::SHIFT).ipart() as u8;
+    let blue = (blue >> P::SHIFT).ipart() as u8;
+    let alpha = (alpha >> P::SHIFT).ipart() as u8;
     Rgba8::from_raw(red, green, blue, alpha)
   }
 }
@@ -1499,7 +1495,7 @@ mod tests {
     assert_eq!(rem0, rem);
     assert_eq!(y0, y);
 
-    let mut lp = LineInterpolator::new(SubPixel::ZERO, SubPixel::from_f64_rounded(10.0), 4);
+    let mut lp = LineInterpolator::new(SubPixel::ZERO, SubPixel::from_raw(10), 4);
     let y0 = vec![0, 2, 5, 7, 10];
     let left0 = vec![2, 2, 2, 2, 2];
     let xmod0 = vec![-2, 0, -2, 0, -2];

@@ -117,7 +117,7 @@ fn t26_aa_test() {
     let x2 = 20.0 + k * (k + 1.0) + ((k - 1.0) * 4.0);
     let y2 = 100.5;
     let gradient_mtx = calc_linear_gradient_transform(x1, y1, x2, y2);
-    let span = agg::SpanGradient::new(gradient_mtx, agg::GradientX {}, &gradient_colors, 0.0, 100.0);
+    let span = agg::SpanGradient::<_, _>::new(gradient_mtx, agg::GradientX, &gradient_colors, 0.0, 100.0);
     let mut ren_grad = agg::RenderingScanlineAA::new(&mut ren_base, span);
     let path = path_from_slice(&[x1, y1, x2, y2]);
     let mut stroke = agg::Stroke::new(path);
@@ -137,7 +137,7 @@ fn t26_aa_test() {
     let x2 = 17.5 + (k * 4.0) + k / 6.66666667;
     let y2 = 107.;
     let gradient_mtx = calc_linear_gradient_transform(x1, y1, x2, y2);
-    let span = agg::SpanGradient::new(gradient_mtx, agg::GradientX {}, &gradient_colors, 0.0, 100.0);
+    let span = agg::SpanGradient::<_, _>::new(gradient_mtx, agg::GradientX, &gradient_colors, 0.0, 100.0);
     let mut ren_grad = agg::RenderingScanlineAA::new(&mut ren_base, span);
     let path = path_from_slice(&[x1, y1, x2, y2]);
     let mut stroke = agg::Stroke::new(path);
@@ -153,7 +153,7 @@ fn t26_aa_test() {
     let x2 = 18.0 + (k * 4.0);
     let y2 = 112.5 + k / 6.66666667;
     let gradient_mtx = calc_linear_gradient_transform(x1, y1, x2, y2);
-    let span = agg::SpanGradient::new(gradient_mtx, agg::GradientX {}, &gradient_colors, 0.0, 100.0);
+    let span = agg::SpanGradient::<_, _>::new(gradient_mtx, agg::GradientX, &gradient_colors, 0.0, 100.0);
     let mut ren_grad = agg::RenderingScanlineAA::new(&mut ren_base, span);
     let path = path_from_slice(&[x1, y1, x2, y2]);
     let mut stroke = agg::Stroke::new(path);
@@ -173,7 +173,7 @@ fn t26_aa_test() {
     let x2 = 52.5;
     let y2 = 120.0 + (k - 1.0) * 3.1;
     let gradient_mtx = calc_linear_gradient_transform(x1, y1, x2, y2);
-    let span = agg::SpanGradient::new(gradient_mtx, agg::GradientX {}, &colors, 0.0, 100.0);
+    let span = agg::SpanGradient::<_, _>::new(gradient_mtx, agg::GradientX, &colors, 0.0, 100.0);
     let mut ren_grad = agg::RenderingScanlineAA::new(&mut ren_base, span);
     let path = path_from_slice(&[x1, y1, x2, y2]);
     let mut stroke = agg::Stroke::new(path);
@@ -193,7 +193,7 @@ fn t26_aa_test() {
     let x2 = 83.5;
     let y2 = 118.0 + (k * 3.0);
     let gradient_mtx = calc_linear_gradient_transform(x1, y1, x2, y2);
-    let span = agg::SpanGradient::new(gradient_mtx, agg::GradientX {}, &colors, 0.0, 100.0);
+    let span = agg::SpanGradient::<_, _>::new(gradient_mtx, agg::GradientX, &colors, 0.0, 100.0);
     let mut ren_grad = agg::RenderingScanlineAA::new(&mut ren_base, span);
     let path = path_from_slice(&[x1, y1, x2, y2]);
     let mut stroke = agg::Stroke::new(path);
@@ -213,7 +213,7 @@ fn t26_aa_test() {
     let x2 = 114.5;
     let y2 = 119.0 + (k * 3.0);
     let gradient_mtx = calc_linear_gradient_transform(x1, y1, x2, y2);
-    let span = agg::SpanGradient::new(gradient_mtx, agg::GradientX {}, &colors, 0.0, 100.0);
+    let span = agg::SpanGradient::<_, _>::new(gradient_mtx, agg::GradientX, &colors, 0.0, 100.0);
     let mut ren_grad = agg::RenderingScanlineAA::new(&mut ren_base, span);
     let path = path_from_slice(&[x1, y1, x2, y2]);
     let mut dash = agg::Dash::new(path);
@@ -288,7 +288,7 @@ fn t26_aa_test() {
 
     let gradient_mtx = calc_linear_gradient_transform(x1, y1, x2, y2);
     // println!("Gradient Mtx: {:?}", gradient_mtx);
-    let span = agg::SpanGradient::new(gradient_mtx, agg::GradientX {}, &gradient_colors, 0.0, 100.0);
+    let span = agg::SpanGradient::<_, _>::new(gradient_mtx, agg::GradientX, &gradient_colors, 0.0, 100.0);
     let mut ren_grad = agg::RenderingScanlineAA::new(&mut ren_base, span);
 
     ras.reset();
