@@ -1,6 +1,7 @@
-use fixed::traits::Fixed;
+use fixed::{traits::Fixed, types::I56F8};
 
 pub type Position = i64;
+pub type SubPixel = I56F8;
 pub const PIXEL_SHIFT: usize = 8;
 
 pub trait Arithmetics:
@@ -81,6 +82,13 @@ pub trait FixedLike: Sized + PartialEq + std::fmt::Debug + Copy + 'static {
     let x = (x * (Self::SHIFT as f64).exp2()).floor() / (Self::SHIFT as f64).exp2();
     Self::from_f64_nearest(x)
   }
+  fn from_f64_ceiled(x: f64) -> Self {
+    if Self::BITS == 0 || Self::SHIFT == usize::MAX {
+      return Self::from_f64_nearest(x);
+    }
+    let x = (x * (Self::SHIFT as f64).exp2()).ceil() / (Self::SHIFT as f64).exp2();
+    Self::from_f64_nearest(x)
+  }
   fn to_f64(self) -> f64;
   fn from_raw(x: Self::Raw) -> Self;
   fn into_raw(self) -> Self::Raw;
@@ -105,19 +113,24 @@ pub trait PixelLike: FixedLike + Arithmetics + IsSigned {
     // TODO improve this
     Self::from_f64_nearest(self.to_f64() * p.to_f64())
   }
-  fn to_sub_pixel(self, target_shift: usize) -> i64 {
-    let scale = 2f64.powi(target_shift as i32);
+  fn from_sub_pixel(p: i64) -> Self {
+    let scale = 2f64.powi(Self::SHIFT as i32);
+    Self::from_f64_nearest(p as f64 / scale)
+  }
+  fn to_sub_pixel(self) -> i64 {
+    let scale = 2f64.powi(Self::SHIFT as i32);
     (self.to_f64() * scale).round() as i64
   }
 
-  fn div_mod_floor<P: FixedLike, const TARGET_SHIFT: usize>(self, p: P) -> (Self, Self) {
+  fn div_mod_floor<P: FixedLike>(self, p: P, target_shift: usize) -> (Self, Self) {
     // TODO improve this
     // a = d * scale * (p / scale) + r
-    let scale = 2f64.powi(TARGET_SHIFT as i32);
+    let scale = 2f64.powi(target_shift as i32);
     let a = self.to_f64() * scale;
     let p = p.to_f64();
     let d = Self::from_f64_nearest(a.div_euclid(p) / scale);
     let r = Self::from_f64_nearest(a.rem_euclid(p) / scale);
+    debug_assert!(d.to_f64() * p + r.to_f64() == a / scale);
     (d, r)
   }
 }
@@ -338,5 +351,14 @@ mod test {
   #[test]
   fn test_float() {
     test_pixel_like!(f32 f64);
+  }
+
+  #[test]
+  fn test_to_subpixel() {
+    let x = I56F8::from_f64_nearest(1.5);
+    let sp = x.to_sub_pixel();
+    assert_eq!(sp, 384); // 1.5 * 256 = 384
+    let y = I56F8::from_sub_pixel(sp);
+    assert_eq!(x.to_f64(), y.to_f64());
   }
 }

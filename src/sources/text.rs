@@ -1,5 +1,6 @@
 use crate::NamedColor;
 use crate::Pixel;
+use crate::Position;
 use crate::RenderingBase;
 use crate::U8;
 use crate::VertexSource;
@@ -187,7 +188,7 @@ pub fn line_height(font: &ft::Face) -> f64 {
   (met.ascender - met.descender) as f64 / 64.0
 }
 
-pub fn draw_text<T>(txt: &str, x: i64, y: i64, font: &ft::Face, ren_base: &mut RenderingBase<T>)
+pub fn draw_text<T>(txt: &str, x: Position, y: Position, font: &ft::Face, ren_base: &mut RenderingBase<T>)
 where
   T: Pixel,
 {
@@ -196,8 +197,8 @@ where
   let width = string_width(txt, font);
   let height = line_height(font);
   // Shift to center justification, x and y
-  let dx = (width / 2.0).round() as i64;
-  let dy = (height / 2.0).round() as i64;
+  let dx = (width / 2.0).round() as Position;
+  let dy = (height / 2.0).round() as Position;
   x -= dx;
   y += dy;
   for c in txt.chars() {
@@ -207,18 +208,18 @@ where
     font.load_glyph(glyph_index, ft::face::LoadFlag::DEFAULT).unwrap();
     font.glyph().render_glyph(ft::RenderMode::Normal).unwrap();
     let g = font.glyph().bitmap();
-    let left = font.glyph().bitmap_left() as i64;
-    let top = font.glyph().bitmap_top() as i64;
+    let left = font.glyph().bitmap_left() as Position;
+    let top = font.glyph().bitmap_top() as Position;
     let buf: Vec<_> = g.buffer().iter().map(|&x| U8::new(x)).collect();
-    let rows = g.rows() as i64;
+    let rows = g.rows() as Position;
     let pitch = g.pitch().unsigned_abs() as usize;
-    let width = g.width() as i64;
+    let width = g.width() as Position;
     for i in 0..rows {
       ren_base.blend_solid_hspan(x + left, y - top + i, width, color, &buf[pitch * i as usize..]);
     }
     let adv = font.glyph().advance();
-    x += (adv.x as f64 / 64.0).round() as i64;
-    y += (adv.y as f64 / 64.0).round() as i64;
+    x += (adv.x as f64 / 64.0).round() as Position;
+    y += (adv.y as f64 / 64.0).round() as Position;
   }
 }
 
@@ -352,17 +353,17 @@ fn draw_text_subpixel<T>(
       };
       glyph.transform(None, Some(dt)).unwrap();
       let g = glyph.to_bitmap(ft::RenderMode::Normal, None).unwrap();
-      let left = g.left() as i64;
-      let top = g.top() as i64;
+      let left = g.left() as Position;
+      let top = g.top() as Position;
       let bit = g.bitmap();
       let buf: Vec<_> = bit.buffer().iter().map(|&x| U8::new(x)).collect();
-      let rows = bit.rows() as i64;
-      let width = bit.width() as i64;
+      let rows = bit.rows() as Position;
+      let width = bit.width() as Position;
       let pitch = bit.pitch().unsigned_abs() as usize;
       for i in 0..rows {
         ren_base.blend_solid_hspan(
-          x.floor() as i64 + left,
-          y.floor() as i64 + i - top,
+          x.floor() as Position + left,
+          y.floor() as Position + i - top,
           width,
           color,
           &buf[pitch * i as usize..],

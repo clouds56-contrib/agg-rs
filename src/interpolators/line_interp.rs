@@ -2,12 +2,14 @@ use crate::renders::LineInterpolator;
 //use crate::renders::RendererPrimatives;
 
 use crate::DistanceInterpolator;
+use crate::FixedLike;
 use crate::LineParameters;
 use crate::MAX_HALF_WIDTH;
 use crate::POLY_SUBPIXEL_MASK;
 use crate::POLY_SUBPIXEL_SCALE;
 use crate::POLY_SUBPIXEL_SHIFT;
 use crate::RealLike;
+use crate::SubPixel;
 use crate::U8;
 
 /// Line Interpolator AA
@@ -70,18 +72,18 @@ impl LineInterpolatorAA {
     };
 
     // Setup Number Interpolator from 0 .. y1 with n segments
-    let m_li = LineInterpolator::new_back_adjusted_2(y1, n);
+    let m_li = LineInterpolator::new_back_adjusted_2(SubPixel::from_raw(y1), n);
 
     // Length of line in subpixels
     let mut dd = if lp.vertical { lp.dy } else { lp.dx };
     dd <<= POLY_SUBPIXEL_SHIFT; // to subpixels
-    let mut li = LineInterpolator::new_foward_adjusted(0, dd, lp.len);
+    let mut li = LineInterpolator::new_foward_adjusted(SubPixel::ZERO, SubPixel::from_raw(dd), lp.len);
 
     // Get Distances along the line
     let mut dist = vec![0i64; MAX_HALF_WIDTH + 1];
     let stop = width + POLY_SUBPIXEL_SCALE * 2;
     for d in dist.iter_mut().take(MAX_HALF_WIDTH) {
-      *d = li.y;
+      *d = li.y.into_raw();
       if li.y >= stop {
         break;
       }
@@ -116,7 +118,7 @@ impl LineInterpolatorAA {
     // Increment the x by the LineParameter increment, typically +1 or -1
     self.x += self.lp.inc;
     // Set y value to initial + new y value
-    self.y = (self.lp.y1 + self.li.y) >> POLY_SUBPIXEL_SHIFT;
+    self.y = (self.lp.y1 + self.li.y.into_raw()) >> POLY_SUBPIXEL_SHIFT;
     // "Increment" the distance interpolator
     if self.lp.inc > 0 {
       di.inc_x(self.y - self.old_y);
@@ -134,7 +136,7 @@ impl LineInterpolatorAA {
   {
     self.li.inc();
     self.y += self.lp.inc;
-    self.x = (self.lp.x1 + self.li.y) >> POLY_SUBPIXEL_SHIFT;
+    self.x = (self.lp.x1 + self.li.y.into_raw()) >> POLY_SUBPIXEL_SHIFT;
 
     if self.lp.inc > 0 {
       di.inc_y(self.x - self.old_x);

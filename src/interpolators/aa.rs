@@ -1,6 +1,7 @@
 use crate::{
-  DistanceInterpolator, DistanceInterpolator1, DistanceInterpolator2, DistanceInterpolator3, LineInterpolatorAA,
-  LineParameters, MAX_HALF_WIDTH, POLY_SUBPIXEL_MASK, POLY_SUBPIXEL_SHIFT, RealLike, RenderOutline, U8,
+  DistanceInterpolator, DistanceInterpolator1, DistanceInterpolator2, DistanceInterpolator3, FixedLike,
+  LineInterpolatorAA, LineParameters, MAX_HALF_WIDTH, POLY_SUBPIXEL_MASK, POLY_SUBPIXEL_SHIFT, RealLike, RenderOutline,
+  U8,
 };
 
 /// Line Interpolator0
@@ -138,7 +139,7 @@ impl AA1 {
       loop {
         li.li.dec();
         li.y -= lp.inc;
-        li.x = (li.lp.x1 + li.li.y) >> POLY_SUBPIXEL_SHIFT;
+        li.x = (li.lp.x1 + li.li.y.into_raw()) >> POLY_SUBPIXEL_SHIFT;
 
         if lp.inc > 0 {
           di.dec_y(li.x - li.old_x);
@@ -181,7 +182,7 @@ impl AA1 {
       loop {
         li.li.dec();
         li.x -= lp.inc;
-        li.y = (li.lp.y1 + li.li.y) >> POLY_SUBPIXEL_SHIFT;
+        li.y = (li.lp.y1 + li.li.y.into_raw()) >> POLY_SUBPIXEL_SHIFT;
         if lp.inc > 0 {
           di.dec_x(li.y - li.old_y);
         } else {
@@ -476,7 +477,7 @@ impl AA3 {
       loop {
         li.li.dec();
         li.y -= lp.inc;
-        li.x = (li.lp.x1 + li.li.y) >> POLY_SUBPIXEL_SHIFT;
+        li.x = (li.lp.x1 + li.li.y.into_raw()) >> POLY_SUBPIXEL_SHIFT;
 
         if lp.inc > 0 {
           di.dec_y(li.x - li.old_x);
@@ -520,7 +521,7 @@ impl AA3 {
       loop {
         li.li.dec();
         li.x -= lp.inc;
-        li.y = (li.lp.y1 + li.li.y) >> POLY_SUBPIXEL_SHIFT;
+        li.y = (li.lp.y1 + li.li.y.into_raw()) >> POLY_SUBPIXEL_SHIFT;
 
         if lp.inc > 0 {
           di.dec_x(li.y - li.old_y);

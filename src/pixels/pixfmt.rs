@@ -1,7 +1,8 @@
 use std::marker::PhantomData;
 
 use crate::{
-  Color, FromRaw2, FromRaw3, FromRaw4, Gray8, NamedColor, Pixel, RenderingBuffer, Rgb8, Rgba8, Rgba32, RgbaPre8,
+  Color, FromRaw2, FromRaw3, FromRaw4, Gray8, NamedColor, Pixel, Position, RenderingBuffer, Rgb8, Rgba8, Rgba32,
+  RgbaPre8,
 };
 
 /// Pixel Format Wrapper around raw pixel component data
@@ -28,7 +29,8 @@ where
   /// Create new Pixel Format of `width` x `height``
   ///
   /// Allocates memory of `width * height * bpp`
-  pub fn create(width: usize, height: usize) -> Self {
+  pub fn create(width: Position, height: Position) -> Self {
+    let (width, height) = (width as usize, height as usize);
     if width == 0 || height == 0 {
       panic!("Cannot create pixfmt with 0 width or height");
     }
@@ -41,7 +43,8 @@ where
   /// Create new Pixel Format of `width` x `height``
   ///
   /// Allocates memory of `width * height * bpp`
-  pub fn create_flipped(width: usize, height: usize) -> Self {
+  pub fn create_flipped(width: Position, height: Position) -> Self {
+    let (width, height) = (width as usize, height as usize);
     if width == 0 || height == 0 {
       panic!("Cannot create pixfmt with 0 width or height");
     }
@@ -121,8 +124,8 @@ where
   /// ```
   ///
   /// [Color]: ../trait.Color.html
-  pub fn copy_pixel<C: Color>(&mut self, x: usize, y: usize, c: C) {
-    if x >= self.rbuf.width || y >= self.rbuf.height {
+  pub fn copy_pixel<C: Color>(&mut self, x: Position, y: Position, c: C) {
+    if x >= self.width() || y >= self.height() {
       return;
     }
     self.set((x, y), c);
@@ -145,15 +148,12 @@ where
   /// ```
   ///
   /// [Color]: ../trait.Color.html
-  pub fn copy_hline<C: Color>(&mut self, x: usize, y: usize, n: usize, c: C) {
-    if y >= self.rbuf.height || x >= self.rbuf.width || n == 0 {
+  pub fn copy_hline<C: Color>(&mut self, x: Position, y: Position, n: Position, c: C) {
+    let (width, height) = (self.width(), self.height());
+    if y >= height || x >= width || n == 0 {
       return;
     }
-    let n = if x + n >= self.rbuf.width {
-      self.rbuf.width - x
-    } else {
-      n
-    };
+    let n = if x + n >= width { width - x } else { n };
     for i in 0..n {
       self.set((x + i, y), c);
     }
@@ -179,15 +179,12 @@ where
   ///
   /// [Color]: ../trait.Color.html
   /// [Rgba8]: ../Color/struct.Rgba8.html
-  pub fn copy_vline<C: Color>(&mut self, x: usize, y: usize, n: usize, c: C) {
-    if y >= self.rbuf.height || x >= self.rbuf.width || n == 0 {
+  pub fn copy_vline<C: Color>(&mut self, x: Position, y: Position, n: Position, c: C) {
+    let (width, height) = (self.width(), self.height());
+    if y >= height || x >= width || n == 0 {
       return;
     }
-    let n = if y + n >= self.rbuf.height {
-      self.rbuf.height - y
-    } else {
-      n
-    };
+    let n = if y + n >= height { height - y } else { n };
     for i in 0..n {
       self.set((x, y + i), c);
     }
@@ -211,45 +208,50 @@ impl Pixfmt<RgbaPre8> {
       .filter(|(i, _)| i % 4 < 3)
       .map(|(_, x)| *x)
       .collect();
-    Pixfmt::<Rgb8>::new(RenderingBuffer::from_buf(buf, self.width(), self.height(), 3))
+    Pixfmt::<Rgb8>::new(RenderingBuffer::from_buf(
+      buf,
+      self.width() as usize,
+      self.height() as usize,
+      3,
+    ))
   }
 }
 
 /// Access Pixel source color
 pub trait Source {
   type Color: Color;
-  fn get(&self, id: (usize, usize)) -> Self::Color;
+  fn get(&self, id: (Position, Position)) -> Self::Color;
 }
 
 impl Source for Pixfmt<Rgba8> {
   type Color = Rgba8;
-  fn get(&self, (x, y): (usize, usize)) -> Self::Color {
-    Rgba8::from_slice(self.rbuf.get_pixel(x, y))
+  fn get(&self, (x, y): (Position, Position)) -> Self::Color {
+    Rgba8::from_slice(self.rbuf.get_pixel(x as usize, y as usize))
   }
 }
 impl Source for Pixfmt<RgbaPre8> {
   type Color = Rgba8;
-  fn get(&self, (x, y): (usize, usize)) -> Self::Color {
-    RgbaPre8::from_slice(self.rbuf.get_pixel(x, y)).rgba()
+  fn get(&self, (x, y): (Position, Position)) -> Self::Color {
+    RgbaPre8::from_slice(self.rbuf.get_pixel(x as usize, y as usize)).rgba()
   }
 }
 impl Source for Pixfmt<Rgb8> {
   type Color = Rgb8;
-  fn get(&self, (x, y): (usize, usize)) -> Self::Color {
-    Rgb8::from_slice(self.rbuf.get_pixel(x, y))
+  fn get(&self, (x, y): (Position, Position)) -> Self::Color {
+    Rgb8::from_slice(self.rbuf.get_pixel(x as usize, y as usize))
   }
 }
 impl Source for Pixfmt<Gray8> {
   type Color = Gray8;
-  fn get(&self, (x, y): (usize, usize)) -> Self::Color {
-    Gray8::from_slice(self.rbuf.get_pixel(x, y))
+  fn get(&self, (x, y): (Position, Position)) -> Self::Color {
+    Gray8::from_slice(self.rbuf.get_pixel(x as usize, y as usize))
   }
 }
 impl Source for Pixfmt<Rgba32> {
   type Color = Rgba32;
-  fn get(&self, (x, y): (usize, usize)) -> Self::Color {
+  fn get(&self, (x, y): (Position, Position)) -> Self::Color {
     //let n = (id.0 + id.1 * self.rbuf.width) * Pixfmt::<Rgba32>::bpp();
-    let p = self.rbuf.get_pixel(x, y);
+    let p = self.rbuf.get_pixel(x as usize, y as usize);
     let red = f32::from_ne_bytes([p[0], p[1], p[2], p[3]]);
     let green = f32::from_ne_bytes([p[4], p[5], p[6], p[7]]);
     let blue = f32::from_ne_bytes([p[8], p[9], p[10], p[11]]);

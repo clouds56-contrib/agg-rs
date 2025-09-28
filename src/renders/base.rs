@@ -145,7 +145,7 @@ where
     self.pixf.blend_color_vspan(x, y, len, colors_win, covers_win)
   }
 
-  pub fn blend_color_hspan<'a, C, U, Co>(&mut self, x: i64, y: i64, len: i64, colors: &[C], covers: Co)
+  pub fn blend_color_hspan<'a, C, U, Co>(&mut self, x: Position, y: Position, len: Position, colors: &[C], covers: Co)
   where
     C: Color,
     U: RealLike,
