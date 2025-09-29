@@ -21,13 +21,13 @@ char=! left=1 top=10 w=2 h=10
 #[test]
 fn t23_font() {
   let lib = agg::ft::Library::init().unwrap();
-  let font = lib.new_face("/System/Library/Fonts/Helvetica.ttc", 0).unwrap();
+  let font = lib.new_face("tests/assets/DejaVuSans.ttf", 0).unwrap();
   // ["Regular", "Bold", "Oblique", "Bold Oblique", "Light", "Light Oblique"]
-  assert_eq!(font.family_name().unwrap(), "Helvetica");
-  assert_eq!(font.style_name().unwrap(), "Regular");
+  assert_eq!(font.family_name().unwrap(), "DejaVu Sans");
+  assert_eq!(font.style_name().unwrap(), "Book");
   font.set_pixel_sizes(0, 13).unwrap();
-  assert_eq!(line_height(&font), 14.0);
-  assert_eq!(font.height(), 2048);
+  assert_eq!(line_height(&font), 17.0);
+  assert_eq!(font.height(), 2384);
   println!("{:?}", font.size_metrics().unwrap());
 
   let pix = agg::Pixfmt::<agg::Rgb8>::create(100, 100);
@@ -40,7 +40,7 @@ fn t23_font() {
     .unwrap()
     .xalign(agg::XAlign::Center)
     .yalign(agg::YAlign::Center);
-  assert_eq!(label.size(), (78., 14.));
+  assert_eq!(label.size(), (91., 17.));
   label.draw(&mut ren_base); // visual height 11
 
   ren_base.blend_hline(50, 58, 50, agg::Rgba8::RED, 1.0);
