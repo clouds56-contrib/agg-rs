@@ -210,6 +210,7 @@ where
     let g = font.glyph().bitmap();
     let left = font.glyph().bitmap_left() as Position;
     let top = font.glyph().bitmap_top() as Position;
+    trace!("char={} left={} top={} w={} h={}", c, left, top, g.width(), g.rows());
     let buf: Vec<_> = g.buffer().iter().map(|&x| U8::new(x)).collect();
     let rows = g.rows() as Position;
     let pitch = g.pitch().unsigned_abs() as usize;
